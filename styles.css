@@ -57,3 +57,44 @@
 @media(max-width:700px){.editor-form{grid-template-columns:1fr!important;gap:13px;padding:13px}.editor-form .full{grid-column:1}.editor-actions .small-btn{flex:1}.admin-item-actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.admin-item-actions .small-btn{padding:8px 5px;font-size:12px}.admin-panel-head{gap:12px}.admin-actions{display:flex;flex-wrap:wrap;width:100%}.admin-actions button{flex:1}.editor-form input,.editor-form select{font-size:16px}}
 
 .admin-tools{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:10px;margin:18px 0 8px}.admin-tools input,.admin-tools select{width:100%;min-width:0;border:1px solid #d4e0f3;border-radius:12px;padding:12px 14px;background:#fff;color:#17345f;font-size:14px}.admin-panel-head{padding:18px;border:1px solid #dce8fb;border-radius:20px;background:linear-gradient(120deg,#f5f9ff,#fff 58%,#edf5ff);box-shadow:0 10px 28px #17345f0c}.admin-panel-head .eyebrow{color:#0878f9;font-weight:900}@media(max-width:600px){.admin-tools{grid-template-columns:1fr}.admin-panel-head{padding:15px}}
+
+/* Admin Control Center — refreshed visual design */
+.admin-dialog{width:min(1040px,calc(100% - 18px));padding:clamp(13px,2.6vw,30px);border:1px solid #cfe0ff;border-radius:24px;background:linear-gradient(160deg,#f5f8ff 0%,#fff 42%,#f2fbff 100%);box-shadow:0 28px 90px #061b3a66}
+#adminRoot{color:#142b52}
+.admin-panel-head{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:clamp(18px,3vw,30px);border:0;border-radius:22px;color:#fff;background:linear-gradient(125deg,#071d52 0%,#075bd9 48%,#07a9c7 100%);box-shadow:0 16px 36px #075bd92c}
+.admin-panel-head:after{content:"";position:absolute;width:220px;height:220px;right:-65px;top:-110px;border:28px solid #ffffff19;border-radius:50%;pointer-events:none}
+.admin-panel-head .eyebrow{color:#9defff;letter-spacing:1.7px;font-size:10px;font-weight:900}
+.admin-panel-head h2{color:#fff;font-size:clamp(23px,4vw,34px);line-height:1.15}
+.admin-panel-head .tiny-note{color:#d8eaff;text-align:left;margin:9px 0 0;max-width:unset;font-size:12px}
+.admin-actions{display:flex;gap:9px;flex-wrap:wrap;z-index:1}
+.admin-actions .small-btn,.editor-actions .small-btn{min-height:43px;border-radius:12px;padding:11px 16px;font-weight:850}
+.admin-actions #newJob{background:linear-gradient(120deg,#ffdb69,#ff9e39);color:#1d2b4b;border:0;box-shadow:0 6px 18px #00194a35}
+.admin-actions #logoutBtn{background:#ffffff18;border:1px solid #ffffff70;color:#fff}
+.admin-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:16px 0 22px}
+.admin-stats .stat{padding:17px 18px;border-radius:17px;border:1px solid #dce8fb;background:#fff;box-shadow:0 7px 20px #183c7210;position:relative;overflow:hidden}
+.admin-stats .stat:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(#0878f9,#16c6d7)}
+.admin-stats .stat strong{font-size:clamp(24px,4vw,32px);color:#075bd9;line-height:1.1}
+.admin-stats .stat span{font-size:12px;font-weight:800;color:#5b6f91;margin-top:6px}
+.editor-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:clamp(14px,2.5vw,25px);margin:20px 0;border:1px solid #d3e3ff;border-radius:22px;background:#fff;box-shadow:0 14px 35px #102d5a12}
+.editor-form:before{content:"JOB DETAILS EDITOR";grid-column:1/-1;color:#075bd9;font-size:11px;font-weight:950;letter-spacing:1.5px;padding-bottom:12px;border-bottom:1px solid #e5edfa}
+.editor-form label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:850;color:#23416e;min-width:0}
+.editor-form input,.editor-form select,.editor-form textarea{border:1px solid #d5e1f2;border-radius:12px;background:#fbfdff;color:#102b53;padding:13px 14px;min-height:46px;font-size:15px;box-shadow:inset 0 1px 2px #0d2c5a05}
+.editor-form input:focus,.editor-form select:focus,.editor-form textarea:focus{background:#fff;border-color:#168bff;box-shadow:0 0 0 4px #168bff19}
+.editor-form textarea{min-height:210px;line-height:1.6;resize:vertical}
+.editor-form .full{grid-column:1/-1}
+.editor-form label:has(#jobDescription){background:linear-gradient(135deg,#f1f8ff,#f3fcff);border:1px solid #d6eaff;border-radius:15px;padding:13px}
+.editor-actions{display:flex;gap:10px;flex-wrap:wrap}
+.editor-actions button[type=submit]{background:linear-gradient(120deg,#0878f9,#05a9c7);border:0;color:#fff;box-shadow:0 8px 20px #0878f930}
+.editor-actions #cancelEdit{background:#edf2fb;color:#29466e;border:1px solid #d7e2f4}
+.admin-tools{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:10px;margin:22px 0 12px}
+.admin-tools input,.admin-tools select{min-height:48px;border:1px solid #d5e2f5;border-radius:13px;padding:12px 14px;background:#fff;color:#17345f;font-size:14px;box-shadow:0 5px 15px #163c7410}
+.admin-list{display:grid;gap:12px;margin-top:12px}
+.admin-item{display:flex;align-items:center;justify-content:space-between;gap:15px;border:1px solid #e0e9f8;border-radius:17px;padding:16px;background:#fff;box-shadow:0 6px 18px #10265309;transition:transform .2s,box-shadow .2s}
+.admin-item:hover{transform:translateY(-2px);box-shadow:0 12px 25px #10265312}
+.admin-item h4{font-size:15px;color:#102b53;overflow-wrap:anywhere}
+.admin-item p{line-height:1.7}
+.admin-item-actions .small-btn{border-radius:10px;padding:9px 12px;font-weight:800}
+.admin-item-actions [data-toggle]{background:#e8f9ef;color:#087a43;border:1px solid #c6efd7}
+.admin-item-actions [data-delete]{background:#fff0f0;color:#b42323;border:1px solid #ffd6d6}
+@media(max-width:700px){.admin-dialog{padding:12px}.admin-panel-head{align-items:flex-start;flex-direction:column;border-radius:17px}.admin-actions{width:100%}.admin-actions button{flex:1}.admin-stats{gap:8px}.admin-stats .stat{padding:13px 10px}.admin-stats .stat span{font-size:10px}.editor-form{grid-template-columns:1fr!important;gap:12px;padding:13px;border-radius:17px}.editor-form:before,.editor-form .full{grid-column:1}.editor-form label{font-size:12px}.editor-form input,.editor-form select,.editor-form textarea{font-size:16px}.editor-form textarea{min-height:190px}.admin-tools{grid-template-columns:1fr}.admin-item{align-items:flex-start;flex-direction:column}.admin-item-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.admin-item-actions .small-btn{font-size:11px;padding:9px 4px}.editor-actions{display:grid;grid-template-columns:1fr 1fr}.editor-actions button{width:100%}}
+@media(prefers-reduced-motion:reduce){.admin-item,.admin-panel-head,.admin-actions button{transition:none}}
