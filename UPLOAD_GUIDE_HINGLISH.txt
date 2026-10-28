@@ -1,0 +1,12 @@
+SARKARIJOBALERT UPDATE — UPLOAD GUIDE
+
+1) Backup your GitHub repository before replacing files. Do not delete Supabase rows.
+2) Extract this ZIP on your computer.
+3) In GitHub repo open Add file > Upload files. Upload the extracted files/folders, keeping their folder paths.
+4) Commit changes.
+5) GitHub Actions > Auto Fetch Government Jobs > Run workflow.
+6) Check logs. The fetcher keeps detected notices as DRAFT; it does not automatically publish unverified notices.
+7) Supabase schema.sql is included. Run it in Supabase SQL Editor only if needed; it uses create/alter-if-not-exists and does not delete existing jobs.
+
+IMPORTANT LIMITATION:
+Official websites may block automated requests (HTTP 403, SSL, JavaScript-only pages). A green GitHub Actions run does not guarantee that jobs were found. This package does not claim live integration with SarkariResult. Use permitted feeds/APIs or manually verify official notices.
