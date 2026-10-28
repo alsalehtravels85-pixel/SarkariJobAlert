@@ -1,395 +1,165 @@
-import os
-import re
-import time
+#!/usr/bin/env python3
+"""Official-source notice collector for SarkariJobAlert. Saves candidates as drafts."""
+import os, re, sys, time
+from datetime import datetime, timezone
+from urllib.parse import urljoin, urlparse, urldefrag
 import requests
-
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from supabase import create_client
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
 
-
-# ==================================================
-# SUPABASE
-# ==================================================
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
+SUPABASE_URL = os.getenv('SUPABASE_URL', '').strip()
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '').strip()
 if not SUPABASE_URL or not SUPABASE_KEY:
-    raise RuntimeError(
-        "GitHub Secrets missing: SUPABASE_URL / "
-        "SUPABASE_SERVICE_ROLE_KEY"
-    )
-
+    raise RuntimeError('Missing GitHub Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY')
 db = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-
-# ==================================================
-# OFFICIAL NOTICE PAGES
-# ==================================================
-
+ALLOWED_CATEGORIES = {'Latest Jobs', 'Admit Card', 'Results', 'Answer Key', 'Admission', 'Syllabus'}
 SOURCES = [
-    {
-        "name": "Staff Selection Commission",
-        "url": "https://ssc.gov.in/",
-        "hosts": ["ssc.gov.in"],
-    },
-    {
-        "name": "UPSC Recruitment Advertisements",
-        "url": "https://www.upsc.gov.in/recruitment/recruitment-advertisement",
-        "hosts": ["upsc.gov.in"],
-    },
-    {
-        "name": "IBPS Recruitment",
-        "url": "https://www.ibps.in/index.php/recruitment/",
-        "hosts": ["ibps.in"],
-    },
-    {
-        "name": "IBPS Recent Updates",
-        "url": "https://www.ibps.in/index.php/crp-updates/",
-        "hosts": ["ibps.in"],
-    },
-    {
-        "name": "Railway Recruitment Notices",
-        "url": "https://www.rrbcdg.gov.in/employment-notices.php",
-        "hosts": ["rrbcdg.gov.in"],
-    },
-    {
-        "name": "State Bank of India Careers",
-        "url": "https://sbi.co.in/web/careers",
-        "hosts": ["sbi.co.in", "bank.sbi"],
-    },
+ {'name':'Staff Selection Commission','urls':['https://ssc.gov.in/'],'hosts':['ssc.gov.in']},
+ {'name':'UPSC','urls':['https://upsc.gov.in/','https://www.upsc.gov.in/','https://upsc.gov.in/recruitment/recruitment-advertisement'],'hosts':['upsc.gov.in']},
+ {'name':'IBPS','urls':['https://www.ibps.in/','https://www.ibps.in/index.php/recruitment/','https://www.ibps.in/index.php/crp-updates/'],'hosts':['ibps.in']},
+ {'name':'Railway Recruitment Boards','urls':['https://indianrailways.gov.in/','https://www.rrbcdg.gov.in/employment-notices.php'],'hosts':['indianrailways.gov.in','rrbcdg.gov.in']},
+ {'name':'State Bank of India Careers','urls':['https://sbi.co.in/web/careers','https://bank.sbi/web/careers'],'hosts':['sbi.co.in','bank.sbi']},
 ]
-
-
-# ==================================================
-# ALLOWED CATEGORIES
-# ==================================================
-
-ALLOWED_CATEGORIES = {
-    "Latest Jobs",
-    "Admit Card",
-    "Results",
-    "Answer Key",
-    "Admission",
-    "Syllabus",
-}
-
-
-# ==================================================
-# KEYWORD RULES
-# ==================================================
-
 CATEGORY_RULES = [
-    (
-        "Results",
-        re.compile(
-            r"\b(result|results|merit list|score card|"
-            r"scorecard|marks of candidates|final result)\b",
-            re.I,
-        ),
-    ),
-    (
-        "Admit Card",
-        re.compile(
-            r"\b(admit card|hall ticket|call letter|"
-            r"admission certificate)\b",
-            re.I,
-        ),
-    ),
-    (
-        "Answer Key",
-        re.compile(r"\b(answer key|answer keys)\b", re.I),
-    ),
-    (
-        "Syllabus",
-        re.compile(r"\b(syllabus|exam pattern)\b", re.I),
-    ),
-    (
-        "Admission",
-        re.compile(r"\b(admission|entrance application)\b", re.I),
-    ),
+ ('Results', re.compile(r'\b(result|results|merit list|score ?card|final result)\b', re.I)),
+ ('Admit Card', re.compile(r'\b(admit card|hall ticket|call letter|e-admit card)\b', re.I)),
+ ('Answer Key', re.compile(r'\b(answer key|answer keys|provisional answer key)\b', re.I)),
+ ('Syllabus', re.compile(r'\b(syllabus|exam pattern)\b', re.I)),
+ ('Admission', re.compile(r'\b(admission|entrance examination|entrance application)\b', re.I)),
 ]
+JOB_PATTERN = re.compile(r'\b(recruitment|vacanc(?:y|ies)|apply online|online application|employment notice|recruitment notice|recruitment advertisement|invited applications|invites applications|notification for|selection post|combined graduate level|combined higher secondary|junior engineer|assistant loco pilot|station master|rrb ntpc|group[- ]?d|probationary officer|po/mt|crp[- ]?(rrb|spl|clerk)|apprentice|trainee|constable|sub inspector|officer recruitment)\b', re.I)
+EXCLUDE = re.compile(r'\b(tender|procurement|auction|vendor registration|press release|annual report|investor relations|old notices|previous notices|archive|archives|recruitment results archive)\b', re.I)
+GENERIC = {'home','careers','career','recruitment','view all','read more','click here','download','notice','notices','results','latest updates'}
 
-JOB_KEYWORDS = re.compile(
-    r"\b(recruitment|vacancy|vacancies|"
-    r"apply online|online application|"
-    r"employment notice|recruitment notice|"
-    r"recruitment advertisement|"
-    r"invites applications|invited applications|"
-    r"notification for recruitment|"
-    r"engagement of|appointment of|"
-    r"selection posts|combined graduate level|"
-    r"combined higher secondary|"
-    r"junior engineer examination|"
-    r"assistant loco pilot|station master|"
-    r"rrb ntpc|group d|group-d|"
-    r"po/mt|crp-rrb|crp-spl|clerk recruitment)\b",
-    re.I,
-)
+def make_session():
+    s = requests.Session()
+    retry = Retry(total=2, connect=2, read=2, backoff_factor=.7, status_forcelist=(429,500,502,503,504), allowed_methods=frozenset(['GET']))
+    adapter = HTTPAdapter(max_retries=retry)
+    s.mount('https://', adapter); s.mount('http://', adapter)
+    s.headers.update({'User-Agent':'Mozilla/5.0 (compatible; SarkariJobAlertNoticeChecker/2.0)','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8','Accept-Language':'en-IN,en;q=0.8'})
+    return s
+SESSION = make_session()
 
-EXCLUDED_KEYWORDS = re.compile(
-    r"\b(tender|procurement|auction|"
-    r"vendor registration|press release|"
-    r"annual report|investor relations|"
-    r"recruitment results archive|"
-    r"results archive|archives|"
-    r"old notices|previous notices)\b",
-    re.I,
-)
+def official(url, hosts):
+    try:
+        p = urlparse(url); host = (p.hostname or '').lower().rstrip('.')
+        return p.scheme.lower() == 'https' and bool(host) and any(host == h or host.endswith('.'+h) for h in hosts)
+    except Exception: return False
 
+def clean(text): return ' '.join((text or '').split()).strip(' \t\r\n-–—|:·')
 
-def classify_notice(title):
-    for category, pattern in CATEGORY_RULES:
-        if pattern.search(title):
-            return category
-
-    if JOB_KEYWORDS.search(title):
-        return "Latest Jobs"
-
+def classify(title):
+    for cat, pattern in CATEGORY_RULES:
+        if pattern.search(title): return cat
+    if JOB_PATTERN.search(title) and not EXCLUDE.search(title): return 'Latest Jobs'
     return None
 
+def add_candidate(found, title, link, source):
+    title, link = clean(title), urldefrag(link)[0].strip()
+    if len(title) < 8 or len(title) > 400 or title.lower() in GENERIC or EXCLUDE.search(title): return
+    if not official(link, source['hosts']): return
+    if re.search(r'/(archives?|archive|old-notices?)/?$', urlparse(link).path, re.I): return
+    category = classify(title)
+    if category not in ALLOWED_CATEGORIES: return
+    found[link] = {'title':title[:250], 'department':source['name'], 'category':category,
+      'notification_url':link, 'apply_url':link,
+      'description':'Automatically detected candidate notice from an official source. Verify eligibility, vacancies, fees, dates and the application link in the original notice before publishing.',
+      'status':'draft'}
 
-# ==================================================
-# HTTP SESSION
-# ==================================================
-
-def create_session():
-    session = requests.Session()
-
-    retry = Retry(
-        total=2,
-        connect=2,
-        read=2,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET"],
-    )
-
-    adapter = HTTPAdapter(max_retries=retry)
-
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-
-    session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (compatible; SarkariJobAlertBot/1.0)"
-        ),
-        "Accept": "text/html,application/xhtml+xml",
-    })
-
-    return session
-
-
-SESSION = create_session()
-
-
-# ==================================================
-# DOMAIN VALIDATION
-# ==================================================
-
-def is_allowed_official_link(link, allowed_hosts):
-    parsed = urlparse(link)
-
-    if parsed.scheme != "https":
-        return False
-
-    host = (parsed.hostname or "").lower()
-
-    for allowed in allowed_hosts:
-        allowed = allowed.lower()
-
-        if host == allowed or host.endswith("." + allowed):
-            return True
-
-    return False
-
-
-# ==================================================
-# FETCH NOTICES
-# ==================================================
-
-def collect_notices(source):
-    print(f"\nChecking: {source['name']}")
-    notices = {}
-
+def get_page(url, source):
     try:
-        response = SESSION.get(
-            source["url"],
-            timeout=(15, 45),
-        )
-        response.raise_for_status()
+        r = SESSION.get(url, timeout=(12,25), allow_redirects=True)
+        if r.status_code >= 400:
+            print(f'  HTTP {r.status_code}: {url}'); return None, None
+        if not official(r.url, source['hosts']):
+            print(f'  Skipped redirect outside official host: {r.url}'); return None, None
+        return r, None
+    except requests.exceptions.SSLError as e: return None, f'SSL error: {e}'
+    except requests.exceptions.RequestException as e: return None, f'Connection error: {e}'
 
-        soup = BeautifulSoup(response.text, "html.parser")
+def scan_page(url, source, found, counts):
+    r, error = get_page(url, source)
+    if error:
+        print(f'  {error}'); counts['errors'] += 1; return
+    if r is None: counts['errors'] += 1; return
+    if feedparser and ('xml' in r.headers.get('Content-Type','').lower() or r.text.lstrip().startswith('<?xml')):
+        feed = feedparser.parse(r.content)
+        if feed.entries:
+            before = len(found)
+            for entry in feed.entries:
+                link = getattr(entry,'link','')
+                if link: add_candidate(found, getattr(entry,'title',''), urljoin(r.url,link), source)
+            counts['pages_ok'] += 1
+            print(f'  Feed scanned: {url}; candidates: {len(found)-before}')
+            return
+    soup = BeautifulSoup(r.text, 'html.parser'); before = len(found)
+    for a in soup.select('a[href]'):
+        href = (a.get('href') or '').strip()
+        if not href or href.startswith(('javascript:','mailto:','tel:')): continue
+        link = urljoin(r.url, href)
+        if not official(link, source['hosts']): continue
+        title = clean(a.get_text(' ', strip=True))
+        parent = a.find_parent(['tr','li','article'])
+        nearby = clean(parent.get_text(' ', strip=True)) if parent else ''
+        if len(title) < 12 and len(nearby) > len(title): title = nearby
+        add_candidate(found, title, link, source)
+    counts['pages_ok'] += 1
+    print(f'  Page read; candidates added: {len(found)-before} ({url})')
 
-        for anchor in soup.select("a[href]"):
-            href = anchor.get("href", "").strip()
+def scan_sitemaps(source, found, counts):
+    for host in source['hosts']:
+        for sm in (f'https://{host}/sitemap.xml', f'https://{host}/sitemap_index.xml'):
+            r, _ = get_page(sm, source)
+            if r is None: continue
+            if '<urlset' not in r.text[:3000] and '<sitemapindex' not in r.text[:3000]: continue
+            soup = BeautifulSoup(r.text, 'xml')
+            locs = [x.get_text(strip=True) for x in soup.find_all('loc')]
+            if soup.find('sitemapindex'):
+                locs = [u for u in locs if re.search(r'(recruit|career|notice|job|news|update)',u,re.I)][:5]
+            for loc in locs[:50]:
+                if official(loc,source['hosts']) and re.search(r'(recruit|career|notice|job|advertisement|vacan|result|admit|answer)',loc,re.I):
+                    scan_page(loc,source,found,counts); time.sleep(.2)
 
-            if not href:
-                continue
-
-            link = urljoin(response.url, href)
-
-            if not is_allowed_official_link(
-                link,
-                source["hosts"],
-            ):
-                continue
-
-            # Use nearby text if PDF link has no visible title.
-            anchor_text = " ".join(
-                anchor.get_text(" ", strip=True).split()
-            )
-
-            parent = anchor.find_parent(
-                ["tr", "li", "article"]
-            )
-
-            nearby_text = ""
-
-            if parent:
-                nearby_text = " ".join(
-                    parent.get_text(" ", strip=True).split()
-                )
-
-            title = anchor_text
-
-            if len(title) < 8 and len(nearby_text) >= 8:
-                title = nearby_text
-
-            if not title or len(title) < 8:
-                continue
-
-            title = title[:250]
-
-            if EXCLUDED_KEYWORDS.search(title):
-                continue
-
-            category = classify_notice(title)
-
-            if category not in ALLOWED_CATEGORIES:
-                continue
-
-            # Ignore links which only say generic navigation text.
-            if title.lower() in {
-                "view all",
-                "read more",
-                "click here",
-                "home",
-                "careers",
-                "recruitment",
-                "results",
-            }:
-                continue
-
-            notices[link] = {
-                "title": title,
-                "department": source["name"],
-                "category": category,
-                "notification_url": link,
-                "apply_url": link,
-                "description": (
-                    "Official source link collected automatically. "
-                    "Verify the original notification for eligibility, "
-                    "vacancies, fees, dates and application details."
-                ),
-                "status": "draft",
-            }
-
-        print(f"Candidate notices found: {len(notices)}")
-
-        for notice in notices.values():
-            print(
-                f"  [{notice['category']}] "
-                f"{notice['title']}"
-            )
-
-    except requests.exceptions.SSLError as error:
-        print(f"SSL error: {source['name']}: {error}")
-
-    except requests.exceptions.RequestException as error:
-        print(f"Connection error: {source['name']}: {error}")
-
-    except Exception as error:
-        print(f"Unexpected error: {source['name']}: {error}")
-
-    return list(notices.values())
-
-
-# ==================================================
-# CHECK DUPLICATES AND SAVE
-# ==================================================
-
-def save_notice(notice):
+def save_notice(notice, counts):
     try:
-        if notice["category"] not in ALLOWED_CATEGORIES:
-            print(
-                f"Skipped invalid category: "
-                f"{notice['category']}"
-            )
-            return False
-
-        result = (
-            db.table("jobs")
-            .select("id")
-            .eq(
-                "notification_url",
-                notice["notification_url"],
-            )
-            .limit(1)
-            .execute()
-        )
-
-        if result.data:
-            print(f"Already exists: {notice['title']}")
-            return False
-
-        db.table("jobs").insert(notice).execute()
-
-        print(
-            f"Saved as draft: "
-            f"[{notice['category']}] {notice['title']}"
-        )
-
-        return True
-
-    except Exception as error:
-        print(
-            f"Database save failed for "
-            f"{notice['title']}: {error}"
-        )
-        return False
-
-
-# ==================================================
-# MAIN
-# ==================================================
+        existing = db.table('jobs').select('id').eq('notification_url',notice['notification_url']).limit(1).execute()
+        if existing.data:
+            counts['duplicates'] += 1; print(f"  Duplicate skipped: {notice['title']}"); return
+        db.table('jobs').insert(notice).execute()
+        counts['saved'] += 1; print(f"  Saved as draft [{notice['category']}]: {notice['title']}")
+    except Exception as e:
+        counts['save_failures'] += 1; print(f"  DATABASE SAVE FAILED [{notice['title']}]: {e}")
 
 def main():
-    total_found = 0
-    total_saved = 0
-    total_failed = 0
-
+    counts = {'pages_ok':0,'errors':0,'duplicates':0,'saved':0,'save_failures':0}
+    all_notices = {}
+    print('SARKARI JOB ALERT - OFFICIAL SOURCE CHECK')
+    print('Run time UTC:', datetime.now(timezone.utc).isoformat())
+    print('Detected notices are saved as DRAFT, not auto-published.')
     for source in SOURCES:
-        notices = collect_notices(source)
+        print(f"\nChecking: {source['name']}"); found = {}
+        for url in source['urls']:
+            scan_page(url,source,found,counts); time.sleep(.4)
+        if not found: scan_sitemaps(source,found,counts)
+        all_notices.update(found)
+        print(f'  Total candidates for source: {len(found)}'); time.sleep(.5)
+    for notice in all_notices.values(): save_notice(notice,counts)
+    print('\n================================')
+    print('SARKARI JOB ALERT - CHECK REPORT')
+    print(f"Pages successfully read: {counts['pages_ok']}")
+    print(f"Fetch errors: {counts['errors']}")
+    print(f'Candidate notices: {len(all_notices)}')
+    print(f"New notices saved as drafts: {counts['saved']}")
+    print(f"Duplicates skipped: {counts['duplicates']}")
+    print(f"Database save failures: {counts['save_failures']}")
+    print('================================')
+    if counts['pages_ok'] == 0 or counts['save_failures'] > 0: sys.exit(1)
 
-        total_found += len(notices)
-
-        for notice in notices:
-            if save_notice(notice):
-                total_saved += 1
-
-        time.sleep(2)
-
-    print("\n================================")
-    print("SARKARI JOB ALERT - CHECK REPORT")
-    print(f"Candidate notices: {total_found}")
-    print(f"New notices saved: {total_saved}")
-    print(f"Save failures: {total_failed}")
-    print("================================")
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__': main()
