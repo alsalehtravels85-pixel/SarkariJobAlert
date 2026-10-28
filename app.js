@@ -15,11 +15,7 @@
   const formatDate = value => value ? new Date(value + (String(value).length===10 ? "T00:00:00" : "")).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "As per notification";
   const isExpired = job => job.last_date && new Date(job.last_date + "T23:59:59") < new Date();
   const isNewJob = job => { if(!job.created_at) return false; const created = new Date(job.created_at).getTime(); return Number.isFinite(created) && (Date.now()-created)>=0 && (Date.now()-created)<3*24*60*60*1000; };
-  const demoJobs = [
-    {id:"demo-1",title:"Sample: Junior Assistant Recruitment",department:"Sample Department (Demo only)",category:"Latest Jobs",vacancies:"—",qualification:"As per official notice",last_date:null,status:"published",description:"Yeh sirf design preview ke liye sample entry hai. Isse real vacancy na samjhein. Live website par verified official details add karein.",notification_url:"",apply_url:""},
-    {id:"demo-2",title:"Sample: Admit Card Update",department:"Sample Exam Board (Demo only)",category:"Admit Card",vacancies:"—",qualification:"Registered candidates",last_date:null,status:"published",description:"Demo card only. Actual admit card link publish karne se pehle official source verify karein.",notification_url:"",apply_url:""},
-    {id:"demo-3",title:"Sample: Examination Result",department:"Sample Recruitment Board (Demo only)",category:"Results",vacancies:"—",qualification:"Exam candidates",last_date:null,status:"published",description:"Demo card only. Real result details yahan verified source ke saath add honge.",notification_url:"",apply_url:""}
-  ];
+  const demoJobs = [];
   function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600);}
   async function loadJobs(){
     if(!supabase){notice.hidden=false;allJobs=demoJobs;renderJobs();return;}
@@ -28,7 +24,7 @@
     notice.hidden=true;allJobs=data||[];renderJobs();
   }
   function renderJobs(){
-    const filtered=allJobs.filter(j=>(activeCategory==="All"||j.category===activeCategory)&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
+    const moreCategories=["Admission","Syllabus"];const filtered=allJobs.filter(j=>(activeCategory==="All"||(activeCategory==="More"?moreCategories.includes(j.category):j.category===activeCategory))&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
     count.textContent=`${filtered.length} update${filtered.length===1?"":"s"}`;
     $("#listingHeading").textContent=activeCategory==="All"?"Latest Government Jobs":activeCategory;
     if(!filtered.length){grid.innerHTML='<div class="empty-state"><strong>Abhi koi matching update nahi mila.</strong><br><span>Search badal kar dekhein ya baad mein check karein.</span></div>';return;}
@@ -52,7 +48,13 @@
   $("#detailClose").addEventListener("click",()=>detailDialog.close());
   $("#searchBtn").addEventListener("click",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
   $("#searchInput").addEventListener("input",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
-  document.querySelectorAll(".cat").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));btn.classList.add("active");activeCategory=btn.dataset.category;renderJobs();}));
+  document.querySelectorAll("[data-category]").forEach(btn=>btn.addEventListener("click",()=>{
+    document.querySelectorAll(".cat").forEach(x=>x.classList.toggle("active",x.dataset.category===btn.dataset.category));
+    activeCategory=btn.dataset.category;
+    renderJobs();
+    const section=document.querySelector(".content-section");
+    if(section && !btn.classList.contains("cat")) section.scrollIntoView({behavior:"smooth",block:"start"});
+  }));
   $("#adminOpen").addEventListener("click",()=>{adminDialog.showModal();});
   $("#adminClose").addEventListener("click",()=>adminDialog.close());
   $("#loginForm").addEventListener("submit",async e=>{
@@ -90,7 +92,7 @@
         <div class="editor-actions full"><button class="small-btn primary" type="submit">Save Update</button><button class="small-btn" type="button" id="cancelEdit">Cancel</button></div>
         <p id="saveMessage" class="form-message full"></p>
       </form>
-      <div class="admin-list">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(j.category)} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
+      <div class="admin-list">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(j.category)} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))} • Source: ${escapeHtml(j.source_name||"Manual")}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
     $("#newJob").onclick=()=>openEditor();
     $("#cancelEdit").onclick=()=>{$("#jobForm").hidden=true;editingId=null;};
     $("#logoutBtn").onclick=async()=>{await supabase.auth.signOut();currentUser=null;$("#adminRoot").innerHTML=loginMarkup();};
