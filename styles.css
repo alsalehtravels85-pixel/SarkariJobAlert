@@ -29,3 +29,206 @@
 .loading-card:before{content:"";display:inline-block;width:15px;height:15px;margin-right:8px;border:2px solid #d8e5fa;border-top-color:var(--blue);border-radius:50%;vertical-align:-3px;animation:sjaSpin .75s linear infinite}
 :focus-visible{outline:3px solid #f2a12b;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* ===== SarkariJobAlert: animated professional visual layer ===== */
+:root{
+  --sja-glow: rgba(74, 156, 255, .42);
+  --sja-violet: #713cff;
+  --sja-cyan: #13c7f5;
+}
+body{
+  background:
+    radial-gradient(ellipse at 5% 8%, rgba(70,150,255,.10), transparent 32%),
+    radial-gradient(ellipse at 95% 34%, rgba(131,75,255,.09), transparent 30%),
+    linear-gradient(180deg,#f7faff 0%,#eef4ff 48%,#fbfcff 100%);
+  background-attachment: fixed;
+}
+.topbar{
+  position:relative;
+  z-index:2;
+  overflow:hidden;
+  background:linear-gradient(110deg,#071d56,#103d9b 52%,#142b75);
+  border-bottom:1px solid rgba(255,255,255,.22);
+  box-shadow:0 8px 28px rgba(12,44,112,.18);
+}
+.topbar:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 15%,rgba(255,255,255,.12) 42%,transparent 60%);
+  transform:translateX(-120%);
+  animation:sjaHeaderShine 11s ease-in-out infinite;
+}
+.brand{position:relative;z-index:1;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15)}
+.brand small{color:#d9e8ff}
+.brand-accent{color:#ffd15e}
+.brand-mark{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.42);
+  background:linear-gradient(140deg,#13bdf0 0%,#2368ef 42%,#633cff 100%);
+  box-shadow:0 0 0 4px rgba(255,255,255,.07),0 8px 24px rgba(15,100,245,.38);
+}
+.brand-mark:after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  top:-70%;left:-45%;
+  width:55%;height:240%;
+  transform:rotate(28deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);
+  animation:sjaLogoShine 5.5s ease-in-out infinite;
+}
+.admin-open{
+  position:relative;z-index:1;
+  color:#fff;background:rgba(255,255,255,.08);
+  border-color:rgba(255,255,255,.4);
+  backdrop-filter:blur(10px);
+}
+.admin-open:hover{background:rgba(255,255,255,.18)}
+.hero{
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 12% 18%,rgba(0,210,255,.45),transparent 30%),
+    radial-gradient(ellipse at 87% 13%,rgba(139,64,255,.55),transparent 34%),
+    radial-gradient(ellipse at 48% 120%,rgba(0,116,255,.65),transparent 45%),
+    linear-gradient(125deg,#092a78 0%,#0759c9 48%,#3127a8 100%);
+  background-size:150% 150%;
+  animation:sjaAurora 18s ease-in-out infinite alternate;
+}
+.hero:before,.hero:after{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  pointer-events:none;
+  border-radius:50%;
+}
+.hero:before{
+  width:390px;height:390px;right:-105px;top:-190px;
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 0 65px rgba(34,198,255,.22),inset 0 0 60px rgba(110,95,255,.18);
+  animation:sjaOrbFloat 12s ease-in-out infinite alternate;
+}
+.hero:after{
+  width:230px;height:230px;left:-120px;bottom:-145px;
+  background:radial-gradient(circle,rgba(43,213,255,.24),rgba(119,74,255,.08) 55%,transparent 70%);
+  animation:sjaOrbFloat 10s ease-in-out infinite alternate-reverse;
+}
+.hero-badge{
+  box-shadow:0 5px 24px rgba(0,0,0,.12);
+  backdrop-filter:blur(8px);
+  animation:sjaFloatIn .7s ease-out both,sjaBadgeGlow 4s ease-in-out 1s infinite;
+}
+.hero h1{text-shadow:0 5px 28px rgba(0,0,0,.18)}
+.hero h1 span{display:inline-block;text-shadow:0 3px 20px rgba(255,205,75,.18)}
+.search-row{
+  border:1px solid rgba(255,255,255,.72);
+  box-shadow:0 12px 34px rgba(0,17,70,.24),0 0 0 5px rgba(255,255,255,.08);
+  transition:box-shadow .25s ease,transform .25s ease;
+}
+.search-row:focus-within{
+  transform:translateY(-2px);
+  box-shadow:0 16px 38px rgba(0,17,70,.28),0 0 0 5px rgba(95,204,255,.2);
+}
+.search-row button,.primary-btn{
+  background:linear-gradient(115deg,#ffcb53,#ff9b29 55%,#ffb43e);
+  box-shadow:0 5px 14px rgba(255,160,38,.22);
+}
+.quick-cats{position:relative;z-index:1}
+.cat{
+  box-shadow:0 4px 14px rgba(26,62,120,.045);
+}
+.cat.active,.cat:hover{
+  background:linear-gradient(120deg,#1267e8,#168ee9 58%,#10b8d6);
+  border-color:transparent;
+  box-shadow:0 8px 22px rgba(24,112,225,.22);
+}
+.content-section{animation:sjaFloatIn .7s .08s ease-out both}
+.section-heading h2{color:#102e67}
+.result-count{
+  padding:7px 11px;border-radius:999px;
+  background:#e5efff;color:#174fae;font-weight:800;
+}
+.job-card{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(202,218,242,.9);
+  box-shadow:0 8px 24px rgba(24,57,110,.065);
+}
+.job-card:before{
+  content:"";
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#0877ff,#19c5e8,#8b5cf6,#0877ff);
+  background-size:220% 100%;
+  transform:scaleX(.35);transform-origin:left;
+  opacity:.75;
+  transition:transform .3s ease;
+}
+.job-card:hover:before{transform:scaleX(1);animation:sjaGradientShift 3s linear infinite}
+.job-card:hover{
+  transform:translateY(-5px);
+  border-color:#b8d2fb;
+  box-shadow:0 18px 38px rgba(24,75,155,.13);
+}
+.apply-btn{
+  background:linear-gradient(115deg,#0878f9,#145bd7 65%,#5548e8);
+  border-color:transparent;
+  box-shadow:0 5px 13px rgba(20,91,215,.16);
+}
+.details-btn{background:linear-gradient(120deg,#fff,#f0f6ff)}
+.info-strip>div{
+  position:relative;overflow:hidden;
+  box-shadow:0 7px 22px rgba(24,57,110,.045);
+}
+.info-strip>div:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);
+  transform:translateX(-130%);
+  transition:transform .7s ease;
+}
+.info-strip>div:hover:after{transform:translateX(130%)}
+.footer{
+  background:linear-gradient(110deg,#071d4b,#123b83 55%,#101e57);
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.detail-dialog,.admin-dialog{
+  border:1px solid rgba(255,255,255,.75);
+  box-shadow:0 28px 90px rgba(3,22,60,.35);
+}
+.toast{backdrop-filter:blur(12px)}
+@keyframes sjaHeaderShine{
+  0%,65%{transform:translateX(-120%)}
+  90%,100%{transform:translateX(120%)}
+}
+@keyframes sjaLogoShine{
+  0%,55%{left:-65%}
+  85%,100%{left:130%}
+}
+@keyframes sjaAurora{
+  0%{background-position:0% 40%}
+  50%{background-position:100% 55%}
+  100%{background-position:30% 100%}
+}
+@keyframes sjaOrbFloat{
+  from{transform:translate3d(0,0,0) scale(1)}
+  to{transform:translate3d(-18px,22px,0) scale(1.08)}
+}
+@keyframes sjaBadgeGlow{
+  0%,100%{box-shadow:0 5px 24px rgba(0,0,0,.12)}
+  50%{box-shadow:0 5px 28px rgba(76,205,255,.26)}
+}
+@media(max-width:600px){
+  .topbar{background:linear-gradient(110deg,#071d56,#103d9b 55%,#142b75)}
+  .hero{background-size:180% 180%;padding-top:34px}
+  .hero:before{width:260px;height:260px;right:-150px;top:-100px}
+  .hero:after{width:170px;height:170px;left:-100px;bottom:-110px}
+  .job-card:hover{transform:translateY(-2px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .topbar:before,.brand-mark:after,.hero,.hero:before,.hero:after,.hero-badge,
+  .job-card:hover:before,.info-strip>div:after{animation:none!important;transition:none!important}
+}
