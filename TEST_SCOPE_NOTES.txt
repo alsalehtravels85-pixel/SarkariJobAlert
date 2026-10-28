@@ -1,0 +1,1 @@
+Controlled first test: SSC + UPSSSC only. Adds best-effort selectable-text PDF extraction via pypdf. Scanned PDFs need OCR and may remain blank. Apply URL stays blank unless verified. All new records remain Draft; existing records are not deleted. Live GitHub/Supabase test is still required.
