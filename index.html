@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123c8c">
+  <title>SarkariJobAlert — Latest Government Jobs, Admit Card, Results</title>
+  <meta name="description" content="Latest Sarkari Naukri, government job notifications, admit cards, results and answer keys. Check official notification and apply links.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://example.com/">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="SarkariJobAlert home">
+      <span class="brand-mark">SA</span><span>Sarkari<span class="brand-accent">JobAlert</span><small>Jobs • Admit Card • Results</small></span>
+    </a>
+    <button class="admin-open" id="adminOpen" type="button">Admin Login</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-badge">🇮🇳 Students ka trusted job desk</div>
+      <h1>Apni agli <span>सरकारी नौकरी</span> yahan dhoondhein</h1>
+      <p>Latest Jobs, Admit Cards, Results aur Answer Keys — ek hi jagah.</p>
+      <div class="search-row">
+        <label class="sr-only" for="searchInput">Search jobs</label>
+        <input id="searchInput" type="search" placeholder="Job, department ya qualification search karein…">
+        <button id="searchBtn" type="button">Search</button>
+      </div>
+      <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
+    </section>
+
+    <section class="quick-cats" aria-label="Job categories">
+      <button class="cat active" data-category="All">All Updates</button>
+      <button class="cat" data-category="Latest Jobs">Latest Jobs</button>
+      <button class="cat" data-category="Admit Card">Admit Card</button>
+      <button class="cat" data-category="Results">Results</button>
+      <button class="cat" data-category="Answer Key">Answer Key</button>
+    </section>
+
+    <section class="content-section">
+      <div class="section-heading">
+        <div><p class="eyebrow">LATEST UPDATES</p><h2 id="listingHeading">Latest Government Jobs</h2></div>
+        <span class="result-count" id="resultCount">Loading…</span>
+      </div>
+      <div class="notice" id="setupNotice" hidden>Website preview mode chal raha hai. Live posts dikhane ke liye Supabase setup karein — SETUP.md dekhein.</div>
+      <div class="job-grid" id="jobGrid" aria-live="polite">
+        <div class="loading-card">Updates load ho rahe hain…</div>
+      </div>
+    </section>
+
+    <section class="info-strip">
+      <div><span class="info-icon">🔎</span><h3>Verify before applying</h3><p>Dates, eligibility aur fees official notification se confirm karein.</p></div>
+      <div><span class="info-icon">🔗</span><h3>Official links</h3><p>Application ke liye hamesha official department website use karein.</p></div>
+      <div><span class="info-icon">📱</span><h3>Phone friendly</h3><p>Simple layout, fast loading aur easy navigation.</p></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-brand">SarkariJobAlert</div>
+    <p>Information support only. Apply karne se pehle official notification zaroor padhein.</p>
+    <nav aria-label="Footer links"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="disclaimer.html">Disclaimer</a></nav>
+    <small>© <span id="year"></span> SarkariJobAlert</small>
+  </footer>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <button class="dialog-close" id="detailClose" aria-label="Close">×</button>
+    <div id="detailContent"></div>
+  </dialog>
+
+  <dialog id="adminDialog" class="admin-dialog">
+    <button class="dialog-close" id="adminClose" aria-label="Close">×</button>
+    <div id="adminRoot">
+      <div class="admin-login-head"><span class="brand-mark">SA</span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div>
+      <form id="loginForm" class="admin-form">
+        <label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label>
+        <label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Password"></label>
+        <button type="submit" class="primary-btn">Secure Login</button>
+        <p id="loginMessage" class="form-message"></p>
+      </form>
+      <p class="tiny-note">Admin account Supabase Dashboard mein create karein. Public sign-up yahan disabled hai.</p>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
