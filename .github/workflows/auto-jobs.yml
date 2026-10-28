@@ -3,7 +3,7 @@ name: Auto Fetch Government Jobs
 on:
   workflow_dispatch:
   schedule:
-    # 08:00 IST = 02:30 UTC
+    # Daily at 08:00 AM IST
     - cron: "30 2 * * *"
 
 permissions:
@@ -13,6 +13,7 @@ jobs:
   fetcher:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,7 +22,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
       - name: Install dependencies
         run: |
