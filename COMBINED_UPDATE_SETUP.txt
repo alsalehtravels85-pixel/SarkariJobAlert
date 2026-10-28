@@ -1,0 +1,26 @@
+SARKARIJOBALERT COMBINED UPDATE — SETUP GUIDE (HINGLISH)
+
+What changed:
+1. Main portal shows Vacancy, Result, Admit Card, and School & Exam Guide.
+2. Legacy database categories are mapped in the display: Latest Jobs -> Vacancy; Results/Answer Key -> Result. Existing rows are not deleted.
+3. Existing Admin Panel remains the place to manually create/edit/publish/unpublish/delete Vacancy, Result and Admit Card posts.
+4. Added education.html, SCHOOL_EXAM_SETUP.sql, scripts/publish_school_article.py and .github/workflows/daily-school-exam-guide.yml.
+5. The daily workflow publishes one general study-guidance article at 8:30 AM IST. It does not fetch official exam dates/results and does not use AI API. It rotates through 80 class/subject/topic combinations; content is templated study advice, so review quality periodically.
+
+IMPORTANT INSTALL STEPS:
+A. Upload/replace the files from this ZIP at the same paths in your GitHub repository. Keep .github/workflows/auto-jobs.yml and scripts/fetch_jobs.py; this update does not replace them.
+B. In Supabase Dashboard > SQL Editor, run SCHOOL_EXAM_SETUP.sql once. It creates a separate school_articles table and does not delete or change jobs rows.
+C. In GitHub repository Settings > Secrets and variables > Actions, ensure secrets exist:
+   - SUPABASE_URL
+   - SUPABASE_SERVICE_ROLE_KEY
+   Never put the service-role key in config.js or in public HTML/JS.
+D. Open GitHub Actions > Daily School Exam Guide Publishing > Run workflow. Confirm the run succeeds.
+E. Open education.html on the deployed website. It will show articles only after the SQL has run and workflow has successfully inserted one.
+F. Test Admin Panel login, create/update/publish/unpublish/delete using a test record. Do not test Delete on a real important post.
+
+SECURITY NOTE:
+The previous ADMIN_CRUD_FIX.sql policy permits any authenticated Supabase user to manage jobs. Keep public signups disabled and only trusted admin accounts enabled. A dedicated admin allowlist policy is a safer future improvement.
+
+TESTING:
+- Python syntax checked locally.
+- Do not assume live GitHub/Supabase has been tested: deployment still requires the steps above.

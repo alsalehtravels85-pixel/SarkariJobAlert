@@ -9,6 +9,7 @@
   const grid = $("#jobGrid"), notice = $("#setupNotice"), count = $("#resultCount");
   const detailDialog = $("#detailDialog"), adminDialog = $("#adminDialog");
   let allJobs = [], activeCategory = "All", searchTerm = "", currentUser = null, editingId = null;
+  const displayCategory = value => ({ "Latest Jobs":"Vacancy", "Results":"Result", "Answer Key":"Result", "All":"All" }[value] || value || "Vacancy");
   $("#year").textContent = new Date().getFullYear();
 
   const escapeHtml = (value="") => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -28,12 +29,12 @@
     notice.hidden=true;allJobs=data||[];renderJobs();
   }
   function renderJobs(){
-    const filtered=allJobs.filter(j=>(activeCategory==="All"||j.category===activeCategory)&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
+    const filtered=allJobs.filter(j=>(activeCategory==="All"||displayCategory(j.category)===activeCategory)&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
     count.textContent=`${filtered.length} update${filtered.length===1?"":"s"}`;
-    $("#listingHeading").textContent=activeCategory==="All"?"Latest Government Jobs":activeCategory;
+    $("#listingHeading").textContent=activeCategory==="All"?"Latest Updates":activeCategory;
     if(!filtered.length){grid.innerHTML='<div class="empty-state"><strong>Abhi koi matching update nahi mila.</strong><br><span>Search badal kar dekhein ya baad mein check karein.</span></div>';return;}
     grid.innerHTML=filtered.map(j=>`<article class="job-card">
-      <div class="card-top"><span class="tag">${escapeHtml(j.category||"Latest Jobs")}</span><span class="status-tag">${isExpired(j)?"Date passed":"Check details"}</span></div>
+      <div class="card-top"><span class="tag">${escapeHtml(displayCategory(j.category))}</span><span class="status-tag">${isExpired(j)?"Date passed":"Check details"}</span></div>
       <h3>${escapeHtml(j.title)}${isNewJob(j)?' <span class="new-badge">NEW</span>':""}</h3><p class="department">${escapeHtml(j.department||"Department not specified")}</p>
       <div class="card-meta"><div class="meta-item"><small>Vacancies / Update</small><strong>${escapeHtml(j.vacancies||"See notice")}</strong></div><div class="meta-item"><small>Last date</small><strong>${escapeHtml(formatDate(j.last_date))}</strong></div></div>
       <div class="card-actions"><button class="details-btn" data-detail="${escapeHtml(j.id)}">View Details</button>${j.apply_url?`<a class="apply-btn" href="${escapeHtml(j.apply_url)}" target="_blank" rel="noopener noreferrer">Official Link ↗</a>`:`<button class="apply-btn" data-detail="${escapeHtml(j.id)}">Read Update</button>`}</div>
@@ -41,7 +42,7 @@
   }
   function showDetails(id){
     const j=allJobs.find(x=>String(x.id)===String(id));if(!j)return;
-    $("#detailContent").innerHTML=`<span class="tag">${escapeHtml(j.category||"Latest Jobs")}</span><h2 class="detail-title">${escapeHtml(j.title)}</h2><p class="detail-dept">${escapeHtml(j.department||"Department not specified")}</p>
+    $("#detailContent").innerHTML=`<span class="tag">${escapeHtml(displayCategory(j.category))}</span><h2 class="detail-title">${escapeHtml(j.title)}</h2><p class="detail-dept">${escapeHtml(j.department||"Department not specified")}</p>
       <table class="detail-table"><tbody><tr><th>Vacancies</th><td>${escapeHtml(j.vacancies||"See notification")}</td></tr><tr><th>Qualification</th><td>${escapeHtml(j.qualification||"See official notification")}</td></tr><tr><th>Notification Date</th><td>${escapeHtml(formatDate(j.notification_date))}</td></tr><tr><th>Last Date</th><td>${escapeHtml(formatDate(j.last_date))}</td></tr><tr><th>DOB Eligibility</th><td>${escapeHtml(j.dob_from||j.dob_to ? (j.dob_from?formatDate(j.dob_from):'Any')+' to '+(j.dob_to?formatDate(j.dob_to):'Any') : 'See official notification')}</td></tr><tr><th>Fees</th><td>${escapeHtml(j.fees||"See official notification")}</td></tr><tr><th>Age Limit</th><td>${escapeHtml(j.age_limit||"See official notification")}</td></tr><tr><th>Selection</th><td>${escapeHtml(j.selection_process||"See official notification")}</td></tr></tbody></table>
       <h3>Important Information</h3><div class="detail-copy">${escapeHtml(j.description||"Please read the official notification carefully.")}</div>
       <div class="card-actions">${j.notification_url?`<a class="details-btn" href="${escapeHtml(j.notification_url)}" target="_blank" rel="noopener noreferrer">Official Notification ↗</a>`:""}${j.apply_url?`<a class="apply-btn" href="${escapeHtml(j.apply_url)}" target="_blank" rel="noopener noreferrer">Apply Online ↗</a>`:""}</div>
@@ -73,7 +74,7 @@
         <input type="hidden" id="jobId">
         <label>Post title *<input id="jobTitle" required maxlength="180" placeholder="e.g. Recruitment / Admit Card title"></label>
         <label>Department<input id="jobDepartment" maxlength="180" placeholder="Department / Board name"></label>
-        <label>Category *<select id="jobCategory"><option>Latest Jobs</option><option>Admit Card</option><option>Results</option><option>Answer Key</option><option>Admission</option><option>Syllabus</option></select></label>
+        <label>Category *<select id="jobCategory"><option>Vacancy</option><option>Result</option><option>Admit Card</option></select></label>
         <label>Vacancies / update<input id="jobVacancies" maxlength="80" placeholder="e.g. 250 posts"></label>
         <label>Notification date<input id="jobNotificationDate" type="date"></label>
         <label>Last date to apply<input id="jobLastDate" type="date"></label>
@@ -91,7 +92,7 @@
         <p id="saveMessage" class="form-message full"></p>
       </form>
       <div class="admin-tools"><input id="adminSearch" type="search" placeholder="Search job title / department..." aria-label="Search jobs"><select id="adminFilter" aria-label="Filter posts"><option value="all">All posts</option><option value="draft">Drafts only</option><option value="published">Published only</option></select></div>
-      <div class="admin-list" id="adminList">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(j.category)} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
+      <div class="admin-list" id="adminList">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(displayCategory(j.category))} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
     $("#newJob").onclick=()=>openEditor();
     $("#cancelEdit").onclick=()=>{$("#jobForm").hidden=true;editingId=null;};
     $("#logoutBtn").onclick=async()=>{await supabase.auth.signOut();currentUser=null;$("#adminRoot").innerHTML=loginMarkup();};
@@ -105,7 +106,7 @@
   function loginMarkup(){return `<div class="admin-login-head"><span class="brand-mark">SA</span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div><form id="loginForm" class="admin-form"><label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label><label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Password"></label><button type="submit" class="primary-btn">Secure Login</button><p id="loginMessage" class="form-message"></p></form><p class="tiny-note">Admin account Supabase Dashboard mein create karein. Public sign-up yahan disabled hai.</p>`;}
   function openEditor(j=null){
     editingId=j?.id||null;const f=$("#jobForm");f.hidden=false;
-    const values={jobId:j?.id||"",jobTitle:j?.title||"",jobDepartment:j?.department||"",jobCategory:j?.category||"Latest Jobs",jobVacancies:j?.vacancies||"",jobNotificationDate:j?.notification_date||"",jobLastDate:j?.last_date||"",jobDobFrom:j?.dob_from||"",jobDobTo:j?.dob_to||"",jobQualification:j?.qualification||"",jobFees:j?.fees||"",jobAge:j?.age_limit||"",jobSelection:j?.selection_process||"",jobNotification:j?.notification_url||"",jobApply:j?.apply_url||"",jobDescription:j?.description||"",jobStatus:j?.status||"draft"};
+    const values={jobId:j?.id||"",jobTitle:j?.title||"",jobDepartment:j?.department||"",jobCategory:displayCategory(j?.category||"Vacancy"),jobVacancies:j?.vacancies||"",jobNotificationDate:j?.notification_date||"",jobLastDate:j?.last_date||"",jobDobFrom:j?.dob_from||"",jobDobTo:j?.dob_to||"",jobQualification:j?.qualification||"",jobFees:j?.fees||"",jobAge:j?.age_limit||"",jobSelection:j?.selection_process||"",jobNotification:j?.notification_url||"",jobApply:j?.apply_url||"",jobDescription:j?.description||"",jobStatus:j?.status||"draft"};
     Object.entries(values).forEach(([id,v])=>{const el=$("#"+id);if(el)el.value=v;});
     f.scrollIntoView({behavior:"smooth",block:"start"});
   }

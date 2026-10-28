@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#082b78">
-  <title>SarkariJobAlert — Latest Government Jobs, Admit Card, Results</title>
+  <title>SarkariJobAlert — Latest Updates, Admit Card, Results</title>
   <meta name="description" content="Latest Sarkari Naukri, government job notifications, admit cards, results and answer keys. Check official notification and apply links.">
   <meta name="robots" content="index,follow">
   <!-- TODO: Replace this with your real production URL before publishing -->
@@ -18,14 +18,14 @@
   <header class="topbar">
     <a class="brand" href="./" aria-label="SarkariJobAlert home">
       <span class="brand-mark" aria-hidden="true"><span>SA</span><small>भारत</small></span>
-      <span class="brand-copy">Sarkari<span class="brand-accent">JobAlert</span><small>Jobs • Admit Card • Results • Answer Keys</small></span>
+      <span class="brand-copy">Sarkari<span class="brand-accent">JobAlert</span><small>Vacancy • Result • Admit Card</small></span>
     </a>
     <nav class="main-nav" aria-label="Main navigation">
       <a class="nav-link active" href="./"><span>⌂</span>Home</a>
-      <button class="nav-link" type="button" data-category="Latest Jobs"><span>▣</span>Latest Jobs</button>
+      <button class="nav-link" type="button" data-category="Vacancy"><span>▣</span>Vacancy</button>
       <button class="nav-link" type="button" data-category="Admit Card"><span>▤</span>Admit Card</button>
-      <button class="nav-link" type="button" data-category="Results"><span>🏆</span>Results</button>
-      <button class="nav-link" type="button" data-category="Answer Key"><span>▤</span>Answer Key</button>
+      <button class="nav-link" type="button" data-category="Result"><span>🏆</span>Result</button>
+      <a class="nav-link" href="education.html"><span>📚</span>School & Exam Guide</a>
     </nav>
     <div class="header-actions">
       <a class="icon-search" href="#searchInput" aria-label="Go to search">⌕</a>
@@ -46,7 +46,7 @@
         <div class="hero-copy">
           <div class="hero-badge"><span class="mini-flag" aria-hidden="true"><i></i><b></b><em></em></span> Students ka trusted job desk</div>
           <h1>Apni agli <span>सरकारी नौकरी</span><br>yahan dhoondhein</h1>
-          <p>Latest Jobs, Admit Cards, Results aur Answer Keys — ek hi jagah.</p>
+          <p>Vacancy, Result aur Admit Card — ek hi jagah.</p>
         </div>
         <div class="trust-panel" aria-label="Website features">
           <div><span class="trust-icon green">✓</span><b>Official<br>Links</b></div>
@@ -66,22 +66,25 @@
 
     <section class="quick-cats" aria-label="Job categories">
       <button class="cat active" data-category="All"><span>▦</span>All Updates</button>
-      <button class="cat" data-category="Latest Jobs"><span class="orange">▣</span>Latest Jobs</button>
+      <button class="cat" data-category="Vacancy"><span class="orange">▣</span>Vacancy</button>
+      <button class="cat" data-category="Result"><span class="gold-text">🏆</span>Result</button>
       <button class="cat" data-category="Admit Card"><span class="pink">▣</span>Admit Card</button>
-      <button class="cat" data-category="Results"><span class="gold-text">🏆</span>Results</button>
-      <button class="cat" data-category="Answer Key"><span class="teal">▤</span>Answer Key</button>
-      <button class="cat" data-category="More"><span class="violet">•••</span>More</button>
     </section>
 
     <section class="content-section">
       <div class="section-heading">
-        <div><p class="eyebrow">LATEST UPDATES</p><h2 id="listingHeading">Latest Government Jobs</h2></div>
+        <div><p class="eyebrow">LATEST UPDATES</p><h2 id="listingHeading">Latest Updates</h2></div>
         <span class="result-count" id="resultCount">Loading…</span>
       </div>
       <div class="notice" id="setupNotice" hidden>Website preview mode chal raha hai. Live posts dikhane ke liye Supabase setup karein — SETUP.md dekhein.</div>
       <div class="job-grid" id="jobGrid" aria-live="polite">
         <div class="loading-card">Updates load ho rahe hain…</div>
       </div>
+    </section>
+
+    <section class="content-section guide-promo">
+      <div class="section-heading"><div><p class="eyebrow">STUDENTS CORNER</p><h2>School & Exam Guide</h2></div><a class="apply-btn" href="education.html">Study Articles dekhein ↗</a></div>
+      <p>UP Board Class 9–12 ke liye study tips, revision plans aur subject-wise practice guidance.</p>
     </section>
 
     <section class="info-strip">
@@ -93,7 +96,7 @@
   </main>
 
   <footer class="footer">
-    <div class="footer-left"><div class="footer-brand">Sarkari<span>JobAlert</span></div><p>Jobs • Admit Card • Results • Answer Keys</p></div>
+    <div class="footer-left"><div class="footer-brand">Sarkari<span>JobAlert</span></div><p>Vacancy • Result • Admit Card</p></div>
     <div class="footer-center"><p>Information support only. Apply karne se pehle official notification zaroor padhein.</p><small>© <span id="year"></span> SarkariJobAlert. All Rights Reserved.</small></div>
     <nav aria-label="Footer links"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="disclaimer.html">Disclaimer</a></nav>
   </footer>
