@@ -14,6 +14,7 @@
   const escapeHtml = (value="") => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const formatDate = value => value ? new Date(value + (String(value).length===10 ? "T00:00:00" : "")).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "As per notification";
   const isExpired = job => job.last_date && new Date(job.last_date + "T23:59:59") < new Date();
+  const isNewJob = job => { if(!job.created_at) return false; const created = new Date(job.created_at).getTime(); return Number.isFinite(created) && (Date.now()-created)>=0 && (Date.now()-created)<3*24*60*60*1000; };
   const demoJobs = [
     {id:"demo-1",title:"Sample: Junior Assistant Recruitment",department:"Sample Department (Demo only)",category:"Latest Jobs",vacancies:"—",qualification:"As per official notice",last_date:null,status:"published",description:"Yeh sirf design preview ke liye sample entry hai. Isse real vacancy na samjhein. Live website par verified official details add karein.",notification_url:"",apply_url:""},
     {id:"demo-2",title:"Sample: Admit Card Update",department:"Sample Exam Board (Demo only)",category:"Admit Card",vacancies:"—",qualification:"Registered candidates",last_date:null,status:"published",description:"Demo card only. Actual admit card link publish karne se pehle official source verify karein.",notification_url:"",apply_url:""},
@@ -33,7 +34,7 @@
     if(!filtered.length){grid.innerHTML='<div class="empty-state"><strong>Abhi koi matching update nahi mila.</strong><br><span>Search badal kar dekhein ya baad mein check karein.</span></div>';return;}
     grid.innerHTML=filtered.map(j=>`<article class="job-card">
       <div class="card-top"><span class="tag">${escapeHtml(j.category||"Latest Jobs")}</span><span class="status-tag">${isExpired(j)?"Date passed":"Check details"}</span></div>
-      <h3>${escapeHtml(j.title)}</h3><p class="department">${escapeHtml(j.department||"Department not specified")}</p>
+      <h3>${escapeHtml(j.title)}${isNewJob(j)?' <span class="new-badge">NEW</span>':""}</h3><p class="department">${escapeHtml(j.department||"Department not specified")}</p>
       <div class="card-meta"><div class="meta-item"><small>Vacancies / Update</small><strong>${escapeHtml(j.vacancies||"See notice")}</strong></div><div class="meta-item"><small>Last date</small><strong>${escapeHtml(formatDate(j.last_date))}</strong></div></div>
       <div class="card-actions"><button class="details-btn" data-detail="${escapeHtml(j.id)}">View Details</button>${j.apply_url?`<a class="apply-btn" href="${escapeHtml(j.apply_url)}" target="_blank" rel="noopener noreferrer">Official Link ↗</a>`:`<button class="apply-btn" data-detail="${escapeHtml(j.id)}">Read Update</button>`}</div>
     </article>`).join("");
