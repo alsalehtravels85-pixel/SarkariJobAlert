@@ -3,8 +3,7 @@ name: Automatic Government Jobs Check
 on:
   workflow_dispatch:
   schedule:
-    # 08:00 IST = 02:30 UTC
-    - cron: "30 2 * * *"
+    - cron: "30 2 * * *" # 08:00 IST
 
 permissions:
   contents: read
@@ -27,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 supabase feedparser
+          pip install requests beautifulsoup4 supabase
       - name: Check official government job notices
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
