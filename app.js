@@ -15,7 +15,11 @@
   const formatDate = value => value ? new Date(value + (String(value).length===10 ? "T00:00:00" : "")).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "As per notification";
   const isExpired = job => job.last_date && new Date(job.last_date + "T23:59:59") < new Date();
   const isNewJob = job => { if(!job.created_at) return false; const created = new Date(job.created_at).getTime(); return Number.isFinite(created) && (Date.now()-created)>=0 && (Date.now()-created)<3*24*60*60*1000; };
-  const demoJobs = [];
+  const demoJobs = [
+    {id:"demo-1",title:"Sample: Junior Assistant Recruitment",department:"Sample Department (Demo only)",category:"Latest Jobs",vacancies:"—",qualification:"As per official notice",last_date:null,status:"published",description:"Yeh sirf design preview ke liye sample entry hai. Isse real vacancy na samjhein. Live website par verified official details add karein.",notification_url:"",apply_url:""},
+    {id:"demo-2",title:"Sample: Admit Card Update",department:"Sample Exam Board (Demo only)",category:"Admit Card",vacancies:"—",qualification:"Registered candidates",last_date:null,status:"published",description:"Demo card only. Actual admit card link publish karne se pehle official source verify karein.",notification_url:"",apply_url:""},
+    {id:"demo-3",title:"Sample: Examination Result",department:"Sample Recruitment Board (Demo only)",category:"Results",vacancies:"—",qualification:"Exam candidates",last_date:null,status:"published",description:"Demo card only. Real result details yahan verified source ke saath add honge.",notification_url:"",apply_url:""}
+  ];
   function toast(message){const el=$("#toast");el.textContent=message;el.classList.add("show");setTimeout(()=>el.classList.remove("show"),2600);}
   async function loadJobs(){
     if(!supabase){notice.hidden=false;allJobs=demoJobs;renderJobs();return;}
@@ -24,7 +28,7 @@
     notice.hidden=true;allJobs=data||[];renderJobs();
   }
   function renderJobs(){
-    const moreCategories=["Admission","Syllabus"];const filtered=allJobs.filter(j=>(activeCategory==="All"||(activeCategory==="More"?moreCategories.includes(j.category):j.category===activeCategory))&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
+    const filtered=allJobs.filter(j=>(activeCategory==="All"||j.category===activeCategory)&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
     count.textContent=`${filtered.length} update${filtered.length===1?"":"s"}`;
     $("#listingHeading").textContent=activeCategory==="All"?"Latest Government Jobs":activeCategory;
     if(!filtered.length){grid.innerHTML='<div class="empty-state"><strong>Abhi koi matching update nahi mila.</strong><br><span>Search badal kar dekhein ya baad mein check karein.</span></div>';return;}
@@ -48,13 +52,7 @@
   $("#detailClose").addEventListener("click",()=>detailDialog.close());
   $("#searchBtn").addEventListener("click",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
   $("#searchInput").addEventListener("input",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
-  document.querySelectorAll("[data-category]").forEach(btn=>btn.addEventListener("click",()=>{
-    document.querySelectorAll(".cat").forEach(x=>x.classList.toggle("active",x.dataset.category===btn.dataset.category));
-    activeCategory=btn.dataset.category;
-    renderJobs();
-    const section=document.querySelector(".content-section");
-    if(section && !btn.classList.contains("cat")) section.scrollIntoView({behavior:"smooth",block:"start"});
-  }));
+  document.querySelectorAll(".cat").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));btn.classList.add("active");activeCategory=btn.dataset.category;renderJobs();}));
   $("#adminOpen").addEventListener("click",()=>{adminDialog.showModal();});
   $("#adminClose").addEventListener("click",()=>adminDialog.close());
   $("#loginForm").addEventListener("submit",async e=>{
@@ -69,7 +67,7 @@
     const {data,error}=await supabase.from("jobs").select("*").order("created_at",{ascending:false});
     if(error){$("#adminRoot").innerHTML=`<button class="dialog-close" id="adminLogout">×</button><h2>Dashboard load nahi hua</h2><p>Database schema/RLS policy check karein. ${escapeHtml(error.message)}</p>`;return;}
     const jobs=data||[];
-    $("#adminRoot").innerHTML=`<div class="admin-panel-head"><div><p class="eyebrow">PRIVATE WORKSPACE</p><h2>Admin Dashboard</h2><p class="tiny-note">Logged in: ${escapeHtml(currentUser?.email||"Admin")}</p></div><div class="admin-actions"><button class="small-btn primary" id="newJob">+ Add Update</button><button class="small-btn" id="logoutBtn">Logout</button></div></div>
+    $("#adminRoot").innerHTML=`<div class="admin-panel-head"><div><p class="eyebrow">SARKARI JOB ALERT • CONTENT CONTROL</p><h2>Professional Admin Dashboard</h2><p class="tiny-note">Manage drafts, verify links, and publish manually. Logged in: ${escapeHtml(currentUser?.email||"Admin")}</p></div><div class="admin-actions"><button class="small-btn primary" id="newJob">+ Add Update</button><button class="small-btn" id="logoutBtn">Logout</button></div></div>
       <div class="admin-stats"><div class="stat"><strong>${jobs.length}</strong><span>Total posts</span></div><div class="stat"><strong>${jobs.filter(j=>j.status==="published").length}</strong><span>Published</span></div><div class="stat"><strong>${jobs.filter(j=>j.status==="draft").length}</strong><span>Drafts</span></div></div>
       <form id="jobForm" class="editor-form" hidden>
         <input type="hidden" id="jobId">
@@ -85,14 +83,16 @@
         <label>Application fees<input id="jobFees" maxlength="180" placeholder="As per official notice"></label>
         <label>Age limit<input id="jobAge" maxlength="180" placeholder="As per official notice"></label>
         <label>Selection process<input id="jobSelection" maxlength="180" placeholder="Exam / Interview etc."></label>
-        <label>Official notification URL<input id="jobNotification" type="url" placeholder="https://official-site.gov.in/..."></label>
+        <label>Official notification PDF / URL<input id="jobNotification" type="url" placeholder="Official notification link"></label>
+        <label>SarkariResult details URL<input id="jobSource" type="url" placeholder="https://www.sarkariresult.com/..."></label>
         <label>Apply online URL<input id="jobApply" type="url" placeholder="https://official-site.gov.in/..."></label>
         <label class="full">Description / important details<textarea id="jobDescription" maxlength="10000" placeholder="Only verified details. Mention source and dates clearly."></textarea></label>
         <label>Status<select id="jobStatus"><option value="draft">Draft (not public)</option><option value="published">Published (public)</option></select></label>
         <div class="editor-actions full"><button class="small-btn primary" type="submit">Save Update</button><button class="small-btn" type="button" id="cancelEdit">Cancel</button></div>
         <p id="saveMessage" class="form-message full"></p>
       </form>
-      <div class="admin-list">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(j.category)} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))} • Source: ${escapeHtml(j.source_name||"Manual")}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
+      <div class="admin-tools"><input id="adminSearch" type="search" placeholder="Search job title / department..." aria-label="Search jobs"><select id="adminFilter" aria-label="Filter posts"><option value="all">All posts</option><option value="draft">Drafts only</option><option value="published">Published only</option></select></div>
+      <div class="admin-list" id="adminList">${jobs.length?jobs.map(j=>`<div class="admin-item"><div><h4>${escapeHtml(j.title)}</h4><p>${escapeHtml(j.category)} • ${escapeHtml(j.status)} • ${escapeHtml(j.department||"No department")} • Notification: ${escapeHtml(formatDate(j.notification_date))} • Last date: ${escapeHtml(formatDate(j.last_date))}</p></div><div class="admin-item-actions"><button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button><button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status==="published"?"Unpublish":"Publish"}</button><button class="small-btn" data-delete="${escapeHtml(j.id)}">Delete</button></div></div>`).join(""):'<div class="empty-state">Abhi posts nahi hain. “Add Update” se pehli post banayein.</div>'}</div>`;
     $("#newJob").onclick=()=>openEditor();
     $("#cancelEdit").onclick=()=>{$("#jobForm").hidden=true;editingId=null;};
     $("#logoutBtn").onclick=async()=>{await supabase.auth.signOut();currentUser=null;$("#adminRoot").innerHTML=loginMarkup();};
@@ -100,17 +100,19 @@
     $("#adminRoot").querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>openEditor(jobs.find(j=>String(j.id)===b.dataset.edit)));
     $("#adminRoot").querySelectorAll("[data-toggle]").forEach(b=>b.onclick=()=>changeStatus(b.dataset.toggle,b.dataset.status==="published"?"draft":"published"));
     $("#adminRoot").querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>deleteJob(b.dataset.delete));
+    const filterAdminList=()=>{const term=( $("#adminSearch")?.value||"").trim().toLowerCase();const state=$("#adminFilter")?.value||"all";$("#adminList")?.querySelectorAll(".admin-item").forEach(item=>{const hay=item.textContent.toLowerCase();const okText=!term||hay.includes(term);const okState=state==="all"||hay.includes("• "+state+" •");item.style.display=okText&&okState?"":"none";});};
+    $("#adminSearch")?.addEventListener("input",filterAdminList);$("#adminFilter")?.addEventListener("change",filterAdminList);
   }
   function loginMarkup(){return `<div class="admin-login-head"><span class="brand-mark">SA</span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div><form id="loginForm" class="admin-form"><label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label><label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Password"></label><button type="submit" class="primary-btn">Secure Login</button><p id="loginMessage" class="form-message"></p></form><p class="tiny-note">Admin account Supabase Dashboard mein create karein. Public sign-up yahan disabled hai.</p>`;}
   function openEditor(j=null){
     editingId=j?.id||null;const f=$("#jobForm");f.hidden=false;
-    const values={jobId:j?.id||"",jobTitle:j?.title||"",jobDepartment:j?.department||"",jobCategory:j?.category||"Latest Jobs",jobVacancies:j?.vacancies||"",jobNotificationDate:j?.notification_date||"",jobLastDate:j?.last_date||"",jobDobFrom:j?.dob_from||"",jobDobTo:j?.dob_to||"",jobQualification:j?.qualification||"",jobFees:j?.fees||"",jobAge:j?.age_limit||"",jobSelection:j?.selection_process||"",jobNotification:j?.notification_url||"",jobApply:j?.apply_url||"",jobDescription:j?.description||"",jobStatus:j?.status||"draft"};
+    const values={jobId:j?.id||"",jobTitle:j?.title||"",jobDepartment:j?.department||"",jobCategory:j?.category||"Latest Jobs",jobVacancies:j?.vacancies||"",jobNotificationDate:j?.notification_date||"",jobLastDate:j?.last_date||"",jobDobFrom:j?.dob_from||"",jobDobTo:j?.dob_to||"",jobQualification:j?.qualification||"",jobFees:j?.fees||"",jobAge:j?.age_limit||"",jobSelection:j?.selection_process||"",jobNotification:j?.notification_url||"",jobSource:j?.source_url||"",jobApply:j?.apply_url||"",jobDescription:j?.description||"",jobStatus:j?.status||"draft"};
     Object.entries(values).forEach(([id,v])=>{const el=$("#"+id);if(el)el.value=v;});
     f.scrollIntoView({behavior:"smooth",block:"start"});
   }
   async function saveJob(e){
     e.preventDefault();const msg=$("#saveMessage");msg.textContent="";
-    const data={title:$("#jobTitle").value.trim(),department:$("#jobDepartment").value.trim(),category:$("#jobCategory").value,vacancies:$("#jobVacancies").value.trim(),notification_date:$("#jobNotificationDate").value||null,last_date:$("#jobLastDate").value||null,dob_from:$("#jobDobFrom").value||null,dob_to:$("#jobDobTo").value||null,qualification:$("#jobQualification").value.trim(),fees:$("#jobFees").value.trim(),age_limit:$("#jobAge").value.trim(),selection_process:$("#jobSelection").value.trim(),notification_url:$("#jobNotification").value.trim()||null,apply_url:$("#jobApply").value.trim()||null,description:$("#jobDescription").value.trim(),status:$("#jobStatus").value,updated_at:new Date().toISOString()};
+    const data={title:$("#jobTitle").value.trim(),department:$("#jobDepartment").value.trim(),category:$("#jobCategory").value,vacancies:$("#jobVacancies").value.trim(),notification_date:$("#jobNotificationDate").value||null,last_date:$("#jobLastDate").value||null,dob_from:$("#jobDobFrom").value||null,dob_to:$("#jobDobTo").value||null,qualification:$("#jobQualification").value.trim(),fees:$("#jobFees").value.trim(),age_limit:$("#jobAge").value.trim(),selection_process:$("#jobSelection").value.trim(),notification_url:$("#jobNotification").value.trim()||null,source_url:$("#jobSource").value.trim()||null,apply_url:$("#jobApply").value.trim()||null,description:$("#jobDescription").value.trim(),status:$("#jobStatus").value,updated_at:new Date().toISOString()};
     const result=editingId?await supabase.from("jobs").update(data).eq("id",editingId).select().single():await supabase.from("jobs").insert({...data,created_by:currentUser.id}).select().single();
     if(result.error){msg.textContent="Save failed: "+result.error.message+". Agar column missing bataye, SQL_MIGRATION.sql Supabase SQL Editor mein run karein.";return;}
     toast("Update saved successfully");await loadJobs();await renderAdmin();

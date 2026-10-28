@@ -1,0 +1,1 @@
+Professional admin dashboard: search jobs, filter All/Drafts/Published, SarkariResult source URL, notification/apply links, DOB eligibility, dates, qualification, fees, age, selection process, manual draft/publish. Run schema.sql in Supabase SQL Editor. Does not delete existing rows. Review RLS policies before production use.

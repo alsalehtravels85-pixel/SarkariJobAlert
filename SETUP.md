@@ -7,7 +7,7 @@ Yeh lightweight static website starter hai. Aapke laptop par local server chalan
 - `styles.css` — responsive/mobile-first styling.
 - `app.js` — public job loading and authenticated admin CRUD.
 - `config.js` — Supabase project URL and anon/public key.
-- `schema.sql` — jobs + push tables, missing-column migration, and Row Level Security policies.
+- `schema.sql` — database tables and Row Level Security policies.
 - `about.html`, `contact.html`, `privacy.html`, `disclaimer.html` — basic information pages.
 
 ## Step 1 — Create Supabase database
@@ -49,12 +49,7 @@ Recommended: Cloudflare Pages static hosting.
 - Verify the RLS behavior with a non-admin test browser/account before real use.
 - The included policies allow a signed-in user to edit/delete rows they created. For a single-owner portal, create only your own admin user and do not give credentials to others. A future multi-admin role table/policy is recommended before adding staff accounts.
 - Do not store Aadhaar, passwords, payment data, or other sensitive customer information in this job portal.
-- The GitHub Actions workflow runs the source checker daily (08:00 AM IST) and can also be run manually from Actions. It installs `pypdf` to read text-based PDF notices.
-- Add GitHub repository secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for the scraper. Never place the service-role key in `config.js` or commit it into Git.
-- The fetcher now opens candidate official notice pages and tries to extract explicitly labeled fields from HTML or text-based PDF notices. It publishes only when it finds a clear application link, last date, qualification, vacancy count, official notification link, and department.
-- GitHub Actions sets `AUTO_PUBLISH_VERIFIED=true`; incomplete records remain drafts. This is a conservative auto-publishing gate, not a guarantee that every government notice can be parsed. Scanned/image-only PDFs, JavaScript-only pages, CAPTCHA, blocked pages, or unusual formats may not parse and may remain drafts or be skipped.
-- SarkariResult scraping is not enabled because the site's published terms prohibit automated scraping without permission. It can be added if you obtain written permission or a supported feed/API. Use official recruitment notices as the final source for deadlines, eligibility, fees, and application links.
-- Existing jobs are not deleted by this package. Back up the database before any cleanup.
+- Automatic collection from official websites is not switched on in this starter. It should be added separately using permitted official APIs/feeds, with source links, duplicate checks and human approval before publishing.
 - AdSense approval is not guaranteed; add original, accurate content and review Google policies before applying.
 - Replace `https://example.com/` canonical URL in `index.html` with the final domain after you purchase/choose it.
 - The About/Contact/Privacy/Disclaimer pages are starter templates. Replace placeholder contact details and review privacy terms before going live.
@@ -62,12 +57,3 @@ Recommended: Cloudflare Pages static hosting.
 ## Current scope
 Included: responsive homepage, search, category filters, job detail dialog, Supabase connection, admin login, add/edit/delete, draft/publish, official link fields.
 Not included yet: automated vacancy scraping/feed integration, email alerts, user accounts, application submissions, analytics, PWA install prompt, or custom domain.
-
-
-## Changes in this updated package
-- `schema.sql` now creates the `jobs` table for fresh projects and adds missing columns for older projects without deleting existing job rows.
-- The scraper no longer incorrectly sets the notification URL as `apply_url`.
-- Scraped records retain `source_name` and `source_url`, and are marked draft until the details can be verified.
-- Public preview no longer shows fake sample vacancies when Supabase is not configured.
-- "More" category now filters Admission and Syllabus; header category buttons also respond.
-- Automatic publishing is deliberately gated: link-only records remain drafts. Do not disable this safety gate without testing accurate source-specific parsers.
