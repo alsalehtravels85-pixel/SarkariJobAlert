@@ -474,4 +474,54 @@ def main():
 
     for item in candidates:
         try:
-            title = normalize_title(item
+            title = normalize_title(item["title"])
+            if len(title) < 14 or len(title) > MAX_TITLE_LEN:
+                rejected += 1
+                print(f"  Skipped invalid title: {title[:80]}")
+                continue
+
+            if item["category"] not in ALLOWED_CATEGORIES:
+                rejected += 1
+                print(f"  Skipped invalid category: {item['category']}")
+                continue
+
+            # Recheck the database before insert to reduce race-condition duplicates.
+            existing = (
+                db.table("jobs")
+                .select("id")
+                .eq("notification_url", item["notification_url"])
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                duplicates += 1
+                continue
+
+            db.table("jobs").insert(item).execute()
+            saved += 1
+            populated = [k for k in ("vacancies", "notification_date", "last_date", "dob_from", "dob_to", "fees", "qualification", "age_limit", "selection_process") if item.get(k)]
+            print(f"  Saved as draft [{item['category']}]: {title} | extracted fields: {', '.join(populated) if populated else 'none; manual verification needed'}")
+
+        except Exception as exc:
+            failures += 1
+            print(f"  DATABASE SAVE FAILED [{item.get('title', '')[:80]}]: {exc}")
+
+    print("================================")
+    print("SARKARI JOB ALERT - CHECK REPORT")
+    print(f"Pages successfully read: {pages_read}")
+    print(f"Fetch errors: {fetch_errors}")
+    print(f"Candidate notices after filtering: {len(candidates)}")
+    print(f"New notices saved as drafts: {saved}")
+    print(f"Duplicates skipped: {duplicates}")
+    print(f"Invalid records skipped: {rejected}")
+    print(f"Database save failures: {failures}")
+    print("================================")
+    print("NOTE: Website access errors (403/SSL/timeouts) need source-specific handling.")
+    print("NOTE: Confirm dates, eligibility, vacancies, and application URLs before publishing.")
+
+    if failures or pages_read == 0:
+        return 1
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
