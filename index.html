@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#123c8c">
+  <meta name="theme-color" content="#082b78">
   <title>SarkariJobAlert — Latest Government Jobs, Admit Card, Results</title>
   <meta name="description" content="Latest Sarkari Naukri, government job notifications, admit cards, results and answer keys. Check official notification and apply links.">
   <meta name="robots" content="index,follow">
-  <link rel="canonical" href="https://example.com/">
+  <!-- TODO: Replace this with your real production URL before publishing -->
+  <link rel="canonical" href="https://sarkarijobalert.alsalehtravels85.workers.dev/">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
@@ -16,30 +17,60 @@
 <body>
   <header class="topbar">
     <a class="brand" href="./" aria-label="SarkariJobAlert home">
-      <span class="brand-mark">SA</span><span>Sarkari<span class="brand-accent">JobAlert</span><small>Jobs • Admit Card • Results</small></span>
+      <span class="brand-mark" aria-hidden="true"><span>SA</span><small>भारत</small></span>
+      <span class="brand-copy">Sarkari<span class="brand-accent">JobAlert</span><small>Jobs • Admit Card • Results • Answer Keys</small></span>
     </a>
-    <button class="admin-open" id="adminOpen" type="button">Admin Login</button>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a class="nav-link active" href="./"><span>⌂</span>Home</a>
+      <button class="nav-link" type="button" data-category="Latest Jobs"><span>▣</span>Latest Jobs</button>
+      <button class="nav-link" type="button" data-category="Admit Card"><span>▤</span>Admit Card</button>
+      <button class="nav-link" type="button" data-category="Results"><span>🏆</span>Results</button>
+      <button class="nav-link" type="button" data-category="Answer Key"><span>▤</span>Answer Key</button>
+    </nav>
+    <div class="header-actions">
+      <a class="icon-search" href="#searchInput" aria-label="Go to search">⌕</a>
+      <button class="admin-open" id="adminOpen" type="button">♙ Admin Login</button>
+    </div>
   </header>
 
   <main>
     <section class="hero">
-      <div class="hero-badge">🇮🇳 Students ka trusted job desk</div>
-      <h1>Apni agli <span>सरकारी नौकरी</span> yahan dhoondhein</h1>
-      <p>Latest Jobs, Admit Cards, Results aur Answer Keys — ek hi jagah.</p>
-      <div class="search-row">
-        <label class="sr-only" for="searchInput">Search jobs</label>
-        <input id="searchInput" type="search" placeholder="Job, department ya qualification search karein…">
-        <button id="searchBtn" type="button">Search</button>
+      <div class="patriotic-art" aria-hidden="true">
+        <div class="tricolor tricolor-left"></div><div class="tricolor tricolor-right"></div>
+        <div class="chakra">☸</div>
+        <div class="parliament"><div class="parliament-dome"></div><div class="parliament-roof"></div><div class="parliament-body"></div><div class="parliament-columns"></div></div>
+        <div class="india-gate">INDIA<br>GATE</div>
+        <span class="light-orb orb-one"></span><span class="light-orb orb-two"></span><span class="light-orb orb-three"></span>
       </div>
-      <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-badge"><span class="mini-flag" aria-hidden="true"><i></i><b></b><em></em></span> Students ka trusted job desk</div>
+          <h1>Apni agli <span>सरकारी नौकरी</span><br>yahan dhoondhein</h1>
+          <p>Latest Jobs, Admit Cards, Results aur Answer Keys — ek hi jagah.</p>
+        </div>
+        <div class="trust-panel" aria-label="Website features">
+          <div><span class="trust-icon green">✓</span><b>Official<br>Links</b></div>
+          <div><span class="trust-icon gold">ϟ</span><b>Fast<br>Updates</b></div>
+          <div><span class="trust-icon cyan">▯</span><b>Mobile<br>Friendly</b></div>
+          <div><span class="trust-icon blue">◆</span><b>Trusted<br>Information</b></div>
+        </div>
+        <div class="search-row">
+          <label class="sr-only" for="searchInput">Search jobs</label>
+          <span class="search-symbol" aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Job, department ya qualification search karein…">
+          <button id="searchBtn" type="button">Search <span aria-hidden="true">→</span></button>
+        </div>
+        <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
+      </div>
     </section>
 
     <section class="quick-cats" aria-label="Job categories">
-      <button class="cat active" data-category="All">All Updates</button>
-      <button class="cat" data-category="Latest Jobs">Latest Jobs</button>
-      <button class="cat" data-category="Admit Card">Admit Card</button>
-      <button class="cat" data-category="Results">Results</button>
-      <button class="cat" data-category="Answer Key">Answer Key</button>
+      <button class="cat active" data-category="All"><span>▦</span>All Updates</button>
+      <button class="cat" data-category="Latest Jobs"><span class="orange">▣</span>Latest Jobs</button>
+      <button class="cat" data-category="Admit Card"><span class="pink">▣</span>Admit Card</button>
+      <button class="cat" data-category="Results"><span class="gold-text">🏆</span>Results</button>
+      <button class="cat" data-category="Answer Key"><span class="teal">▤</span>Answer Key</button>
+      <button class="cat" data-category="More"><span class="violet">•••</span>More</button>
     </section>
 
     <section class="content-section">
@@ -54,17 +85,17 @@
     </section>
 
     <section class="info-strip">
-      <div><span class="info-icon">🔎</span><h3>Verify before applying</h3><p>Dates, eligibility aur fees official notification se confirm karein.</p></div>
-      <div><span class="info-icon">🔗</span><h3>Official links</h3><p>Application ke liye hamesha official department website use karein.</p></div>
-      <div><span class="info-icon">📱</span><h3>Phone friendly</h3><p>Simple layout, fast loading aur easy navigation.</p></div>
+      <div><span class="info-icon shield">✓</span><div><h3>Verify before applying</h3><p>Dates, eligibility aur fees official notification se confirm karein.</p></div></div>
+      <div><span class="info-icon link-icon">↗</span><div><h3>Official links</h3><p>Application ke liye hamesha official department website use karein.</p></div></div>
+      <div><span class="info-icon phone-icon">▯</span><div><h3>Phone friendly</h3><p>Simple layout, fast loading aur easy navigation.</p></div></div>
+      <div><span class="info-icon student-icon">♟</span><div><h3>For Students</h3><p>Ek hi jagah saari sarkari naukri ki jankari.</p></div></div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="footer-brand">SarkariJobAlert</div>
-    <p>Information support only. Apply karne se pehle official notification zaroor padhein.</p>
+    <div class="footer-left"><div class="footer-brand">Sarkari<span>JobAlert</span></div><p>Jobs • Admit Card • Results • Answer Keys</p></div>
+    <div class="footer-center"><p>Information support only. Apply karne se pehle official notification zaroor padhein.</p><small>© <span id="year"></span> SarkariJobAlert. All Rights Reserved.</small></div>
     <nav aria-label="Footer links"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="disclaimer.html">Disclaimer</a></nav>
-    <small>© <span id="year"></span> SarkariJobAlert</small>
   </footer>
 
   <dialog id="detailDialog" class="detail-dialog">
@@ -75,7 +106,7 @@
   <dialog id="adminDialog" class="admin-dialog">
     <button class="dialog-close" id="adminClose" aria-label="Close">×</button>
     <div id="adminRoot">
-      <div class="admin-login-head"><span class="brand-mark">SA</span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div>
+      <div class="admin-login-head"><span class="brand-mark"><span>SA</span><small>भारत</small></span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div>
       <form id="loginForm" class="admin-form">
         <label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label>
         <label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Password"></label>
@@ -85,7 +116,6 @@
       <p class="tiny-note">Admin account Supabase Dashboard mein create karein. Public sign-up yahan disabled hai.</p>
     </div>
   </dialog>
-
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
