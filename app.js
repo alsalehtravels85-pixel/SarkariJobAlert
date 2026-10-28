@@ -112,11 +112,28 @@
   async function saveJob(e){
     e.preventDefault();const msg=$("#saveMessage");msg.textContent="";
     const data={title:$("#jobTitle").value.trim(),department:$("#jobDepartment").value.trim(),category:$("#jobCategory").value,vacancies:$("#jobVacancies").value.trim(),notification_date:$("#jobNotificationDate").value||null,last_date:$("#jobLastDate").value||null,dob_from:$("#jobDobFrom").value||null,dob_to:$("#jobDobTo").value||null,qualification:$("#jobQualification").value.trim(),fees:$("#jobFees").value.trim(),age_limit:$("#jobAge").value.trim(),selection_process:$("#jobSelection").value.trim(),notification_url:$("#jobNotification").value.trim()||null,apply_url:$("#jobApply").value.trim()||null,description:$("#jobDescription").value.trim(),status:$("#jobStatus").value,updated_at:new Date().toISOString()};
-    const result=editingId?await supabase.from("jobs").update(data).eq("id",editingId).select().single():await supabase.from("jobs").insert({...data,created_by:currentUser.id}).select().single();
-    if(result.error){msg.textContent="Save failed: "+result.error.message+". Agar column missing bataye, SQL_MIGRATION.sql Supabase SQL Editor mein run karein.";return;}
-    toast("Update saved successfully");await loadJobs();await renderAdmin();
+    let result;
+    try {
+      result=editingId
+        ? await supabase.from("jobs").update(data).eq("id",editingId).select("id").maybeSingle()
+        : await supabase.from("jobs").insert({...data,created_by:currentUser.id}).select("id").single();
+    } catch(err) { msg.textContent="Save failed: "+(err?.message||String(err)); return; }
+    if(result.error){msg.textContent="Save failed: "+result.error.message+". Supabase SQL Editor mein ADMIN_CRUD_FIX.sql run karein, phir dobara login karein.";return;}
+    if(editingId && !result.data){msg.textContent="Koi row update nahi hui. RLS policy ya record ID check karein; database ne record return nahi kiya.";return;}
+    toast(editingId?"Changes saved":"New update saved");await loadJobs();await renderAdmin();
   }
-  async function changeStatus(id,status){const {error}=await supabase.from("jobs").update({status,updated_at:new Date().toISOString()}).eq("id",id);if(error){toast("Status update nahi hua");return;}toast(status==="published"?"Post published":"Post draft mein chali gayi");await loadJobs();await renderAdmin();}
-  async function deleteJob(id){if(!confirm("Kya aap is post ko permanently delete karna chahte hain?"))return;const {error}=await supabase.from("jobs").delete().eq("id",id);if(error){toast("Delete nahi hua. Permissions check karein.");return;}toast("Post deleted");await loadJobs();await renderAdmin();}
+  async function changeStatus(id,status){
+    const {data,error}=await supabase.from("jobs").update({status,updated_at:new Date().toISOString()}).eq("id",id).select("id").maybeSingle();
+    if(error){toast("Publish/Unpublish failed: "+error.message);return;}
+    if(!data){toast("Status nahi badla: row nahi mili ya RLS ne block kiya. ADMIN_CRUD_FIX.sql check karein.");return;}
+    toast(status==="published"?"Post published":"Post draft mein chali gayi");await loadJobs();await renderAdmin();
+  }
+  async function deleteJob(id){
+    if(!confirm("Kya aap is post ko permanently delete karna chahte hain?"))return;
+    const {data,error}=await supabase.from("jobs").delete().eq("id",id).select("id").maybeSingle();
+    if(error){toast("Delete failed: "+error.message);return;}
+    if(!data){toast("Delete nahi hua: row nahi mili ya RLS policy ne block kiya.");return;}
+    toast("Post deleted");await loadJobs();await renderAdmin();
+  }
   loadJobs();
 })();

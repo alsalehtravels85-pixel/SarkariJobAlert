@@ -1,0 +1,17 @@
+SarkariJobAlert Combined Repair Package
+
+Included changes:
+- Restores all nine configured official source entries from the previous full fetcher (SSC, UPSC, IBPS, Railway, SBI, UPSSSC, UPPSC, NCS, India Post).
+- Keeps TLS certificate verification enabled; blocked sources are logged rather than bypassing security.
+- Keeps discovered records in draft status.
+- Admin save/edit/publish/unpublish/delete now checks whether a row was actually changed and displays the Supabase error instead of silently failing.
+- Adds ADMIN_CRUD_FIX.sql to set the required jobs table grants and authenticated RLS policy. This does not delete existing rows.
+
+IMPORTANT SETUP:
+1. Replace repository files with these files and commit.
+2. Supabase Dashboard > SQL Editor: run ADMIN_CRUD_FIX.sql.
+3. Supabase Auth: keep public sign-ups disabled; only trusted admin accounts should exist, because authenticated users are allowed to manage jobs by this policy.
+4. GitHub Actions: run Auto Fetch Government Jobs manually.
+5. Check the log: link scan diagnostics, candidate notices, save failures.
+
+Validation performed in this environment: Python syntax compile, JavaScript syntax check if Node is available, and local synthetic HTML extraction test. A live GitHub Actions/Supabase run was not available here. Sites may block automated access or use dynamic/JS content; this cannot guarantee nonzero candidates every run.
