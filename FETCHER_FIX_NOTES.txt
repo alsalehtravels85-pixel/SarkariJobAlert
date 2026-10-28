@@ -1,0 +1,17 @@
+SarkariJobAlert Fetcher Fix - October 2026
+
+What changed:
+- Notice detection now combines nearby card/row text only when the link label is empty or icon-only.
+- Candidate filtering is less strict, so official notice titles do not need exact phrases like 'recruitment of'.
+- Logs show official link count, rejected host count, rejected title count, and accepted candidates for each page.
+- Fixed existing-record query to fetch category as well as title/department/URL, matching the dedupe logic.
+- New notices remain status='draft'; apply_url remains blank unless later verified manually.
+
+Validation performed:
+- Python syntax compilation passed.
+- Synthetic HTML fixture test passed for a recruitment notice and a result notice.
+- Live GitHub Actions/Supabase run has NOT been performed from this environment. Official sites may still block requests (403/SSL), and this package does not claim guaranteed live extraction.
+
+Install:
+Replace the repository files with the files in this ZIP, commit changes, then run Actions > Auto Fetch Government Jobs > Run workflow.
+Check the log lines 'Link scan diagnostics' and 'Candidate notices after filtering'. Keep Supabase secrets in GitHub Secrets only.
