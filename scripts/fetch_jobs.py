@@ -1,7 +1,6 @@
 Run python scripts/fetch_jobs.py
   
 SARKARI JOB ALERT - OFFICIAL SOURCE CHECK
-Run time UTC: 2026-10-28T12:18:24.802151+00:00
 Detected notices are saved as DRAFT, not auto-published.
 Checking: Staff Selection Commission
   Page read; candidates added: 0 (https://ssc.gov.in/)
