@@ -57,3 +57,7 @@ Recommended: Cloudflare Pages static hosting.
 ## Current scope
 Included: responsive homepage, search, category filters, job detail dialog, Supabase connection, admin login, add/edit/delete, draft/publish, official link fields.
 Not included yet: automated vacancy scraping/feed integration, email alerts, user accounts, application submissions, analytics, PWA install prompt, or custom domain.
+
+
+## Updated automatic notice discovery
+See `AUTO_JOBS_README_HINGLISH.txt` for added official sources, GitHub Secrets, limitations, and testing. The fetcher only discovers notice links; it does not yet reliably extract full vacancy details from PDFs. All discovered records remain drafts.
