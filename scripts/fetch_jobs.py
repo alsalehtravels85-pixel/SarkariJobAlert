@@ -10,65 +10,84 @@ from urllib3.util.retry import Retry
 from supabase import create_client
 
 
-# =========================
-# SUPABASE CONFIGURATION
-# =========================
+# ==================================================
+# SUPABASE
+# ==================================================
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError(
-        "Missing GitHub Secrets: SUPABASE_URL or "
+        "GitHub Secrets missing: SUPABASE_URL / "
         "SUPABASE_SERVICE_ROLE_KEY"
     )
 
 db = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
-# =========================
-# OFFICIAL JOB SOURCES
-# =========================
+# ==================================================
+# OFFICIAL NOTICE PAGES
+# ==================================================
 
 SOURCES = [
     {
         "name": "Staff Selection Commission",
-        "category": "Latest Jobs",
         "url": "https://ssc.gov.in/",
+        "hosts": ["ssc.gov.in"],
     },
     {
-        "name": "Union Public Service Commission",
-        "category": "Latest Jobs",
-        "url": "https://upsc.gov.in/",
+        "name": "UPSC Recruitment Advertisements",
+        "url": "https://www.upsc.gov.in/recruitment/recruitment-advertisement",
+        "hosts": ["upsc.gov.in"],
     },
     {
-        "name": "Institute of Banking Personnel Selection",
-        "category": "Latest Jobs",
-        "url": "https://www.ibps.in/",
+        "name": "IBPS Recruitment",
+        "url": "https://www.ibps.in/index.php/recruitment/",
+        "hosts": ["ibps.in"],
     },
     {
-        "name": "State Bank of India",
-        "category": "Latest Jobs",
+        "name": "IBPS Recent Updates",
+        "url": "https://www.ibps.in/index.php/crp-updates/",
+        "hosts": ["ibps.in"],
+    },
+    {
+        "name": "Railway Recruitment Notices",
+        "url": "https://www.rrbcdg.gov.in/employment-notices.php",
+        "hosts": ["rrbcdg.gov.in"],
+    },
+    {
+        "name": "State Bank of India Careers",
         "url": "https://sbi.co.in/web/careers",
-    },
-    {
-        "name": "Railway Recruitment Boards",
-        "category": "Latest Jobs",
-        "url": "https://rrb.indianrailways.gov.in/",
+        "hosts": ["sbi.co.in", "bank.sbi"],
     },
 ]
 
 
-# =========================
-# LINK CLASSIFICATION
-# =========================
+# ==================================================
+# ALLOWED CATEGORIES
+# ==================================================
+
+ALLOWED_CATEGORIES = {
+    "Latest Jobs",
+    "Admit Card",
+    "Results",
+    "Answer Key",
+    "Admission",
+    "Syllabus",
+}
+
+
+# ==================================================
+# KEYWORD RULES
+# ==================================================
 
 CATEGORY_RULES = [
     (
         "Results",
         re.compile(
-            r"\b(result|results|final result|merit list|"
-            r"selection list|score card|scorecard)\b",
+            r"\b(result|results|merit list|score card|"
+            r"scorecard|marks of candidates|final result)\b",
             re.I,
         ),
     ),
@@ -76,7 +95,7 @@ CATEGORY_RULES = [
         "Admit Card",
         re.compile(
             r"\b(admit card|hall ticket|call letter|"
-            r"e-admission certificate)\b",
+            r"admission certificate)\b",
             re.I,
         ),
     ),
@@ -90,56 +109,57 @@ CATEGORY_RULES = [
     ),
     (
         "Admission",
-        re.compile(
-            r"\b(admission|admissions|entrance application)\b",
-            re.I,
-        ),
+        re.compile(r"\b(admission|entrance application)\b", re.I),
     ),
 ]
 
 JOB_KEYWORDS = re.compile(
-    r"\b(recruitment|vacancies|vacancy|"
-    r"advertisement|notification|apply online|"
-    r"online application|employment|"
-    r"direct recruitment|recruitment notice|"
-    r"job opening|job openings)\b",
-    re.I,
-)
-
-RELEVANT_KEYWORDS = re.compile(
-    r"\b(recruitment|vacancies|vacancy|"
-    r"advertisement|notification|apply online|"
-    r"online application|employment|"
-    r"admit card|hall ticket|call letter|"
-    r"answer key|result|results|merit list|"
-    r"scorecard|score card|syllabus|admission)\b",
+    r"\b(recruitment|vacancy|vacancies|"
+    r"apply online|online application|"
+    r"employment notice|recruitment notice|"
+    r"recruitment advertisement|"
+    r"invites applications|invited applications|"
+    r"notification for recruitment|"
+    r"engagement of|appointment of|"
+    r"selection posts|combined graduate level|"
+    r"combined higher secondary|"
+    r"junior engineer examination|"
+    r"assistant loco pilot|station master|"
+    r"rrb ntpc|group d|group-d|"
+    r"po/mt|crp-rrb|crp-spl|clerk recruitment)\b",
     re.I,
 )
 
 EXCLUDED_KEYWORDS = re.compile(
     r"\b(tender|procurement|auction|"
     r"vendor registration|press release|"
-    r"annual report|investor relations)\b",
+    r"annual report|investor relations|"
+    r"recruitment results archive|"
+    r"results archive|archives|"
+    r"old notices|previous notices)\b",
     re.I,
 )
 
 
-def get_category(title):
+def classify_notice(title):
     for category, pattern in CATEGORY_RULES:
         if pattern.search(title):
             return category
 
-    return "Latest Jobs"
+    if JOB_KEYWORDS.search(title):
+        return "Latest Jobs"
+
+    return None
 
 
-# =========================
+# ==================================================
 # HTTP SESSION
-# =========================
+# ==================================================
 
 def create_session():
     session = requests.Session()
 
-    retries = Retry(
+    retry = Retry(
         total=2,
         connect=2,
         read=2,
@@ -148,7 +168,8 @@ def create_session():
         allowed_methods=["GET"],
     )
 
-    adapter = HTTPAdapter(max_retries=retries)
+    adapter = HTTPAdapter(max_retries=retry)
+
     session.mount("https://", adapter)
     session.mount("http://", adapter)
 
@@ -165,175 +186,209 @@ def create_session():
 SESSION = create_session()
 
 
-# =========================
-# FETCH OFFICIAL NOTICES
-# =========================
+# ==================================================
+# DOMAIN VALIDATION
+# ==================================================
 
-def collect_links(source):
+def is_allowed_official_link(link, allowed_hosts):
+    parsed = urlparse(link)
+
+    if parsed.scheme != "https":
+        return False
+
+    host = (parsed.hostname or "").lower()
+
+    for allowed in allowed_hosts:
+        allowed = allowed.lower()
+
+        if host == allowed or host.endswith("." + allowed):
+            return True
+
+    return False
+
+
+# ==================================================
+# FETCH NOTICES
+# ==================================================
+
+def collect_notices(source):
     print(f"\nChecking: {source['name']}")
+    notices = {}
 
     try:
         response = SESSION.get(
             source["url"],
             timeout=(15, 45),
-            allow_redirects=True,
         )
         response.raise_for_status()
 
         soup = BeautifulSoup(response.text, "html.parser")
-        found = {}
 
-        for anchor in soup.find_all("a", href=True):
-            title = " ".join(
-                anchor.get_text(" ", strip=True).split()
-            )
-
+        for anchor in soup.select("a[href]"):
             href = anchor.get("href", "").strip()
 
-            if not title or len(title) < 8:
-                continue
-
-            if not RELEVANT_KEYWORDS.search(title):
-                continue
-
-            if EXCLUDED_KEYWORDS.search(title):
+            if not href:
                 continue
 
             link = urljoin(response.url, href)
 
-            parsed = urlparse(link)
-
-            if parsed.scheme != "https":
+            if not is_allowed_official_link(
+                link,
+                source["hosts"],
+            ):
                 continue
 
-            if parsed.netloc.lower() != urlparse(
-                source["url"]
-            ).netloc.lower():
-                # Allow official subdomains of the same domain.
-                source_domain = urlparse(
-                    source["url"]
-                ).netloc.lower()
+            # Use nearby text if PDF link has no visible title.
+            anchor_text = " ".join(
+                anchor.get_text(" ", strip=True).split()
+            )
 
-                link_domain = parsed.netloc.lower()
+            parent = anchor.find_parent(
+                ["tr", "li", "article"]
+            )
 
-                if not link_domain.endswith(
-                    "." + source_domain
-                ):
-                    continue
+            nearby_text = ""
 
-            category = get_category(title)
+            if parent:
+                nearby_text = " ".join(
+                    parent.get_text(" ", strip=True).split()
+                )
 
-            if category == "Latest Jobs":
-                if not JOB_KEYWORDS.search(title):
-                    continue
+            title = anchor_text
 
-            found[link] = {
-                "title": title[:250],
-                "category": category,
-                "link": link,
-            }
+            if len(title) < 8 and len(nearby_text) >= 8:
+                title = nearby_text
 
-        notices = []
+            if not title or len(title) < 8:
+                continue
 
-        for item in list(found.values())[:25]:
-            notices.append({
-                "title": item["title"],
+            title = title[:250]
+
+            if EXCLUDED_KEYWORDS.search(title):
+                continue
+
+            category = classify_notice(title)
+
+            if category not in ALLOWED_CATEGORIES:
+                continue
+
+            # Ignore links which only say generic navigation text.
+            if title.lower() in {
+                "view all",
+                "read more",
+                "click here",
+                "home",
+                "careers",
+                "recruitment",
+                "results",
+            }:
+                continue
+
+            notices[link] = {
+                "title": title,
                 "department": source["name"],
-                "category": item["category"],
-                "notification_url": item["link"],
-                "apply_url": item["link"],
+                "category": category,
+                "notification_url": link,
+                "apply_url": link,
                 "description": (
-                    "Collected from an official source. "
-                    "Verify the original notice for eligibility, "
+                    "Official source link collected automatically. "
+                    "Verify the original notification for eligibility, "
                     "vacancies, fees, dates and application details."
                 ),
                 "status": "draft",
-            })
+            }
 
-        print(f"Possible notices found: {len(notices)}")
+        print(f"Candidate notices found: {len(notices)}")
 
-        for item in notices:
+        for notice in notices.values():
             print(
-                f"  [{item['category']}] {item['title']}"
+                f"  [{notice['category']}] "
+                f"{notice['title']}"
             )
 
-        return notices
-
     except requests.exceptions.SSLError as error:
-        print(
-            f"SSL verification failed for {source['name']}: "
-            f"{error}"
-        )
+        print(f"SSL error: {source['name']}: {error}")
+
     except requests.exceptions.RequestException as error:
-        print(
-            f"Source connection failed for {source['name']}: "
-            f"{error}"
-        )
+        print(f"Connection error: {source['name']}: {error}")
+
     except Exception as error:
-        print(
-            f"Unexpected source error for {source['name']}: "
-            f"{error}"
-        )
+        print(f"Unexpected error: {source['name']}: {error}")
 
-    return []
+    return list(notices.values())
 
 
-# =========================
-# DUPLICATE CHECK + SAVE
-# =========================
+# ==================================================
+# CHECK DUPLICATES AND SAVE
+# ==================================================
 
-def save_job(job):
+def save_notice(notice):
     try:
-        existing = (
+        if notice["category"] not in ALLOWED_CATEGORIES:
+            print(
+                f"Skipped invalid category: "
+                f"{notice['category']}"
+            )
+            return False
+
+        result = (
             db.table("jobs")
             .select("id")
-            .eq("notification_url", job["notification_url"])
+            .eq(
+                "notification_url",
+                notice["notification_url"],
+            )
             .limit(1)
             .execute()
         )
 
-        if existing.data:
-            print(f"Already exists: {job['title']}")
-            return
+        if result.data:
+            print(f"Already exists: {notice['title']}")
+            return False
 
-        db.table("jobs").insert(job).execute()
+        db.table("jobs").insert(notice).execute()
 
         print(
-            f"Saved as draft: [{job['category']}] "
-            f"{job['title']}"
+            f"Saved as draft: "
+            f"[{notice['category']}] {notice['title']}"
         )
 
+        return True
+
     except Exception as error:
-        print(f"Could not save {job['title']}: {error}")
+        print(
+            f"Database save failed for "
+            f"{notice['title']}: {error}"
+        )
+        return False
 
 
-# =========================
+# ==================================================
 # MAIN
-# =========================
+# ==================================================
 
 def main():
     total_found = 0
-    total_sources_failed = 0
+    total_saved = 0
+    total_failed = 0
 
     for source in SOURCES:
-        notices = collect_links(source)
+        notices = collect_notices(source)
 
-        if not notices:
-            print(
-                f"No candidate notices collected from "
-                f"{source['name']}."
-            )
+        total_found += len(notices)
 
-        for job in notices:
-            save_job(job)
-            total_found += 1
+        for notice in notices:
+            if save_notice(notice):
+                total_saved += 1
 
         time.sleep(2)
 
-    print("\n=========================")
-    print("AUTOMATIC JOB CHECK FINISHED")
+    print("\n================================")
+    print("SARKARI JOB ALERT - CHECK REPORT")
     print(f"Candidate notices: {total_found}")
-    print("=========================")
+    print(f"New notices saved: {total_saved}")
+    print(f"Save failures: {total_failed}")
+    print("================================")
 
 
 if __name__ == "__main__":
