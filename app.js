@@ -8,7 +8,7 @@
   const $ = (s, root=document) => root.querySelector(s);
   const grid = $("#jobGrid"), notice = $("#setupNotice"), count = $("#resultCount");
   const detailDialog = $("#detailDialog"), adminDialog = $("#adminDialog");
-  let allJobs = [], activeCategory = "All", searchTerm = "", currentUser = null, editingId = null;
+  let allJobs = [], activeCategory = "All", searchTerm = "", currentUser = null, editingId = null, showAllJobs = false;
   const displayCategory = value => ({ "Latest Jobs":"Vacancy", "Results":"Result", "Answer Key":"Result", "All":"All" }[value] || value || "Vacancy");
   $("#year").textContent = new Date().getFullYear();
 
@@ -32,8 +32,14 @@
     const filtered=allJobs.filter(j=>(activeCategory==="All"||displayCategory(j.category)===activeCategory)&&(`${j.title} ${j.department} ${j.qualification||""}`.toLowerCase().includes(searchTerm)));
     count.textContent=`${filtered.length} update${filtered.length===1?"":"s"}`;
     $("#listingHeading").textContent=activeCategory==="All"?"Latest Updates":activeCategory;
+    const visibleJobs = showAllJobs ? filtered : filtered.slice(0, 8);
+    const moreBtn = $("#showMoreJobs");
+    if(moreBtn){
+      moreBtn.hidden = filtered.length <= 8 || showAllJobs;
+      moreBtn.textContent = `Show More Jobs (${Math.max(0, filtered.length - 8)} aur)`;
+    }
     if(!filtered.length){grid.innerHTML='<div class="empty-state"><strong>Abhi koi matching update nahi mila.</strong><br><span>Search badal kar dekhein ya baad mein check karein.</span></div>';return;}
-    grid.innerHTML=filtered.map(j=>`<article class="job-card">
+    grid.innerHTML=visibleJobs.map(j=>`<article class="job-card">
       <div class="card-top"><span class="tag">${escapeHtml(displayCategory(j.category))}</span><span class="status-tag">${isExpired(j)?"Date passed":"Check details"}</span></div>
       <h3>${escapeHtml(j.title)}${isNewJob(j)?' <span class="new-badge">NEW</span>':""}</h3><p class="department">${escapeHtml(j.department||"Department not specified")}</p>
       <div class="card-meta"><div class="meta-item"><small>Vacancies / Update</small><strong>${escapeHtml(j.vacancies||"See notice")}</strong></div><div class="meta-item"><small>Last date</small><strong>${escapeHtml(formatDate(j.last_date))}</strong></div></div>
@@ -51,9 +57,11 @@
   }
   document.addEventListener("click",e=>{const d=e.target.closest("[data-detail]");if(d)showDetails(d.dataset.detail);});
   $("#detailClose").addEventListener("click",()=>detailDialog.close());
-  $("#searchBtn").addEventListener("click",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
-  $("#searchInput").addEventListener("input",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();renderJobs();});
-  document.querySelectorAll(".cat").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));btn.classList.add("active");activeCategory=btn.dataset.category;renderJobs();}));
+  $("#searchBtn").addEventListener("click",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();showAllJobs=false;renderJobs();});
+  $("#searchInput").addEventListener("input",()=>{searchTerm=$("#searchInput").value.trim().toLowerCase();showAllJobs=false;renderJobs();});
+  const showMoreJobsBtn = $("#showMoreJobs");
+  if(showMoreJobsBtn) showMoreJobsBtn.addEventListener("click",()=>{showAllJobs=true;renderJobs();});
+  document.querySelectorAll(".cat").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".cat").forEach(x=>x.classList.remove("active"));btn.classList.add("active");activeCategory=btn.dataset.category;showAllJobs=false;renderJobs();}));
   $("#adminOpen").addEventListener("click",()=>{adminDialog.showModal();});
   $("#adminClose").addEventListener("click",()=>adminDialog.close());
   $("#loginForm").addEventListener("submit",async e=>{
