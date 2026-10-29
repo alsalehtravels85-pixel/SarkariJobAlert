@@ -101,4 +101,16 @@
 
 
 /* Education News Feed: compact, readable, AdSense-conscious separation */
-.education-news-section{margin-top:28px}.education-news-note{margin:-4px 0 16px;color:var(--muted,#526581);font-size:13px;line-height:1.7}.education-news-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.education-news-card{background:#fff;border:1px solid #dce7f8;border-radius:16px;padding:17px;min-width:0;box-shadow:0 7px 22px #173a7508}.education-news-card h3{font-size:16px;line-height:1.5;margin:10px 0;color:#122b52;overflow-wrap:anywhere}.education-news-card p{font-size:13px;line-height:1.7;color:#526581;overflow-wrap:anywhere}.education-news-card>a{display:inline-block;margin-top:7px;color:#075bd9;font-size:13px;font-weight:850;text-decoration:none}.education-news-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px;color:#64748b}.education-news-card>a:hover{text-decoration:underline}@media(max-width:900px){.education-news-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.education-news-grid{grid-template-columns:1fr}.education-news-card{padding:15px}.education-news-card h3{font-size:16px}}
+/* Compact Education News cards: smaller columns and typography */
+.education-news-section{margin-top:24px}
+.education-news-note{margin:-4px 0 12px;color:var(--muted,#526581);font-size:12px;line-height:1.55}
+.education-news-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+.education-news-card{background:#fff;border:1px solid #dce7f8;border-radius:11px;padding:11px;min-width:0;box-shadow:0 4px 14px #173a7508}
+.education-news-card h3{font-size:13px;line-height:1.4;margin:7px 0;color:#122b52;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.education-news-card p{font-size:11px;line-height:1.5;color:#526581;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:5px 0}
+.education-news-card>a{display:inline-block;margin-top:5px;color:#075bd9;font-size:11px;font-weight:800;text-decoration:none}
+.education-news-meta{display:flex;justify-content:space-between;gap:5px;flex-wrap:wrap;font-size:10px;line-height:1.4;color:#64748b}
+.education-news-card>a:hover{text-decoration:underline}
+@media(max-width:1050px){.education-news-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.education-news-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.education-news-card{padding:10px}.education-news-card h3{font-size:12px}.education-news-card p{font-size:10.5px}}
+@media(max-width:420px){.education-news-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.education-news-card{padding:8px;border-radius:9px}.education-news-card h3{font-size:11.5px;line-height:1.35}.education-news-card p{font-size:10px;line-height:1.4}.education-news-card>a{font-size:10px}.education-news-meta{font-size:9px}}
