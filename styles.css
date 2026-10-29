@@ -114,3 +114,16 @@
 @media(max-width:1050px){.education-news-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:760px){.education-news-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.education-news-card{padding:10px}.education-news-card h3{font-size:12px}.education-news-card p{font-size:10.5px}}
 @media(max-width:420px){.education-news-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.education-news-card{padding:8px;border-radius:9px}.education-news-card h3{font-size:11.5px;line-height:1.35}.education-news-card p{font-size:10px;line-height:1.4}.education-news-card>a{font-size:10px}.education-news-meta{font-size:9px}}
+
+
+/* Compact student poster linking to FreeTool */
+.student-tool-poster{max-width:1180px;margin:24px auto 30px;padding:18px 20px;display:flex;align-items:center;gap:16px;border:1px solid #c8dcff;border-radius:18px;background:linear-gradient(115deg,#eef6ff 0%,#f5f0ff 52%,#e8fff5 100%);box-shadow:0 8px 24px rgba(21,65,130,.09)}
+.student-poster-icon{flex:0 0 54px;width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:#fff;font-size:29px;box-shadow:0 4px 12px rgba(25,55,110,.1)}
+.student-poster-copy{flex:1;min-width:0}
+.student-poster-tag{display:inline-block;font-size:10px;letter-spacing:1.1px;font-weight:900;color:#075bd9;margin-bottom:4px}
+.student-poster-copy h2{font-size:clamp(17px,2vw,22px);line-height:1.25;margin:0 0 5px;color:#102b55}
+.student-poster-copy p{font-size:13px;line-height:1.5;margin:0;color:#4b5e79}
+.student-poster-cta{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:12px 16px;border-radius:12px;background:linear-gradient(120deg,#075bd9,#5736c8);color:#fff!important;text-decoration:none;font-size:13px;font-weight:800;box-shadow:0 5px 14px rgba(7,91,217,.2);transition:transform .18s ease,box-shadow .18s ease}
+.student-poster-cta:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(7,91,217,.25)}
+@media(max-width:680px){.student-tool-poster{margin:18px 12px 24px;padding:14px;gap:11px;flex-wrap:wrap;border-radius:15px}.student-poster-icon{width:44px;height:44px;flex-basis:44px;font-size:24px;border-radius:13px}.student-poster-copy{flex:1 1 calc(100% - 60px)}.student-poster-copy h2{font-size:17px}.student-poster-copy p{font-size:12px}.student-poster-cta{width:100%;padding:12px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.student-poster-cta{transition:none}}
