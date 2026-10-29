@@ -86,6 +86,15 @@
       <p>UP Board Class 9–12 ke liye study tips, revision plans aur subject-wise practice guidance.</p>
     </section>
 
+    <section class="content-section education-news-section" aria-labelledby="educationNewsTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">STUDENT NEWS DESK</p><h2 id="educationNewsTitle">📰 Education News</h2></div>
+        <a class="apply-btn" href="education-news.html">Saari News dekhein ↗</a>
+      </div>
+      <p class="education-news-note">Education headlines aur short summaries. Har khabar ki poori details original source par padhein.</p>
+      <div id="homeEducationNews" class="education-news-grid" aria-live="polite"><div class="loading-card">Education news load ho rahi hai…</div></div>
+    </section>
+
     <section class="info-strip">
       <div><span class="info-icon shield">✓</span><div><h3>Verify before applying</h3><p>Dates, eligibility aur fees official notification se confirm karein.</p></div></div>
       <div><span class="info-icon link-icon">↗</span><div><h3>Official links</h3><p>Application ke liye hamesha official department website use karein.</p></div></div>
@@ -119,5 +128,21 @@
     </div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(async()=>{
+ const box=document.getElementById('homeEducationNews'); if(!box) return;
+ const cfg=window.SJA_CONFIG||{};
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const safeUrl=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:''}catch{return ''}};
+ if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){box.innerHTML='<div class="loading-card">News feed configuration abhi available nahi hai.</div>';return;}
+ try{const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+ const {data,error}=await sb.from('school_articles').select('title,excerpt,source_url,source_name,original_published_at,published_at').eq('status','published').eq('article_type','news').order('original_published_at',{ascending:false,nullsFirst:false}).limit(6);
+ if(error||!data?.length){box.innerHTML='<div class="loading-card">Nayi education news daily update hoti hai. Latest headlines ke liye News page dekhein.</div>';return;}
+ box.innerHTML=data.map(n=>{const url=safeUrl(n.source_url);const date=n.original_published_at||n.published_at;return `<article class="education-news-card"><div class="education-news-meta"><span>${esc(n.source_name||'News source')}</span><time>${date?new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):''}</time></div><h3>${esc(n.title)}</h3><p>${esc(n.excerpt)}</p>${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow">Original source par padhein ↗</a>`:''}</article>`}).join('');
+ }catch(e){box.innerHTML='<div class="loading-card">News feed abhi load nahi ho paayi. Thodi der baad dobara try karein.</div>';console.error(e)}
+})();
+</script>
+
 </body>
 </html>

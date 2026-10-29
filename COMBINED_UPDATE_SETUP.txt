@@ -24,3 +24,12 @@ The previous ADMIN_CRUD_FIX.sql policy permits any authenticated Supabase user t
 TESTING:
 - Python syntax checked locally.
 - Do not assume live GitHub/Supabase has been tested: deployment still requires the steps above.
+
+
+EDUCATION NEWS FEED UPDATE (new):
+1. Upload the updated files while keeping the same paths in GitHub. New files: education-news.html, scripts/fetch_education_news.py, .github/workflows/daily-education-news.yml. Updated: index.html, styles.css, SCHOOL_EXAM_SETUP.sql.
+2. Supabase SQL Editor mein updated SCHOOL_EXAM_SETUP.sql poora run karein. Yeh existing jobs aur existing study guides delete nahi karta.
+3. GitHub repo Settings > Secrets and variables > Actions mein SUPABASE_URL aur SUPABASE_SERVICE_ROLE_KEY secrets check karein. Service-role key public code mein kabhi na daalein.
+4. GitHub Actions > Daily Education News Feed > Run workflow par click karein. Successful run ke baad homepage ke Education News section aur education-news.html par feed check karein. Schedule daily 08:00 IST hai; GitHub scheduled runs kabhi-kabhi delay ho sakte hain.
+5. Feed RSS headline + short excerpt + publisher/source link store karti hai; full articles copy/scrape nahi karti. RSS availability/quality source par depend karegi. Check headlines before relying on them for official exam dates.
+6. AdSense approval guarantee nahi hai. Feed ko useful original job/student content ke saath rakhein; copied articles, thin/low-value pages, misleading titles, and ads that resemble buttons avoid karein.
