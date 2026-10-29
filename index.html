@@ -11,6 +11,70 @@
   <!-- TODO: Replace this with your real production URL before publishing -->
   <link rel="canonical" href="https://sarkarijobalert.alsalehtravels85.workers.dev/">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Slimmer top navigation bar */
+    .topbar{
+      padding-top:8px!important;padding-bottom:8px!important;
+      min-height:unset!important;gap:12px;
+    }
+    .brand-mark{transform:scale(.92);transform-origin:left center}
+    .brand-copy{line-height:1.15}
+    .brand-copy small{margin-top:2px!important;font-size:10px!important}
+    .main-nav{gap:5px!important}
+    .main-nav .nav-link{
+      padding:7px 9px!important;min-height:32px!important;
+      font-size:12px!important;line-height:1.1!important;
+      cursor:pointer;white-space:nowrap;
+    }
+    .header-actions{gap:8px!important}
+    .icon-search,.admin-open{
+      min-height:32px!important;padding:7px 9px!important;
+      font-size:12px!important;
+    }
+    .main-nav .nav-link.nav-working-active{
+      background:#e7efff!important;color:#1746a2!important;
+      border-radius:9px;font-weight:800;
+    }
+    @media(max-width:760px){
+      .topbar{padding:7px 10px!important;gap:8px}
+      .main-nav{gap:4px!important}
+      .main-nav .nav-link{padding:7px 8px!important;font-size:11px!important}
+    }
+    /* Compact School & Exam Guide strip */
+    .guide-promo-compact{
+      display:flex;align-items:center;gap:14px;padding:13px 18px!important;
+      min-height:unset;border-radius:16px;box-sizing:border-box;
+    }
+    .guide-compact-icon{
+      width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;
+      border-radius:12px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);
+      font-size:22px;
+    }
+    .guide-compact-copy{min-width:0;flex:1}
+    .guide-compact-label{display:block;font-size:10px;font-weight:800;letter-spacing:1.2px;color:#2563eb;margin-bottom:2px}
+    .guide-compact-copy h2{font-size:18px;line-height:1.25;margin:0}
+    .guide-compact-copy p{font-size:12px;line-height:1.4;margin:4px 0 0;color:#64748b}
+    .guide-compact-link{
+      display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+      padding:9px 12px;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;
+      color:#fff;background:linear-gradient(135deg,#2563eb,#0f766e);
+    }
+    .guide-compact-link span{font-size:14px}
+    @media(max-width:560px){
+      .guide-promo-compact{gap:10px;padding:11px 12px!important}
+      .guide-compact-icon{width:36px;height:36px;flex-basis:36px;font-size:19px}
+      .guide-compact-copy h2{font-size:15px}
+      .guide-compact-copy p{font-size:10px}
+      .guide-compact-label{font-size:9px}
+      .guide-compact-link{padding:8px 9px;font-size:11px}
+    }
+    @media(max-width:380px){
+      .guide-promo-compact{flex-wrap:wrap}
+      .guide-compact-copy{flex:1 1 calc(100% - 50px)}
+      .guide-compact-link{margin-left:46px}
+    }
+  </style>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
   <script defer src="app.js"></script>
@@ -82,9 +146,14 @@
       <div class="show-more-wrap"><button class="show-more-jobs" id="showMoreJobs" type="button" hidden>Show More Jobs</button></div>
     </section>
 
-    <section class="content-section guide-promo">
-      <div class="section-heading"><div><p class="eyebrow">STUDENTS CORNER</p><h2>School & Exam Guide</h2></div><a class="apply-btn" href="education.html">Study Articles dekhein ↗</a></div>
-      <p>UP Board Class 9–12 ke liye study tips, revision plans aur subject-wise practice guidance.</p>
+    <section class="content-section guide-promo guide-promo-compact">
+      <div class="guide-compact-icon" aria-hidden="true">📚</div>
+      <div class="guide-compact-copy">
+        <span class="guide-compact-label">STUDENTS CORNER</span>
+        <h2>School &amp; Exam Guide</h2>
+        <p>UP Board Class 9–12 • Study Tips • Revision • Practice</p>
+      </div>
+      <a class="guide-compact-link" href="education.html">Open Guide <span aria-hidden="true">↗</span></a>
     </section>
 
     <section class="content-section education-news-section" aria-labelledby="educationNewsTitle">
@@ -147,12 +216,47 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const safeUrl=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:''}catch{return ''}};
  if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){box.innerHTML='<div class="loading-card">News feed configuration abhi available nahi hai.</div>';return;}
- try{const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
- const {data,error}=await sb.from('school_articles').select('title,excerpt,source_url,source_name,original_published_at,published_at').eq('status','published').eq('article_type','news').order('original_published_at',{ascending:false,nullsFirst:false}).limit(6);
- if(error||!data?.length){box.innerHTML='<div class="loading-card">Nayi education news daily update hoti hai. Latest headlines ke liye News page dekhein.</div>';return;}
- box.innerHTML=data.map(n=>{const url=safeUrl(n.source_url);const date=n.original_published_at||n.published_at;return `<article class="education-news-card"><div class="education-news-meta"><span>${esc(n.source_name||'News source')}</span><time>${date?new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):''}</time></div><h3>${esc(n.title)}</h3><p>${esc(n.excerpt)}</p>${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow">Original source par padhein ↗</a>`:''}</article>`}).join('');
+ try{
+   const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+   const {data,error}=await sb.from('school_articles').select('title,excerpt,source_url,source_name,original_published_at,published_at').eq('status','published').eq('article_type','news').order('original_published_at',{ascending:false,nullsFirst:false}).limit(100);
+   if(error||!data?.length){box.innerHTML='<div class="loading-card">Nayi education news daily update hoti hai. Latest headlines ke liye News page dekhein.</div>';return;}
+   let showAllNews=false;
+   const renderNews=()=>{
+     const visible=showAllNews?data:data.slice(0,8);
+     box.innerHTML=visible.map(n=>{const url=safeUrl(n.source_url);const date=n.original_published_at||n.published_at;return `<article class="education-news-card"><div class="education-news-meta"><span>${esc(n.source_name||'News source')}</span><time>${date?new Date(date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):''}</time></div><h3>${esc(n.title)}</h3><p>${esc(n.excerpt)}</p>${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow">Original source par padhein ↗</a>`:''}</article>`}).join('');
+     let btn=document.getElementById('showMoreNews');
+     if(!btn){
+       btn=document.createElement('button');btn.id='showMoreNews';btn.type='button';btn.className='show-more-jobs';btn.style.cssText='display:block;margin:18px auto 0;';
+       box.insertAdjacentElement('afterend',btn);
+       btn.addEventListener('click',()=>{showAllNews=true;renderNews();});
+     }
+     btn.hidden=data.length<=8||showAllNews;
+     btn.style.display=btn.hidden?'none':'block';
+     btn.textContent=`Show More News (${Math.max(0,data.length-8)} aur)`;
+   };
+   renderNews();
  }catch(e){box.innerHTML='<div class="loading-card">News feed abhi load nahi ho paayi. Thodi der baad dobara try karein.</div>';console.error(e)}
 })();
+</script>
+
+
+<script>
+/* Make the top Vacancy / Admit Card / Result menu buttons use the existing job filters. */
+document.querySelectorAll('.main-nav button[data-category]').forEach(menuButton=>{
+  menuButton.addEventListener('click',()=>{
+    const category=menuButton.dataset.category;
+    const categoryButton=document.querySelector('.quick-cats .cat[data-category="'+category+'"]');
+    if(categoryButton){
+      categoryButton.click();
+      document.querySelectorAll('.main-nav .nav-link[data-category]').forEach(item=>item.classList.remove('nav-working-active'));
+      menuButton.classList.add('nav-working-active');
+      document.querySelector('.content-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }
+  });
+});
+document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('click',function(){
+  /* Keep this as a normal link so the guide page opens reliably. */
+});
 </script>
 
 </body>
