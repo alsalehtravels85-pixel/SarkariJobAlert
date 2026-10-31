@@ -16,7 +16,7 @@ import requests
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 TODAY = dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
-# Safe default: prepare as draft for editorial review. Set GitHub Actions env
+# AUTO_PUBLISH_STUDY_GUIDES: "true"
 # AUTO_PUBLISH_STUDY_GUIDES=true only after reviewing content quality.
 AUTO_PUBLISH = os.getenv("AUTO_PUBLISH_STUDY_GUIDES", "false").strip().lower() == "true"
 PUBLISH_STATUS = "published" if AUTO_PUBLISH else "draft"
