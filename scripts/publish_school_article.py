@@ -1,116 +1,242 @@
 import os
+import re
 import datetime as dt
+from zoneinfo import ZoneInfo
 import requests
+
+# SarkariJobAlert - School & Higher Education Study Guide publisher
+# AdSense-conscious defaults:
+# - No fake exam dates, marks, eligibility, or official claims.
+# - Adds a clear educational disclaimer and encourages official syllabus checks.
+# - Uses India-local dates, unique daily slugs and duplicate checks.
+# - Creates drafts by default so thin/repetitive text is not pushed live automatically.
+# IMPORTANT: Code alone cannot guarantee AdSense approval; each article needs real value,
+# originality, accuracy, and editorial review.
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-TODAY = dt.datetime.now(dt.timezone.utc).date()
+TODAY = dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
+# Safe default: prepare as draft for editorial review. Set GitHub Actions env
+# AUTO_PUBLISH_STUDY_GUIDES=true only after reviewing content quality.
+AUTO_PUBLISH = os.getenv("AUTO_PUBLISH_STUDY_GUIDES", "false").strip().lower() == "true"
+PUBLISH_STATUS = "published" if AUTO_PUBLISH else "draft"
 HEADERS = {
     "apikey": SERVICE_KEY,
     "Authorization": f"Bearer {SERVICE_KEY}",
     "Content-Type": "application/json",
     "Prefer": "return=representation",
 }
+TABLE_URL = f"{SUPABASE_URL}/rest/v1/school_articles"
 
-GRADES = ["Class 9", "Class 10", "Class 11", "Class 12"]
-SUBJECTS = ["Mathematics", "Science", "Hindi", "English", "Social Science"]
-TOPICS = [
-    ("Study timetable kaise banayein", "Har subject ke liye realistic weekly timetable banayein. Mushkil topics ko chhote parts mein baantein aur har study session ke baad 5–10 minute ka break rakhein.", "Roz ke 3 priority tasks likhein. School homework, revision aur practice ko alag blocks dein. Hafte ke ant mein dekhein ki kya complete hua aur agle hafte ka plan us hisaab se badlein."),
-    ("Revision ko effective banane ke tareeqe", "Sirf kitab dobara padhne ke bajaye, topic band karke apni zubaan mein samjhaane ki koshish karein. Isse yaad ki hui baat samajh mein aati hai ya nahi, pata chalta hai.", "Ek short summary banayein, phir bina dekhe questions solve karein. Jo points yaad na aayein unhe mark karke agle revision mein pehle dekhein."),
-    ("Practice questions se taiyari", "Practice karte waqt pehle concept samjhein, phir textbook examples aur chapter-end questions solve karein. Galat jawab ko sirf kaatne ke bajaye uski wajah likhein.", "Ek error notebook rakhein. Har galti ke saamne sahi method aur us topic ka naam likhein. Kuch din baad wahi sawal dobara solve karke progress check karein."),
-    ("Exam se pehle answer writing", "Jawab saaf, seedhe aur question ke mutabiq likhein. Jahan zaroori ho headings, steps, formula ya labelled diagram ka use karein. Sirf lamba jawab likhna achhe answer ki guarantee nahi hota.", "Practice paper ko time limit mein solve karein. Aakhir mein spelling, calculation, units aur question ke sab parts ka jawab diya hai ya nahi, check karein."),
+# Keep existing school grades and add common undergraduate/postgraduate courses.
+COURSES = [
+    {
+        "name": "Class 9",
+        "subjects": ["Mathematics", "Science", "Hindi", "English", "Social Science"],
+        "guidance": "Strong foundation banayein, textbook ko dhyan se padhein aur doubts ko jaldi clear karein."
+    },
+    {
+        "name": "Class 10",
+        "subjects": ["Mathematics", "Science", "Hindi", "English", "Social Science"],
+        "guidance": "Current board syllabus se preparation checklist match karein aur timed practice karein."
+    },
+    {
+        "name": "Class 11",
+        "subjects": ["Mathematics", "Physics", "Chemistry", "Biology", "Hindi", "English", "Accountancy", "Economics"],
+        "guidance": "Conceptual understanding par focus karein aur weekly revision se backlog kam rakhein."
+    },
+    {
+        "name": "Class 12",
+        "subjects": ["Mathematics", "Physics", "Chemistry", "Biology", "Hindi", "English", "Accountancy", "Economics", "Business Studies", "History", "Geography", "Political Science"],
+        "guidance": "Syllabus ke saath regular revision, answer-writing aur timed practice ka balance rakhein."
+    },
+    {
+        "name": "B.A.",
+        "subjects": ["Hindi", "English", "History", "Political Science", "Sociology", "Economics", "Geography", "Education"],
+        "guidance": "University ke semester syllabus, prescribed readings aur answer-writing expectations ko follow karein."
+    },
+    {
+        "name": "B.Sc.",
+        "subjects": ["Physics", "Chemistry", "Mathematics", "Botany", "Zoology", "Computer Science", "Statistics"],
+        "guidance": "Theory ke saath numericals, practical records, lab safety aur prescribed experiments par dhyan dein."
+    },
+    {
+        "name": "B.Com.",
+        "subjects": ["Financial Accounting", "Business Law", "Economics", "Business Studies", "Taxation", "Cost Accounting", "Auditing"],
+        "guidance": "Concepts ke saath formats, calculations, journal entries aur case-based questions ki practice karein."
+    },
+    {
+        "name": "M.A.",
+        "subjects": ["Hindi", "English", "History", "Political Science", "Sociology", "Economics", "Education"],
+        "guidance": "Advanced readings, critical analysis, research methods aur evidence-based long answers par focus karein."
+    },
+    {
+        "name": "M.Sc.",
+        "subjects": ["Physics", "Chemistry", "Mathematics", "Botany", "Zoology", "Computer Science", "Statistics"],
+        "guidance": "Advanced concepts, research papers prescribed by the university, practical work aur problem-solving ko balance karein."
+    },
+    {
+        "name": "M.Com.",
+        "subjects": ["Advanced Accounting", "Corporate Finance", "Business Research", "Taxation", "Auditing", "Business Management"],
+        "guidance": "Accounting standards, analytical problems, research methodology aur university-specific readings ko priority dein."
+    },
 ]
+
+TOPICS = [
+    (
+        "Study timetable kaise banayein",
+        "Apne available time aur syllabus ko dekh kar realistic weekly timetable banayein. Mushkil topics ko chhote parts mein baantein aur study sessions ke beech short breaks rakhein.",
+        "Roz ke 3 priority tasks likhein. Reading, notes, practice aur revision ko alag blocks dein. Hafte ke aakhir mein plan review karke agle hafte ko adjust karein."
+    ),
+    (
+        "Active recall aur revision ke tareeqe",
+        "Sirf notes dobara padhne ke bajaye topic band karke apni zubaan mein samjhaane ya key points likhne ki koshish karein. Isse pata chalega ki kaun se concepts abhi clear nahi hain.",
+        "Short summary banayein, phir bina dekhe questions solve karein. Jo points yaad na aayein unhe mark karein aur 1 din, 1 hafte aur phir zaroorat ke mutabiq revise karein."
+    ),
+    (
+        "Practice questions se taiyari",
+        "Pehle concept aur solved examples samjhein, phir khud questions solve karein. Galat answer ko sirf correct na karein; galti ki wajah bhi likhein.",
+        "Error notebook banayein. Har galti ke saamne topic, galti ka reason aur sahi method note karein. Kuch din baad wahi question dobara solve karein."
+    ),
+    (
+        "Exam answer writing ko behtar banana",
+        "Answer ko question ke mutabiq rakhein. Jahan zaroori ho headings, examples, formulae, labelled diagrams ya relevant evidence ka use karein. Sirf lamba answer likhna achhe answer ki guarantee nahi.",
+        "Practice paper ko time limit mein solve karein. Baad mein dekhein ki answer ne question ke sab parts cover kiye hain, reasoning clear hai aur presentation readable hai."
+    ),
+    (
+        "Notes aur study material organize karna",
+        "Notes ko textbook ki copy banane ke bajaye definitions, core ideas, examples, formulae aur common mistakes ke short summaries mein badlein.",
+        "Har unit ke liye ek revision sheet rakhein. File ya notebook par course, semester/class, subject aur unit ka naam likhein taaki exam se pehle material jaldi mil sake."
+    ),
+]
+
 SUBJECT_TIPS = {
-"Mathematics":"Formula ratne ke saath uska use samjhein. Har din kuch questions khud solve karein aur calculation steps saaf likhein.",
-"Science":"Definitions, concepts, diagrams aur practical examples ko saath mein revise karein. Diagram banate waqt labels clear rakhein.",
-"Hindi":"Gadya, padya, vyakaran aur writing practice ko alag sessions mein baantein. Answer mein sawal se judi baat aur saaf bhasha rakhein.",
-"English":"Reading comprehension, grammar, vocabulary aur writing ko regular practice mein shamil karein. Answer likhne ke baad sentence structure check karein.",
-"Social Science":"History, Geography, Civics aur Economics ke notes alag banayein. Dates, terms, maps aur cause-effect relations ko short points mein revise karein."
-}
-GRADE_TIPS = {
-"Class 9":"Concepts aur textbook reading par mazboot buniyad banayein. Notes ko har hafte update karein.",
-"Class 10":"Syllabus ko school/board ke current session se match karein. Sample papers sirf practice ke liye use karein, official pattern alag se verify karein.",
-"Class 11":"Naye topics ko regular revise karein aur backlog jama na hone dein. Har chapter ke baad short test lein.",
-"Class 12":"Long-term revision plan banayein, weak topics ko priority dein aur timed practice se answer writing behtar karein."
+    "Mathematics": "Formula ka meaning samjhein, solution ke steps likhein aur answer ko dobara check karein.",
+    "Science": "Theory, diagrams, practical examples aur numericals ko relevant syllabus ke hisaab se saath revise karein.",
+    "Physics": "Concepts, units, derivations aur numerical problem-solving ki regular practice karein.",
+    "Chemistry": "Reactions, equations, concepts aur numerical problems ko syllabus ke mutabiq organize karein.",
+    "Biology": "Processes ko step-by-step samjhein, diagrams ko label karein aur scientific terms accurately use karein.",
+    "Hindi": "Text ka central idea, author/poet ka perspective, vocabulary, grammar aur writing practice karein.",
+    "English": "Reading, grammar, vocabulary aur structured writing ki regular practice karein.",
+    "Social Science": "Key concepts, timelines, maps, examples aur cause-effect relations ko short notes mein rakhein.",
+    "History": "Events ke context, chronology, causes, effects aur different interpretations ko compare karein.",
+    "Political Science": "Core concepts, institutions, arguments aur relevant examples ko clear headings mein explain karein.",
+    "Economics": "Definitions, graphs, assumptions, data interpretation aur numerical practice ko syllabus ke mutabiq karein.",
+    "Accountancy": "Accounting concepts, formats, journal entries, calculations aur working notes ko step-by-step practice karein.",
+    "Financial Accounting": "Prescribed accounting principles, formats, journal entries aur final accounts ki practice karein.",
+    "Advanced Accounting": "University-prescribed standards, consolidation or other advanced topics ko official course outline ke mutabiq padhein.",
+    "Business Law": "Relevant legal principles, definitions aur case-based application ko prescribed textbook se verify karein.",
+    "Taxation": "Applicable assessment year aur current official rules verify karein; old rates ya outdated examples ko current advice na samjhein.",
+    "Cost Accounting": "Cost concepts, formulas, working notes aur numerical solutions ko step-by-step practice karein.",
+    "Auditing": "Audit concepts, standards prescribed by the course, evidence and reporting principles ko structured notes mein rakhein.",
+    "Computer Science": "Programming concepts, algorithms, code tracing and practical exercises ko regularly practice karein.",
+    "Statistics": "Formula selection, assumptions, calculations and interpretation of results ko saath practice karein.",
+    "Sociology": "Key theories, thinkers, concepts and examples ko critical comparison ke saath explain karein.",
+    "Geography": "Concepts, maps, diagrams, data and field/practical components ko syllabus ke hisaab se revise karein.",
+    "Education": "Learning theories, classroom applications, terminology and critical reflection ko connect karein.",
+    "Business Studies": "Business concepts, examples, case-based questions and structured explanations ki practice karein.",
+    "Corporate Finance": "Financial concepts, assumptions, calculations and interpretation ko step-by-step explain karein.",
+    "Business Research": "Research question, methodology, ethical considerations and analysis ko university guidance ke mutabiq padhein.",
+    "Business Management": "Management concepts, frameworks and practical examples ko critical analysis ke saath padhein.",
+    "Botany": "Scientific terminology, diagrams, classification and practical observations ko accurately record karein.",
+    "Zoology": "Processes, classification, diagrams and practical concepts ko prescribed syllabus se match karein.",
 }
 
-def build_long_content(grade, subject, topic, intro, method):
-    """Create a useful, structured long-form study article (not just a short blurb)."""
-    subject_focus = {
-        "Mathematics": "Formula ko samajhkar apply karein, har solution ke steps likhein, units/signs check karein aur galat sawalon ko dobara solve karein.",
-        "Science": "Concept, definition, diagram, formula aur real-life example ko ek saath padhein. Diagram mein labels saaf rakhein aur numerical questions ke steps dikhayein.",
-        "Hindi": " पाठ ka central idea, writer/poet ka sandesh, important शब्दार्थ, व्याकरण और लेखन अभ्यास ko alag-alag revise karein.",
-        "English": "Reading comprehension, grammar, vocabulary, textbook chapters aur writing formats ki regular practice karein. Answer submit karne se pehle tense, spelling aur sentence structure check karein.",
-        "Social Science": "History, Geography, Civics aur Economics ko alag notes mein rakhein. Dates, definitions, maps, examples aur cause-effect relationships ko revise karein."
-    }.get(subject, "Textbook ke concepts ko samjhein, notes banayein aur practice questions solve karein.")
-    grade_focus = {
-        "Class 9": "Is class mein strong foundation sabse important hai. Har chapter padhne ke baad apne words mein summary banayein aur doubts ko agle din tak clear karne ki koshish karein.",
-        "Class 10": "Board preparation ke liye current syllabus aur school ke instructions se apni checklist milayein. Sample paper practice karein, lekin kisi unofficial guess paper ko guaranteed question na samjhein.",
-        "Class 11": "Class 11 ke concepts aage ki padhai ka base bante hain. Weekly revision rakhein aur kisi ek difficult chapter ko bahut din tak pending na chhodein.",
-        "Class 12": "Long-term revision ke saath timed answer writing karein. Weak chapters ko priority dein, lekin easy/scoring topics ka revision bhi regular rakhein."
-    }.get(grade, "Apne current syllabus aur teacher ke guidance ke hisaab se preparation plan banayein.")
+def slugify(value):
+    value = value.lower().strip()
+    value = re.sub(r"[^a-z0-9]+", "-", value)
+    return value.strip("-")
+
+def build_long_content(course, subject, topic, intro, method):
+    subject_focus = SUBJECT_TIPS.get(
+        subject,
+        "Subject ke core concepts ko samjhein, prescribed readings use karein aur practice ko course requirements ke mutabiq rakhein."
+    )
+    course_focus = course["guidance"]
     sections = [
-        f"{grade} {subject} – Complete Study Guide\n\nIs guide ka topic: {topic}. {intro}",
-        "1. Sabse pehle goal clear karein\nPadhai shuru karne se pehle chapter ya topic ko chhote targets mein baant dein. Aaj kya samajhna hai, kaun se questions solve karne hain aur end mein kya revise karna hai—ye teen baatein likh lein. Ek session mein bahut saare topics rakhne ke bajaye 1–2 clear targets rakhna zyada practical hota hai.",
-        f"2. Subject-wise approach\n{subject_focus} Pehle textbook explanation aur examples padhein. Uske baad notebook band karke apni zubaan mein concept samjhaane ki koshish karein. Agar concept explain nahi ho raha, to us paragraph ya example ko dobara dekhein aur doubt ko mark karein.",
-        f"3. Class ke hisaab se planning\n{grade_focus} Apne school/board ke latest syllabus se topics tick karein. Syllabus, exam dates aur marking scheme mein badlav ho sakta hai, isliye unhe official board/school source se verify karna zaroori hai.",
-        f"4. Daily study routine\n{method} Ek practical routine ka example: 25–35 minute focused study, 5 minute break, phir 20–30 minute practice. Time apne school, ghar aur coaching schedule ke hisaab se adjust karein. Har din ka target poora na ho to plan ko chhota karein, poori padhai chhodna solution nahi hai.",
-        "5. Notes kaise banayein\nNotes ko textbook ki copy na banayein. Important definitions, formulas, dates, diagrams, examples aur common mistakes ko short headings ke neeche likhein. Har chapter ke end par ek page ka revision sheet banayein. Notes mein page number ya chapter name likhne se exam se pehle topic jaldi milta hai.",
-        "6. Practice aur answer-writing\nPehle solved example samjhein, phir bina dekhe similar question karein. Long-answer subjects mein answer ko introduction, main points aur conclusion ke order mein likhne ki practice karein. Jahan zaroori ho headings, labelled diagrams, formulas aur calculation steps dikhayein. Sirf answer yaad karne ke bajaye question ka demand samajhna seekhein.",
-        "7. Galtiyon se seekhne ka tareeqa\nEk error notebook banayein. Har galat jawab ke saamne likhein: galti concept ki thi, formula yaad nahi tha, question galat padha, ya time management issue tha. 2–3 din baad wahi question dobara solve karein. Jo sawal baar-baar galat ho, use weekly revision list mein rakhein.",
-        "8. Weekly revision plan\nHafte ke aakhir mein 20–30 minute nikaal kar dekhein ki kaun se topics complete hue, kaun se pending hain aur kin sawalon mein galti hui. Ek chhota self-test lein. Test ke baad marks se zyada important hai galtiyon ka analysis. Agle hafte ka timetable isi review ke basis par banayein.",
-        "9. Exam se ek din pehle\nNaya bada chapter shuru karne ke bajaye apni revision sheet, formulas, definitions, maps/diagrams aur error notebook dekhein. Neend poori karein, zaroori stationery pehle rakh lein aur exam instructions padh lein. Paper mein pehle instructions samjhein, time divide karein aur aakhir mein answers check karne ke liye kuch waqt bachayein.",
-        "10. Quick checklist\n• Aaj ka target likha?\n• Textbook se concept samjha?\n• Bina dekhe recall kiya?\n• Practice questions solve kiye?\n• Galtiyon ko note kiya?\n• Kal ke revision ka target banaya?\n\nAgar inmein se sab ka jawab har din ‘haan’ nahi bhi hai, to apne routine ko realistic banayein aur consistency par focus karein.",
-        "Important note\nYeh general educational guidance hai. Official syllabus, exam pattern, dates, eligibility aur board instructions ke liye apne school ya sambandhit board ki official website/notice ko hi final maanein. Kisi bhi unofficial article ko official notification na samjhein."
+        f"{course['name']} {subject}: {topic}\n\n"
+        f"Yeh study guide {course['name']} ke learners ke liye {subject} ki padhai ko organize karne par focused hai. {intro}",
+        "1. Learning goal set karein\n"
+        "Study session se pehle ek clear goal likhein: kaunsa concept samajhna hai, kaunsa section padhna hai ya kaun se questions practice karne hain. Goal ko manageable rakhein aur session ke end mein apni progress check karein.",
+        f"2. Subject-specific approach\n{subject_focus} "
+        "Prescribed textbook, course outline aur teacher/university ke recommended material ko primary reference banayein. Online notes ko samajhne mein madad ke liye use karein, lekin unhe official syllabus ka replacement na samjhein.",
+        f"3. Course ke hisaab se planning\n{course_focus} "
+        "School board ya university ke current academic session, semester scheme, syllabus aur assessment instructions ko official website ya department notice se verify karein.",
+        f"4. Practical study routine\n{method} "
+        "Ek possible routine hai: focused reading, short break, practice/recall aur end mein summary. Total time apne schedule, subject difficulty aur upcoming assessment ke mutabiq adjust karein.",
+        "5. Useful notes banayein\n"
+        "Notes mein main concepts, definitions, examples, formulae, diagrams, important questions aur apni common mistakes ko alag headings mein rakhein. Sirf copied paragraphs se bachkar apni understanding ke short summaries likhein.",
+        "6. Practice aur self-check\n"
+        "Topic ke baad khud ko explain karein ya relevant practice questions solve karein. Numerical subjects mein working steps rakhein; theory subjects mein argument, examples aur clear structure par focus karein. Course-specific assessment pattern ko official guidance se check karein.",
+        "7. Mistake log aur revision\n"
+        "Jo concept samajh na aaye ya question galat ho, uska reason note karein. Mistakes ko concept gap, careless error, unclear question ya time management jaise categories mein baantna helpful ho sakta hai. Baad mein un topics ko dobara test karein.",
+        "8. Weekly progress review\n"
+        "Hafte mein ek baar completed topics, pending work aur weak areas ka review karein. Agle hafte ke targets isi review se banayein. Agar plan consistently complete nahi ho raha, to targets ko realistic banayein.",
+        "9. Study material ko verify karein\n"
+        "Course aur syllabus university/board ke hisaab se alag ho sakte hain. Kisi blog, social media post ya old PDF ko final official information na maanein. Syllabus, exam dates, paper pattern aur rules ko relevant institution ke official source se confirm karein.",
+        "10. Quick checklist\n"
+        "• Aaj ka learning target clear tha?\n"
+        "• Prescribed material se topic padha?\n"
+        "• Bina dekhe recall ya practice ki?\n"
+        "• Galtiyon aur doubts ko note kiya?\n"
+        "• Next revision ka target set kiya?",
+        "About this guide\n"
+        "Yeh general educational guidance hai, official syllabus, university notice, exam paper, professional advice ya guaranteed result nahi. Course structure aur assessment rules institution ke mutabiq badal sakte hain; current information ke liye apne board, university ya department ki official website/notice check karein."
     ]
     return "\n\n".join(sections)
-
 
 def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY:
         raise RuntimeError("Missing Supabase credentials.")
-    url = f"{SUPABASE_URL}/rest/v1/school_articles"
 
-    # Expand existing short study-guide articles too, so older entries are not left tiny.
-    existing = requests.get(url, headers=HEADERS, params={
-        "select":"id,title,grade,subject,content,article_type,status,slug",
-        "status":"eq.published", "article_type":"eq.study_guide", "limit":"200"
-    }, timeout=30)
-    existing.raise_for_status()
-    expanded = 0
-    for article in existing.json():
-        content = article.get("content") or ""
-        if len(content.strip()) >= 1800:
-            continue
-        grade = article.get("grade") or "Class 9"
-        subject = article.get("subject") or "Education"
-        title = article.get("title") or f"{grade} {subject} Study Guide"
-        topic = title.split(":", 1)[-1].strip() if ":" in title else title
-        intro = f"{grade} ke students ke liye {subject} ki taiyari ko systematic aur manageable banane ke liye is guide mein practical steps diye gaye hain."
-        method = f"{topic} par 20–30 minute focus karein, phir apne notes se self-test lein aur jo points yaad na aayein unhe mark karein."
-        patch = requests.patch(f"{url}?id=eq.{article['id']}", headers={**HEADERS, "Prefer":"return=minimal"}, json={"content":build_long_content(grade, subject, topic, intro, method)}, timeout=25)
-        patch.raise_for_status()
-        expanded += 1
-    print(f"Expanded {expanded} existing short study-guide article(s).")
+    # Keep existing articles unchanged. Create one new guide per India-local day.
+    # Draft is the safe default; AUTO_PUBLISH_STUDY_GUIDES=true opts into auto-publishing.
+    course_subject_pairs = [
+        (course, subject)
+        for course in COURSES
+        for subject in course["subjects"]
+    ]
+    cycle_size = len(course_subject_pairs) * len(TOPICS)
+    index = (TODAY - dt.date(2026, 1, 1)).days % cycle_size
+    course, subject = course_subject_pairs[index // len(TOPICS)]
+    topic, intro, method = TOPICS[index % len(TOPICS)]
 
-    # Publish one new, long-form guide per day (80-topic rotation).
-    index = (TODAY.toordinal() - dt.date(2026, 1, 1).toordinal()) % (len(GRADES)*len(SUBJECTS)*len(TOPICS))
-    grade = GRADES[index // (len(SUBJECTS)*len(TOPICS))]
-    remainder = index % (len(SUBJECTS)*len(TOPICS))
-    subject = SUBJECTS[remainder // len(TOPICS)]
-    topic, intro, method = TOPICS[remainder % len(TOPICS)]
-    title = f"{grade} {subject}: {topic}"
-    slug = f"{TODAY.isoformat()}-{grade.lower().replace(' ','-')}-{subject.lower().replace(' ','-')}-{remainder%len(TOPICS)+1}"
-    excerpt = f"{grade} ke students ke liye {subject} mein {topic.lower()} par detailed study guide, daily routine, practice aur revision checklist."
-    check = requests.get(url, headers=HEADERS, params={"slug":f"eq.{slug}","select":"id"}, timeout=25)
+    course_name = course["name"]
+    title = f"{course_name} {subject}: {topic}"
+    slug = f"{TODAY.isoformat()}-{slugify(course_name)}-{slugify(subject)}-{index % len(TOPICS) + 1}"
+    excerpt = (
+        f"{course_name} ke {subject} learners ke liye {topic.lower()} par "
+        "practical study planning, revision aur self-check guidance."
+    )
+    content = build_long_content(course, subject, topic, intro, method)
+
+    # Check slug to avoid creating duplicate rows on reruns.
+    check = requests.get(
+        TABLE_URL,
+        headers=HEADERS,
+        params={"slug": f"eq.{slug}", "select": "id"},
+        timeout=25,
+    )
     check.raise_for_status()
     if check.json():
         print(f"Article already exists for {TODAY}; no duplicate created.")
         return
-    payload = {"slug":slug,"title":title,"excerpt":excerpt,"content":build_long_content(grade,subject,topic,intro,method),"grade":grade,"subject":subject,"article_type":"study_guide","status":"published","published_at":dt.datetime.now(dt.timezone.utc).isoformat()}
-    response = requests.post(url, headers=HEADERS, json=payload, timeout=25)
+
+    payload = {
+        "slug": slug,
+        "title": title,
+        "excerpt": excerpt,
+        "content": content,
+        "grade": course_name,
+        "subject": subject,
+        "article_type": "study_guide",
+        "status": PUBLISH_STATUS,
+    }
+    if PUBLISH_STATUS == "published":
+        payload["published_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    response = requests.post(TABLE_URL, headers=HEADERS, json=payload, timeout=25)
     response.raise_for_status()
-    print(f"Published long-form study article: {title}")
+    print(f"Created {PUBLISH_STATUS} study guide: {title}")
 
 if __name__ == "__main__":
     main()
