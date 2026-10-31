@@ -32,57 +32,62 @@
   let editingId = null;
   let showAllJobs = false;
 
-  const displayCategory = value => {
+  function displayCategory(value) {
     const category = String(value || "").trim();
 
     if (["Latest Jobs", "Vacancy", "Jobs"].includes(category)) {
       return "Vacancy";
     }
 
-    if (["Results", "Answer Key"].includes(category)) {
+    if (["Results", "Result", "Answer Key"].includes(category)) {
       return "Result";
     }
 
     return category || "Vacancy";
-  };
+  }
 
   $("#year").textContent = new Date().getFullYear();
 
-  const escapeHtml = (value = "") =>
-    String(value).replace(/[&<>"']/g, c => ({
+  function escapeHtml(value = "") {
+    return String(value).replace(/[&<>"']/g, c => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#39;"
     }[c]));
+  }
 
-  const formatDate = value =>
-    value
-      ? new Date(
-          value + (String(value).length === 10 ? "T00:00:00" : "")
-        ).toLocaleDateString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric"
-        })
-      : "As per notification";
+  function formatDate(value) {
+    if (!value) return "As per notification";
 
-  const isExpired = job =>
-    job.last_date &&
-    new Date(job.last_date + "T23:59:59") < new Date();
+    const date = new Date(
+      value + (String(value).length === 10 ? "T00:00:00" : "")
+    );
 
-  const isNewJob = job => {
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  }
+
+  function isExpired(job) {
+    return job.last_date &&
+      new Date(job.last_date + "T23:59:59") < new Date();
+  }
+
+  function isNewJob(job) {
     if (!job.created_at) return false;
 
     const created = new Date(job.created_at).getTime();
 
-    return (
-      Number.isFinite(created) &&
+    return Number.isFinite(created) &&
       Date.now() - created >= 0 &&
-      Date.now() - created < 3 * 24 * 60 * 60 * 1000
-    );
-  };
+      Date.now() - created < 3 * 24 * 60 * 60 * 1000;
+  }
 
   const demoJobs = [
     {
@@ -94,7 +99,7 @@
       qualification: "As per official notice",
       last_date: null,
       status: "published",
-      description: "Demo entry only. Real vacancy nahi hai.",
+      description: "Demo entry only. Yeh real vacancy nahi hai.",
       notification_url: "",
       apply_url: ""
     },
@@ -103,26 +108,26 @@
       title: "Sample: Admit Card Update",
       department: "Sample Exam Board (Demo only)",
       category: "Admit Card",
-      vacancies: "Demo",
-      qualification: "Registered candidates",
-      last_date: null,
+      exam_date: null,
+      admit_card_release_date: null,
       status: "published",
-      description: "Demo entry only. Official source verify karein.",
+      description: "Demo entry only. Official admit card link verify karein.",
       notification_url: "",
-      apply_url: ""
+      admit_card_url: ""
     },
     {
       id: "demo-3",
       title: "Sample: Examination Result",
       department: "Sample Recruitment Board (Demo only)",
       category: "Result",
-      vacancies: "Demo",
-      qualification: "Exam candidates",
-      last_date: null,
+      result_date: null,
+      result_status: "Demo",
       status: "published",
-      description: "Demo entry only. Official source verify karein.",
+      description: "Demo entry only. Official result details verify karein.",
       notification_url: "",
-      apply_url: ""
+      result_url: "",
+      cutoff_details: "",
+      merit_list_url: ""
     }
   ];
 
@@ -154,7 +159,7 @@
       if (notice) {
         notice.hidden = false;
         notice.textContent =
-          "Live database connect nahi hua. Supabase settings aur policies check karein.";
+          "Live database se connect nahi ho paya. Supabase settings aur policies check karein.";
       }
 
       allJobs = [];
@@ -172,13 +177,18 @@
     if (!grid || !count) return;
 
     const filtered = allJobs.filter(job => {
+      const category = displayCategory(job.category);
+
       const categoryMatches =
         activeCategory === "All" ||
-        displayCategory(job.category) === activeCategory;
+        category === activeCategory;
 
-      const text = (
-        `${job.title} ${job.department} ${job.qualification || ""}`
-      ).toLowerCase();
+      const text = [
+        job.title,
+        job.department,
+        job.qualification,
+        job.result_status
+      ].filter(Boolean).join(" ").toLowerCase();
 
       return categoryMatches && text.includes(searchTerm);
     });
@@ -193,75 +203,116 @@
         activeCategory === "All" ? "Latest Updates" : activeCategory;
     }
 
-    const visibleJobs = showAllJobs
-      ? filtered
-      : filtered.slice(0, 8);
+    const visible = showAllJobs ? filtered : filtered.slice(0, 8);
+    const more = $("#showMoreJobs");
 
-    const moreBtn = $("#showMoreJobs");
-
-    if (moreBtn) {
-      moreBtn.hidden = filtered.length <= 8 || showAllJobs;
-      moreBtn.textContent =
+    if (more) {
+      more.hidden = filtered.length <= 8 || showAllJobs;
+      more.textContent =
         `Show More Jobs (${Math.max(0, filtered.length - 8)} aur)`;
     }
 
     if (!filtered.length) {
       grid.innerHTML = `
         <div class="empty-state">
-          <strong>Abhi koi matching update nahi mila.</strong><br>
+          <strong>Abhi koi matching update nahi mila.</strong>
+          <br>
           <span>Search badal kar dekhein ya baad mein check karein.</span>
         </div>`;
       return;
     }
 
-    grid.innerHTML = visibleJobs.map(job => `
-      <article class="job-card">
-        <div class="card-top">
-          <span class="tag">${escapeHtml(displayCategory(job.category))}</span>
-          <span class="status-tag">
-            ${isExpired(job) ? "Date passed" : "Check details"}
-          </span>
-        </div>
+    grid.innerHTML = visible.map(job => {
+      const category = displayCategory(job.category);
 
-        <h3>
-          ${escapeHtml(job.title)}
-          ${isNewJob(job) ? '<span class="new-badge">NEW</span>' : ""}
-        </h3>
+      let label1;
+      let value1;
+      let label2;
+      let value2;
+      let mainUrl;
+      let buttonText;
 
-        <p class="department">
-          ${escapeHtml(job.department || "Department not specified")}
-        </p>
+      if (category === "Admit Card") {
+        label1 = "Exam Date";
+        value1 = formatDate(job.exam_date);
 
-        <div class="card-meta">
-          <div class="meta-item">
-            <small>Vacancies / Update</small>
-            <strong>${escapeHtml(job.vacancies || "See notice")}</strong>
+        label2 = "Admit Card Release Date";
+        value2 = formatDate(job.admit_card_release_date);
+
+        mainUrl = job.admit_card_url;
+        buttonText = "Download Admit Card ↗";
+      } else if (category === "Result") {
+        label1 = "Result Date";
+        value1 = formatDate(job.result_date);
+
+        label2 = "Result Status";
+        value2 = job.result_status || "Check official result";
+
+        mainUrl = job.result_url;
+        buttonText = "Check Result ↗";
+      } else {
+        label1 = "Vacancies";
+        value1 = job.vacancies || "See notification";
+
+        label2 = "Last Date to Apply";
+        value2 = formatDate(job.last_date);
+
+        mainUrl = job.apply_url;
+        buttonText = "Apply Online ↗";
+      }
+
+      return `
+        <article class="job-card">
+          <div class="card-top">
+            <span class="tag">${escapeHtml(category)}</span>
+            <span class="status-tag">
+              ${isExpired(job) ? "Date passed" : "Check details"}
+            </span>
           </div>
 
-          <div class="meta-item">
-            <small>Last date</small>
-            <strong>${escapeHtml(formatDate(job.last_date))}</strong>
+          <h3>
+            ${escapeHtml(job.title)}
+            ${isNewJob(job) ? ' <span class="new-badge">NEW</span>' : ""}
+          </h3>
+
+          <p class="department">
+            ${escapeHtml(job.department || "Department not specified")}
+          </p>
+
+          <div class="card-meta">
+            <div class="meta-item">
+              <small>${escapeHtml(label1)}</small>
+              <strong>${escapeHtml(value1)}</strong>
+            </div>
+
+            <div class="meta-item">
+              <small>${escapeHtml(label2)}</small>
+              <strong>${escapeHtml(value2)}</strong>
+            </div>
           </div>
-        </div>
 
-        <div class="card-actions">
-          <button class="details-btn" data-detail="${escapeHtml(job.id)}">
-            View Details
-          </button>
+          <div class="card-actions">
+            <button class="details-btn"
+                    data-detail="${escapeHtml(job.id)}">
+              View Details
+            </button>
 
-          ${
-            job.apply_url
-              ? `<a class="apply-btn"
-                    href="${escapeHtml(job.apply_url)}"
-                    target="_blank"
-                    rel="noopener noreferrer">Official Link ↗</a>`
-              : `<button class="apply-btn" data-detail="${escapeHtml(job.id)}">
-                   Read Update
-                 </button>`
-          }
-        </div>
-      </article>
-    `).join("");
+            ${
+              mainUrl
+                ? `<a class="apply-btn"
+                      href="${escapeHtml(mainUrl)}"
+                      target="_blank"
+                      rel="noopener noreferrer">
+                     ${buttonText}
+                   </a>`
+                : `<button class="apply-btn"
+                           data-detail="${escapeHtml(job.id)}">
+                     View Update
+                   </button>`
+            }
+          </div>
+        </article>`;
+    }).join("");
   }
 
   function showDetails(id) {
@@ -272,67 +323,86 @@
     if (!job) return;
 
     const category = displayCategory(job.category);
+    const rows = [];
 
-    let categoryDetails = "";
+    function addRow(label, value) {
+      if (value === null || value === undefined || value === "") return;
+
+      rows.push(`
+        <tr>
+          <th>${escapeHtml(label)}</th>
+          <td>${escapeHtml(value)}</td>
+        </tr>
+      `);
+    }
+
+    function addLink(label, url) {
+      if (!url) return;
+
+      rows.push(`
+        <tr>
+          <th>${escapeHtml(label)}</th>
+          <td>
+            <a href="${escapeHtml(url)}"
+               target="_blank"
+               rel="noopener noreferrer">
+              ${escapeHtml(label)} ↗
+            </a>
+          </td>
+        </tr>
+      `);
+    }
+
+    if (category === "Vacancy") {
+      addRow("Total Vacancies", job.vacancies);
+      addRow("Qualification", job.qualification);
+      addRow("Notification Date", formatDate(job.notification_date));
+      addRow("Last Date to Apply", formatDate(job.last_date));
+
+      if (job.dob_from || job.dob_to) {
+        addRow(
+          "DOB Eligibility",
+          `${job.dob_from ? formatDate(job.dob_from) : "Any"} to ${
+            job.dob_to ? formatDate(job.dob_to) : "Any"
+          }`
+        );
+      }
+
+      addRow("Application Fees", job.fees);
+      addRow("Age Limit", job.age_limit);
+      addRow("Selection Process", job.selection_process);
+
+      addLink("Official Notification", job.notification_url);
+      addLink("Apply Online", job.apply_url);
+    }
 
     if (category === "Admit Card") {
-      categoryDetails = `
-        <tr>
-          <th>Exam Date</th>
-          <td>${escapeHtml(formatDate(job.exam_date))}</td>
-        </tr>
-        <tr>
-          <th>Admit Card Release Date</th>
-          <td>${escapeHtml(formatDate(job.admit_card_release_date))}</td>
-        </tr>
-        ${
-          job.admit_card_url
-            ? `<tr><th>Admit Card</th><td>
-                 <a href="${escapeHtml(job.admit_card_url)}"
-                    target="_blank" rel="noopener noreferrer">
-                   Download Admit Card ↗
-                 </a>
-               </td></tr>`
-            : ""
-        }
-      `;
+      addRow("Exam Date", formatDate(job.exam_date));
+      addRow(
+        "Admit Card Release Date",
+        formatDate(job.admit_card_release_date)
+      );
+
+      addLink("Download Admit Card", job.admit_card_url);
+      addLink("Official Notification", job.notification_url);
     }
 
     if (category === "Result") {
-      categoryDetails = `
-        <tr>
-          <th>Result Date</th>
-          <td>${escapeHtml(formatDate(job.result_date))}</td>
-        </tr>
-        <tr>
-          <th>Result Status</th>
-          <td>${escapeHtml(job.result_status || "See official notice")}</td>
-        </tr>
-        ${
-          job.result_url
-            ? `<tr><th>Result Link</th><td>
-                 <a href="${escapeHtml(job.result_url)}"
-                    target="_blank" rel="noopener noreferrer">
-                   Check Result ↗
-                 </a>
-               </td></tr>`
-            : ""
-        }
-        <tr>
-          <th>Cut-off</th>
-          <td>${escapeHtml(job.cutoff || "See official notice")}</td>
-        </tr>
-        ${
-          job.merit_list_url
-            ? `<tr><th>Merit List</th><td>
-                 <a href="${escapeHtml(job.merit_list_url)}"
-                    target="_blank" rel="noopener noreferrer">
-                   View Merit List ↗
-                 </a>
-               </td></tr>`
-            : ""
-        }
-      `;
+      addRow("Result Date", formatDate(job.result_date));
+      addRow(
+        "Result Status",
+        job.result_status || "See official notification"
+      );
+
+      addLink("Check Result", job.result_url);
+
+      addRow(
+        "Cut-off Details",
+        job.cutoff_details || job.cutoff || ""
+      );
+
+      addLink("Merit List", job.merit_list_url);
+      addLink("Official Notification", job.notification_url);
     }
 
     $("#detailContent").innerHTML = `
@@ -345,86 +415,20 @@
       </p>
 
       <table class="detail-table">
-        <tbody>
-          ${
-            category === "Vacancy"
-              ? `
-                <tr>
-                  <th>Vacancies</th>
-                  <td>${escapeHtml(job.vacancies || "See notification")}</td>
-                </tr>
-                <tr>
-                  <th>Qualification</th>
-                  <td>${escapeHtml(job.qualification || "See official notification")}</td>
-                </tr>
-                <tr>
-                  <th>DOB Eligibility</th>
-                  <td>${escapeHtml(
-                    job.dob_from || job.dob_to
-                      ? `${job.dob_from ? formatDate(job.dob_from) : "Any"} to ${job.dob_to ? formatDate(job.dob_to) : "Any"}`
-                      : "See official notification"
-                  )}</td>
-                </tr>
-                <tr>
-                  <th>Fees</th>
-                  <td>${escapeHtml(job.fees || "See official notification")}</td>
-                </tr>
-                <tr>
-                  <th>Age Limit</th>
-                  <td>${escapeHtml(job.age_limit || "See official notification")}</td>
-                </tr>
-                <tr>
-                  <th>Selection</th>
-                  <td>${escapeHtml(job.selection_process || "See official notification")}</td>
-                </tr>
-              `
-              : ""
-          }
-
-          <tr>
-            <th>Notification Date</th>
-            <td>${escapeHtml(formatDate(job.notification_date))}</td>
-          </tr>
-
-          <tr>
-            <th>Last Date</th>
-            <td>${escapeHtml(formatDate(job.last_date))}</td>
-          </tr>
-
-          ${categoryDetails}
-        </tbody>
+        <tbody>${rows.join("")}</tbody>
       </table>
 
-      <h3>Important Information</h3>
+      <h3>Complete Details</h3>
 
       <div class="detail-copy">
-        ${escapeHtml(job.description || "Please read the official notification carefully.")}
-      </div>
-
-      <div class="card-actions">
-        ${
-          job.notification_url
-            ? `<a class="details-btn"
-                  href="${escapeHtml(job.notification_url)}"
-                  target="_blank" rel="noopener noreferrer">
-                 Official Notification ↗
-               </a>`
-            : ""
-        }
-
-        ${
-          job.apply_url
-            ? `<a class="apply-btn"
-                  href="${escapeHtml(job.apply_url)}"
-                  target="_blank" rel="noopener noreferrer">
-                 Apply Online ↗
-               </a>`
-            : ""
-        }
+        ${escapeHtml(
+          job.description ||
+          "Please read the official notification carefully."
+        )}
       </div>
 
       <p class="tiny-note">
-        Apply karne se pehle official website par dates, eligibility aur links verify karein.
+        Dates aur links ko apply karne se pehle official website par verify karein.
       </p>
     `;
 
@@ -432,11 +436,8 @@
   }
 
   document.addEventListener("click", event => {
-    const detailButton = event.target.closest("[data-detail]");
-
-    if (detailButton) {
-      showDetails(detailButton.dataset.detail);
-    }
+    const button = event.target.closest("[data-detail]");
+    if (button) showDetails(button.dataset.detail);
   });
 
   $("#detailClose").addEventListener("click", () => {
@@ -455,10 +456,10 @@
     renderJobs();
   });
 
-  const showMoreJobsBtn = $("#showMoreJobs");
+  const moreBtn = $("#showMoreJobs");
 
-  if (showMoreJobsBtn) {
-    showMoreJobsBtn.addEventListener("click", () => {
+  if (moreBtn) {
+    moreBtn.addEventListener("click", () => {
       showAllJobs = true;
       renderJobs();
     });
@@ -537,7 +538,6 @@
           <p class="eyebrow">SARKARI JOB ALERT • CONTENT CONTROL</p>
           <h2>Admin Control Center</h2>
           <p class="tiny-note">
-            Add updates and publish after verification.
             Logged in: ${escapeHtml(currentUser?.email || "Admin")}
           </p>
         </div>
@@ -565,11 +565,11 @@
       <form id="jobForm" class="editor-form" hidden>
         <input type="hidden" id="jobId">
 
-        <label>Post title *
+        <label>Post Title *
           <input id="jobTitle" required maxlength="180">
         </label>
 
-        <label>Department
+        <label>Department / Board
           <input id="jobDepartment" maxlength="180">
         </label>
 
@@ -581,14 +581,20 @@
           </select>
         </label>
 
-        <div id="vacancyFields" class="full">
-          <div class="editor-form">
+        <div id="vacancyFields" class="category-fields full">
+          <div class="category-fields-title">Vacancy Details</div>
+
+          <div class="category-fields-grid">
             <label>Vacancies / Update
               <input id="jobVacancies" maxlength="80">
             </label>
 
-            <label>Qualification
-              <input id="jobQualification" maxlength="180">
+            <label>Notification Date
+              <input id="jobNotificationDate" type="date">
+            </label>
+
+            <label>Last Date to Apply
+              <input id="jobLastDate" type="date">
             </label>
 
             <label>DOB Eligibility — From
@@ -597,6 +603,10 @@
 
             <label>DOB Eligibility — To
               <input id="jobDobTo" type="date">
+            </label>
+
+            <label>Qualification
+              <input id="jobQualification" maxlength="180">
             </label>
 
             <label>Application Fees
@@ -610,11 +620,17 @@
             <label>Selection Process
               <input id="jobSelection" maxlength="180">
             </label>
+
+            <label>Apply Online URL
+              <input id="jobApply" type="url">
+            </label>
           </div>
         </div>
 
-        <div id="admitCardFields" class="full" hidden>
-          <div class="editor-form">
+        <div id="admitCardFields" class="category-fields full" hidden>
+          <div class="category-fields-title">Admit Card Details</div>
+
+          <div class="category-fields-grid">
             <label>Exam Date
               <input id="jobExamDate" type="date">
             </label>
@@ -623,54 +639,41 @@
               <input id="jobAdmitReleaseDate" type="date">
             </label>
 
-            <label class="full">Admit Card URL
-              <input id="jobAdmitUrl" type="url"
-                     placeholder="Official admit card link">
+            <label class="full">Download Admit Card URL
+              <input id="jobAdmitUrl" type="url">
             </label>
           </div>
         </div>
 
-        <div id="resultFields" class="full" hidden>
-          <div class="editor-form">
-            <label>Result Date
+        <div id="resultFields" class="category-fields full" hidden>
+          <div class="category-fields-title">Result Details</div>
+
+          <div class="category-fields-grid">
+            <label>Result Declaration Date
               <input id="jobResultDate" type="date">
             </label>
 
             <label>Result Status
-              <input id="jobResultStatus" maxlength="180"
-                     placeholder="Declared / Pending">
+              <input id="jobResultStatus" maxlength="120"
+                     placeholder="Declared / Soon / Scorecard available">
             </label>
 
-            <label>Cut-off
+            <label class="full">Result Check URL
+              <input id="jobResultUrl" type="url">
+            </label>
+
+            <label>Cut-off Details
               <input id="jobCutoff" maxlength="500">
             </label>
 
-            <label>Result URL
-              <input id="jobResultUrl" type="url"
-                     placeholder="Official result link">
-            </label>
-
-            <label class="full">Merit List URL
-              <input id="jobMeritUrl" type="url"
-                     placeholder="Official merit list link">
+            <label>Merit List URL
+              <input id="jobMeritUrl" type="url">
             </label>
           </div>
         </div>
 
-        <label>Notification Date
-          <input id="jobNotificationDate" type="date">
-        </label>
-
-        <label>Last Date
-          <input id="jobLastDate" type="date">
-        </label>
-
-        <label>Official Notification URL
+        <label class="full">Official Notification PDF / URL
           <input id="jobNotification" type="url">
-        </label>
-
-        <label>Apply Online URL
-          <input id="jobApply" type="url">
         </label>
 
         <label class="full">Complete Details
@@ -695,6 +698,7 @@
       <div class="admin-tools">
         <input id="adminSearch" type="search"
                placeholder="Search title / department...">
+
         <select id="adminFilter">
           <option value="all">All posts</option>
           <option value="draft">Drafts only</option>
@@ -705,29 +709,35 @@
       <div class="admin-list" id="adminList">
         ${
           jobs.length
-            ? jobs.map(job => `
+            ? jobs.map(j => `
               <div class="admin-item">
                 <div>
-                  <h4>${escapeHtml(job.title)}</h4>
+                  <h4>${escapeHtml(j.title)}</h4>
                   <p>
-                    ${escapeHtml(displayCategory(job.category))} •
-                    ${escapeHtml(job.status)} •
-                    ${escapeHtml(job.department || "No department")}
+                    ${escapeHtml(displayCategory(j.category))} •
+                    ${escapeHtml(j.status)} •
+                    ${escapeHtml(j.department || "No department")}
                   </p>
                 </div>
 
                 <div class="admin-item-actions">
-                  <button class="small-btn" data-edit="${escapeHtml(job.id)}">Edit</button>
-                  <button class="small-btn"
-                          data-toggle="${escapeHtml(job.id)}"
-                          data-status="${escapeHtml(job.status)}">
-                    ${job.status === "published" ? "Unpublish" : "Publish"}
+                  <button class="small-btn" data-edit="${escapeHtml(j.id)}">
+                    Edit
                   </button>
-                  <button class="small-btn" data-delete="${escapeHtml(job.id)}">Delete</button>
+
+                  <button class="small-btn"
+                          data-toggle="${escapeHtml(j.id)}"
+                          data-status="${escapeHtml(j.status)}">
+                    ${j.status === "published" ? "Unpublish" : "Publish"}
+                  </button>
+
+                  <button class="small-btn" data-delete="${escapeHtml(j.id)}">
+                    Delete
+                  </button>
                 </div>
               </div>
             `).join("")
-            : '<div class="empty-state">Abhi posts nahi hain. Add Update se pehli post banayein.</div>'
+            : '<div class="empty-state">Abhi posts nahi hain.</div>'
         }
       </div>
     `;
@@ -752,7 +762,7 @@
     $("#adminRoot").querySelectorAll("[data-edit]").forEach(button => {
       button.onclick = () => {
         openEditor(
-          jobs.find(job => String(job.id) === button.dataset.edit)
+          jobs.find(j => String(j.id) === button.dataset.edit)
         );
       };
     });
@@ -770,25 +780,27 @@
       button.onclick = () => deleteJob(button.dataset.delete);
     });
 
-    const filterAdminList = () => {
+    const filter = () => {
       const term = ($("#adminSearch").value || "").trim().toLowerCase();
       const state = $("#adminFilter").value || "all";
 
       $("#adminList").querySelectorAll(".admin-item").forEach(item => {
         const text = item.textContent.toLowerCase();
-        const matchesText = !term || text.includes(term);
-        const matchesState = state === "all" || text.includes("• " + state + " •");
 
-        item.style.display = matchesText && matchesState ? "" : "none";
+        item.style.display =
+          (!term || text.includes(term)) &&
+          (state === "all" || text.includes("• " + state + " •"))
+            ? ""
+            : "none";
       });
     };
 
-    $("#adminSearch").addEventListener("input", filterAdminList);
-    $("#adminFilter").addEventListener("change", filterAdminList);
+    $("#adminSearch").addEventListener("input", filter);
+    $("#adminFilter").addEventListener("change", filter);
   }
 
   function updateCategoryFields() {
-    const category = $("#jobCategory").value;
+    const category = $("#jobCategory")?.value || "Vacancy";
 
     $("#vacancyFields").hidden = category !== "Vacancy";
     $("#admitCardFields").hidden = category !== "Admit Card";
@@ -805,7 +817,8 @@
 
       <form id="loginForm" class="admin-form">
         <label>Email
-          <input id="adminEmail" type="email" autocomplete="username" required>
+          <input id="adminEmail" type="email"
+                 autocomplete="username" required>
         </label>
 
         <label>Password
@@ -832,25 +845,29 @@
       jobTitle: job?.title || "",
       jobDepartment: job?.department || "",
       jobCategory: displayCategory(job?.category || "Vacancy"),
+
       jobVacancies: job?.vacancies || "",
-      jobQualification: job?.qualification || "",
+      jobNotificationDate: job?.notification_date || "",
+      jobLastDate: job?.last_date || "",
       jobDobFrom: job?.dob_from || "",
       jobDobTo: job?.dob_to || "",
+      jobQualification: job?.qualification || "",
       jobFees: job?.fees || "",
       jobAge: job?.age_limit || "",
       jobSelection: job?.selection_process || "",
+      jobApply: job?.apply_url || "",
+
       jobExamDate: job?.exam_date || "",
       jobAdmitReleaseDate: job?.admit_card_release_date || "",
       jobAdmitUrl: job?.admit_card_url || "",
+
       jobResultDate: job?.result_date || "",
       jobResultStatus: job?.result_status || "",
       jobResultUrl: job?.result_url || "",
-      jobCutoff: job?.cutoff || "",
+      jobCutoff: job?.cutoff_details || job?.cutoff || "",
       jobMeritUrl: job?.merit_list_url || "",
-      jobNotificationDate: job?.notification_date || "",
-      jobLastDate: job?.last_date || "",
+
       jobNotification: job?.notification_url || "",
-      jobApply: job?.apply_url || "",
       jobDescription: job?.description || "",
       jobStatus: job?.status || "draft"
     };
@@ -861,7 +878,11 @@
     });
 
     updateCategoryFields();
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    form.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   }
 
   async function saveJob(event) {
@@ -872,11 +893,6 @@
 
     const category = $("#jobCategory").value;
 
-    /*
-     * Important:
-     * Existing database columns vacancies and qualification
-     * may be NOT NULL. Always send a non-empty value.
-     */
     const data = {
       title: $("#jobTitle").value.trim(),
       department: $("#jobDepartment").value.trim() || "Not specified",
@@ -892,67 +908,97 @@
           ? ($("#jobQualification").value.trim() || "Not specified")
           : "Not applicable",
 
-      dob_from: category === "Vacancy"
-        ? ($("#jobDobFrom").value || null)
-        : null,
+      notification_date:
+        category === "Vacancy"
+          ? ($("#jobNotificationDate").value || null)
+          : null,
 
-      dob_to: category === "Vacancy"
-        ? ($("#jobDobTo").value || null)
-        : null,
+      last_date:
+        category === "Vacancy"
+          ? ($("#jobLastDate").value || null)
+          : null,
 
-      fees: category === "Vacancy"
-        ? ($("#jobFees").value.trim() || "See official notification")
-        : "Not applicable",
+      dob_from:
+        category === "Vacancy"
+          ? ($("#jobDobFrom").value || null)
+          : null,
 
-      age_limit: category === "Vacancy"
-        ? ($("#jobAge").value.trim() || "See official notification")
-        : "Not applicable",
+      dob_to:
+        category === "Vacancy"
+          ? ($("#jobDobTo").value || null)
+          : null,
 
-      selection_process: category === "Vacancy"
-        ? ($("#jobSelection").value.trim() || "See official notification")
-        : "Not applicable",
+      fees:
+        category === "Vacancy"
+          ? ($("#jobFees").value.trim() || "See official notification")
+          : "Not applicable",
 
-      exam_date: category === "Admit Card"
-        ? ($("#jobExamDate").value || null)
-        : null,
+      age_limit:
+        category === "Vacancy"
+          ? ($("#jobAge").value.trim() || "See official notification")
+          : "Not applicable",
 
-      admit_card_release_date: category === "Admit Card"
-        ? ($("#jobAdmitReleaseDate").value || null)
-        : null,
+      selection_process:
+        category === "Vacancy"
+          ? ($("#jobSelection").value.trim() || "See official notification")
+          : "Not applicable",
 
-      admit_card_url: category === "Admit Card"
-        ? ($("#jobAdmitUrl").value.trim() || null)
-        : null,
+      apply_url:
+        category === "Vacancy"
+          ? ($("#jobApply").value.trim() || null)
+          : null,
 
-      result_date: category === "Result"
-        ? ($("#jobResultDate").value || null)
-        : null,
+      exam_date:
+        category === "Admit Card"
+          ? ($("#jobExamDate").value || null)
+          : null,
 
-      result_status: category === "Result"
-        ? ($("#jobResultStatus").value.trim() || "See official notification")
-        : null,
+      admit_card_release_date:
+        category === "Admit Card"
+          ? ($("#jobAdmitReleaseDate").value || null)
+          : null,
 
-      result_url: category === "Result"
-        ? ($("#jobResultUrl").value.trim() || null)
-        : null,
+      admit_card_url:
+        category === "Admit Card"
+          ? ($("#jobAdmitUrl").value.trim() || null)
+          : null,
 
-      cutoff: category === "Result"
-        ? ($("#jobCutoff").value.trim() || null)
-        : null,
+      result_date:
+        category === "Result"
+          ? ($("#jobResultDate").value || null)
+          : null,
 
-      merit_list_url: category === "Result"
-        ? ($("#jobMeritUrl").value.trim() || null)
-        : null,
+      result_status:
+        category === "Result"
+          ? ($("#jobResultStatus").value.trim() || "See official notification")
+          : null,
 
-      notification_date: $("#jobNotificationDate").value || null,
-      last_date: $("#jobLastDate").value || null,
+      result_url:
+        category === "Result"
+          ? ($("#jobResultUrl").value.trim() || null)
+          : null,
 
-      notification_url: $("#jobNotification").value.trim() || null,
-      apply_url: $("#jobApply").value.trim() || null,
+      cutoff_details:
+        category === "Result"
+          ? ($("#jobCutoff").value.trim() || null)
+          : null,
 
-      description: $("#jobDescription").value.trim(),
-      status: $("#jobStatus").value,
-      updated_at: new Date().toISOString()
+      merit_list_url:
+        category === "Result"
+          ? ($("#jobMeritUrl").value.trim() || null)
+          : null,
+
+      notification_url:
+        $("#jobNotification").value.trim() || null,
+
+      description:
+        $("#jobDescription").value.trim(),
+
+      status:
+        $("#jobStatus").value,
+
+      updated_at:
+        new Date().toISOString()
     };
 
     let result;
@@ -982,13 +1028,13 @@
     if (result.error) {
       message.textContent =
         "Save failed: " + result.error.message +
-        ". Agar column missing ho, pehle Supabase migration run karein.";
+        ". Database columns aur NOT NULL constraints check karein.";
       return;
     }
 
     if (editingId && !result.data) {
       message.textContent =
-        "Record update nahi hua. Database permissions aur record ID check karein.";
+        "Update nahi hua. RLS policy ya record ID check karein.";
       return;
     }
 
@@ -1019,7 +1065,11 @@
       return;
     }
 
-    toast(status === "published" ? "Post published" : "Post draft mein chali gayi");
+    toast(
+      status === "published"
+        ? "Post published"
+        : "Post draft mein chali gayi"
+    );
 
     await loadJobs();
     await renderAdmin();
