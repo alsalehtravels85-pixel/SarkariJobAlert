@@ -292,25 +292,37 @@
           </div>
 
           <div class="card-actions">
-            <button class="details-btn"
-                    data-detail="${escapeHtml(job.id)}">
-              View Details
-            </button>
+  <button class="details-btn"
+          data-detail="${escapeHtml(job.id)}">
+    View Details
+  </button>
 
-            ${
-              mainUrl
-                ? `<a class="apply-btn"
-                      href="${escapeHtml(mainUrl)}"
-                      target="_blank"
-                      rel="noopener noreferrer">
-                     ${buttonText}
-                   </a>`
-                : `<button class="apply-btn"
-                           data-detail="${escapeHtml(job.id)}">
-                     View Update
-                   </button>`
-            }
-          </div>
+  ${
+    mainUrl
+      ? `<a class="apply-btn"
+            href="${escapeHtml(mainUrl)}"
+            target="_blank"
+            rel="noopener noreferrer">
+           ${buttonText}
+         </a>`
+      : `<button class="apply-btn"
+                 data-detail="${escapeHtml(job.id)}">
+           View Update
+         </button>`
+  }
+
+  <button type="button"
+          class="share-btn"
+          data-share-job="${escapeHtml(job.id)}">
+    ↗ Share
+  </button>
+
+  <button type="button"
+          class="copy-link-btn"
+          data-copy-job="${escapeHtml(job.id)}">
+    Copy Link
+  </button>
+</div>
         </article>`;
     }).join("");
   }
