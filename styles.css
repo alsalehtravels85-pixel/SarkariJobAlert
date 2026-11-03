@@ -131,3 +131,23 @@
 @media(prefers-reduced-motion:reduce){.student-poster-cta{transition:none}}
 
 @media(max-width:390px){.job-grid{grid-template-columns:1fr}.card-actions{flex-direction:row}.job-card h3{font-size:14px}}
+/* WhatsApp Style Share Button */
+.share-btn {
+  background: #25D366 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 10px 16px !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.share-btn:hover {
+  background: #128C7E !important;
+  transform: translateY(-2px);
+}
+
+.share-btn:active {
+  transform: scale(0.96);
+}
