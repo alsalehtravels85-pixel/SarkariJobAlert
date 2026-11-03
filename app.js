@@ -446,11 +446,90 @@
 
     detailDialog.showModal();
   }
+function openSharedJobFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const jobId = params.get("job");
 
-  document.addEventListener("click", event => {
-    const button = event.target.closest("[data-detail]");
-    if (button) showDetails(button.dataset.detail);
-  });
+  if (!jobId) return;
+
+  const job = allJobs.find(
+    item => String(item.id) === String(jobId)
+  );
+
+  if (job) {
+    showDetails(job.id);
+  }
+}
+  function getJobShareData(id) {
+  const job = allJobs.find(
+    item => String(item.id) === String(id)
+  );
+
+  if (!job) return null;
+
+  const url = new URL(window.location.href);
+  url.searchParams.set("job", String(job.id));
+  url.hash = "";
+
+  const shareUrl = url.toString();
+
+  const message =
+    `${job.title}\n` +
+    `${job.department || ""}\n` +
+    `Category: ${displayCategory(job.category)}\n` +
+    `Details: ${shareUrl}`;
+
+  return {
+    title: job.title,
+    text: message,
+    url: shareUrl
+  };
+}
+
+document.addEventListener("click", event => {
+  const shareButton = event.target.closest("[data-share-job]");
+
+  if (shareButton) {
+    const data = getJobShareData(shareButton.dataset.shareJob);
+    if (!data) return;
+
+    if (navigator.share) {
+      navigator.share({
+        title: data.title,
+        text: data.text,
+        url: data.url
+      }).catch(() => {});
+    } else {
+      window.open(
+        "https://wa.me/?text=" + encodeURIComponent(data.text),
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+    return;
+  }
+
+  const copyButton = event.target.closest("[data-copy-job]");
+
+  if (copyButton) {
+    const data = getJobShareData(copyButton.dataset.copyJob);
+    if (!data) return;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(data.url)
+        .then(() => alert("Job link copy ho gaya!"))
+        .catch(() => window.prompt("Job link copy karein:", data.url));
+    } else {
+      window.prompt("Job link copy karein:", data.url);
+    }
+    return;
+  }
+
+  const button = event.target.closest("[data-detail]");
+  if (button) {
+    showDetails(button.dataset.detail);
+  }
+});
 
   $("#detailClose").addEventListener("click", () => {
     detailDialog.close();
