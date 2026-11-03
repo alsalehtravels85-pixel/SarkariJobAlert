@@ -148,6 +148,26 @@
   transform: translateY(-2px);
 }
 
+/* FORCE SHARE BUTTON COLOR */
+button.share-btn,
+.share-btn,
+.card-actions button.share-btn {
+    background: #25D366 !important;
+    background-color: #25D366 !important;
+    color: #ffffff !important;
+    border: 2px solid #25D366 !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+button.share-btn:hover,
+.share-btn:hover {
+    background: #128C7E !important;
+    background-color: #128C7E !important;
+    color: #ffffff !important;
+}
+
 .share-btn:active {
   transform: scale(0.96);
 }
