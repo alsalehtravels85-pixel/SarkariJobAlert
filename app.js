@@ -317,11 +317,7 @@
     ↗ Share
   </button>
 
-  <button type="button"
-          class="copy-link-btn"
-          data-copy-job="${escapeHtml(job.id)}">
-    Copy Link
-  </button>
+
 </div>
         </article>`;
     }).join("");
@@ -511,19 +507,7 @@ document.addEventListener("click", event => {
 
   const copyButton = event.target.closest("[data-copy-job]");
 
-  if (copyButton) {
-    const data = getJobShareData(copyButton.dataset.copyJob);
-    if (!data) return;
 
-    if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(data.url)
-        .then(() => alert("Job link copy ho gaya!"))
-        .catch(() => window.prompt("Job link copy karein:", data.url));
-    } else {
-      window.prompt("Job link copy karein:", data.url);
-    }
-    return;
-  }
 
   const button = event.target.closest("[data-detail]");
   if (button) {
