@@ -505,8 +505,6 @@ document.addEventListener("click", event => {
     return;
   }
 
-  const copyButton = event.target.closest("[data-copy-job]");
-
 
 
   const button = event.target.closest("[data-detail]");
