@@ -478,8 +478,60 @@
       </p>
     `;
 
+    updateJobSeo(job);
     detailDialog.showModal();
   }
+
+  function updateJobSeo(job) {
+    if (!job) return;
+    const url = new URL(window.location.href);
+    url.searchParams.set("job", String(job.id));
+    url.hash = "";
+    window.history.replaceState({}, "", url.toString());
+
+    const title = `${job.title} | Sarkari Job Alert`;
+    document.title = title;
+
+    let description = String(job.description || `${job.title} की पूरी जानकारी, योग्यता, महत्वपूर्ण तिथियां और आधिकारिक आवेदन लिंक देखें।`)
+      .replace(/\s+/g, " ").trim();
+    if (description.length > 155) description = description.slice(0, 152).trimEnd() + "...";
+
+    let descriptionTag = document.querySelector('meta[name="description"]');
+    if (!descriptionTag) {
+      descriptionTag = document.createElement("meta");
+      descriptionTag.name = "description";
+      document.head.appendChild(descriptionTag);
+    }
+    descriptionTag.content = description;
+
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.rel = "canonical";
+      document.head.appendChild(canonical);
+    }
+    canonical.href = url.toString();
+
+    let robots = document.querySelector('meta[name="robots"]');
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      document.head.appendChild(robots);
+    }
+    robots.content = "index,follow,max-image-preview:large";
+  }
+
+  function resetHomeSeo() {
+    document.title = "Sarkari Job Alert — Latest Updates, Admit Card, Results";
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = "https://sarkari-jobalert.com/";
+    const description = document.querySelector('meta[name="description"]');
+    if (description) description.content = "Latest Sarkari Naukri, government job notifications, admit cards, results and answer keys. Check official notification and apply links.";
+    const url = new URL(window.location.href);
+    url.searchParams.delete("job");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }
+
 function openSharedJobFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const jobId = params.get("job");
@@ -553,6 +605,13 @@ document.addEventListener("click", event => {
 
   $("#detailClose").addEventListener("click", () => {
     detailDialog.close();
+    resetHomeSeo();
+  });
+
+  detailDialog.addEventListener("close", () => {
+    if (new URLSearchParams(window.location.search).has("job")) {
+      resetHomeSeo();
+    }
   });
 
   $("#searchBtn").addEventListener("click", () => {

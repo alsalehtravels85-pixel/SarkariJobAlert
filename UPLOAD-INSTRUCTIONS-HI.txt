@@ -1,0 +1,33 @@
+SarkariJobAlert Sitemap Update — Upload Package
+
+Is package mein sirf ye changes hain:
+1) app.js — share/detail URL (?job=ID) par title, meta description aur canonical URL update karta hai; modal close par home SEO restore karta hai.
+2) robots.txt — sitemap location batata hai.
+3) sitemap.xml — initial static pages; GitHub Action ise published jobs se automatic update karega.
+4) scripts/generate-sitemap.mjs — Supabase se sirf status=published jobs leta hai; 1000+ jobs ke liye pagination bhi hai.
+5) .github/workflows/update-sitemap.yml — har 6 ghante sitemap refresh karta hai aur change hone par sitemap.xml commit karta hai.
+
+UPLOAD:
+- Repository ke ROOT mein app.js ko replace karein.
+- robots.txt aur sitemap.xml ko ROOT mein add/replace karein.
+- scripts/generate-sitemap.mjs ko scripts/ folder mein upload karein.
+- .github/workflows/update-sitemap.yml ko .github/workflows/ folder mein upload karein.
+- Existing index.html, styles.css, config.js, admin code aur Supabase schema ko replace/delete na karein.
+
+REQUIRED EXISTING GITHUB SECRETS:
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+Ye wahi secrets hain jo existing school article publishing workflow mein use hote hain. Service-role key ko public files mein kabhi na daalein.
+
+After upload:
+- GitHub > Actions > Update SarkariJobAlert Sitemap > Run workflow.
+- Check https://sarkari-jobalert.com/sitemap.xml
+- Check https://sarkari-jobalert.com/robots.txt
+- Confirm Cloudflare deployment picked up the repository commit. If deployment is manual-only, deploy the updated site assets after the GitHub action writes sitemap.xml.
+- Google Search Console mein sitemap.xml ko re-submit karein.
+
+IMPORTANT:
+- Draft jobs sitemap mein nahi aayengi.
+- Sitemap URL entries use existing share format /?job=ID.
+- Google indexing is not guaranteed; Google decides which valid pages to index.
+- Push sender Worker, website Worker routes, Firebase secrets, Supabase database/schema aur admin panel is package se change nahi hote.
