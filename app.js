@@ -132,9 +132,16 @@
   ];
 
   function toast(message) {
-    let el = $("#toast");
+    // Admin dialog is a browser top-layer element. Keep the diagnostic inside it
+    // so it remains visible while the modal is open and after adminRoot rerenders.
+    const adminStatus = $("#adminPushStatus");
+    if (adminStatus && adminDialog?.open) {
+      adminStatus.hidden = false;
+      adminStatus.textContent = message;
+      adminStatus.style.display = "block";
+    }
 
-    // Toast ko admin panel ke rerender se bachane ke liye body ke andar rakhein.
+    let el = $("#toast");
     if (!el) {
       el = document.createElement("div");
       el.id = "toast";
@@ -163,7 +170,6 @@
 
     el.textContent = message;
     el.classList.add("show");
-
     clearTimeout(el._sjaToastTimer);
     el._sjaToastTimer = setTimeout(() => {
       el.classList.remove("show");
@@ -1008,7 +1014,14 @@ document.addEventListener("click", event => {
         headers: { "content-type": "application/json", "authorization": "Bearer " + token },
         body: JSON.stringify({ jobId: String(jobId) })
       });
-      const result = await response.json().catch(() => ({}));
+      const responseText = await response.text();
+      let result = {};
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        result = { detail: responseText.slice(0, 700) };
+      }
+
       if (!response.ok) {
         const reason = result.error || result.detail || result.message || "Worker error";
         const stage = result.stage ? " [" + result.stage + "]" : "";
