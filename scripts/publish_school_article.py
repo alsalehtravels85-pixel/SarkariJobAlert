@@ -15,7 +15,7 @@ import requests
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip()
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
 AUTO_PUBLISH = os.getenv("AUTO_PUBLISH_STUDY_GUIDES", "true").strip().lower() == "true"
 STATUS = "published" if AUTO_PUBLISH else "draft"
 TODAY = dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
