@@ -36,14 +36,22 @@
       if (!token) throw new Error("Device token nahi mila.");
       const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
       const now = new Date().toISOString();
-      const {error} = await db.from("push_subscriptions").upsert({
+      // Use INSERT (not UPSERT): public visitors have INSERT permission only.
+      const {error} = await db.from("push_subscriptions").insert({
         token,
         user_agent: navigator.userAgent,
         enabled: true,
         created_at: now,
         updated_at: now
-      }, {onConflict: "token", ignoreDuplicates: true});
-      if (error) throw new Error("Device register nahi hua: "+error.message);
+      });
+      if (error) {
+        if (error.code === "23505") {
+          say("Ye device pehle se subscribed hai.");
+          btn.textContent = "✓ Already Subscribed";
+          return;
+        }
+        throw new Error("Device register nahi hua: " + error.message);
+      }
       say("Notifications ON! Is device par Vacancy, Admit Card aur Result alerts milenge.");
       btn.textContent = "✓ Notifications Enabled";
       try { sessionStorage.setItem("sjaPushPopupDismissed", "1"); } catch (_) {}
