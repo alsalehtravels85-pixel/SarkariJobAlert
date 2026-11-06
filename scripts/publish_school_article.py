@@ -1,8 +1,9 @@
-import time
-import random
+
 import os
 import re
 import json
+import time
+import random
 import datetime as dt
 from zoneinfo import ZoneInfo
 import requests
@@ -12,7 +13,7 @@ import requests
 # SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY
 # Optional GitHub Variables:
 # AUTO_PUBLISH_STUDY_GUIDES=true
-# GEMINI_MODEL=gemini-2.5-flash
+# GEMINI_MODEL=gemini-3.8-flash
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
@@ -29,6 +30,53 @@ HEADERS = {
     "Content-Type": "application/json",
     "Prefer": "return=representation",
 }
+
+def gemini_request_with_retry(url, payload, timeout=180, max_retries=6):
+    """Retry temporary Gemini overload/rate-limit/server errors with backoff."""
+    headers = {
+        "x-goog-api-key": GEMINI_API_KEY,
+        "Content-Type": "application/json",
+    }
+    retryable_statuses = {429, 500, 502, 503, 504}
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(
+                url, headers=headers, json=payload, timeout=timeout
+            )
+        except requests.exceptions.RequestException as error:
+            if attempt == max_retries - 1:
+                raise RuntimeError(
+                    f"Gemini network request failed after {max_retries} attempts: {error}"
+                ) from error
+            delay = min(8 * (2 ** attempt), 90) + random.uniform(0, 3)
+            print(
+                f"Gemini network issue. Retry {attempt + 1}/{max_retries} "
+                f"in {delay:.1f} seconds..."
+            )
+            time.sleep(delay)
+            continue
+
+        if response.status_code not in retryable_statuses:
+            return response
+
+        if attempt == max_retries - 1:
+            return response
+
+        retry_after = response.headers.get("Retry-After")
+        try:
+            delay = float(retry_after) if retry_after else min(8 * (2 ** attempt), 90)
+        except (TypeError, ValueError):
+            delay = min(8 * (2 ** attempt), 90)
+        delay = min(delay, 120) + random.uniform(0, 3)
+
+        print(
+            f"Gemini temporarily unavailable (HTTP {response.status_code}). "
+            f"Retry {attempt + 1}/{max_retries} in {delay:.1f} seconds..."
+        )
+        time.sleep(delay)
+
+    raise RuntimeError("Gemini request failed after all retry attempts.")
 
 # Rotation: Class 10 se postgraduate level tak. University syllabus institution-wise
 # alag hota hai, isliye article prompt mein current syllabus verify karne ki hidayat hai.
@@ -139,10 +187,9 @@ def generate_article(course, subject, topic):
 केवल लेख का पाठ लौटाएँ। Markdown headings और numbered lists इस्तेमाल कर सकते हैं। JSON, code fence या अतिरिक्त टिप्पणी न दें।
 """
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    response = requests.post(
+    response = gemini_request_with_retry(
         url,
-        headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
-        json={
+        {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {
                 "temperature": 0.65,
@@ -150,7 +197,7 @@ def generate_article(course, subject, topic):
                 "maxOutputTokens": 10000
             }
         },
-        timeout=180
+        timeout=180,
     )
     try:
         payload = response.json()
@@ -223,16 +270,25 @@ def main():
         "नीचे दिए गए हिंदी शैक्षिक लेख के लिए 35 से 50 शब्दों का मौलिक हिंदी सारांश लिखें। "
         "केवल सारांश दें, शीर्षक या उद्धरण चिह्न नहीं।\n\n" + article[:5000]
     )
-    er = requests.post(
+    er = gemini_request_with_retry(
         f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"},
-        json={
+        {
             "contents": [{"role": "user", "parts": [{"text": excerpt_prompt}]}],
             "generationConfig": {"temperature": 0.3, "maxOutputTokens": 250}
         },
-        timeout=90
+        timeout=90,
     )
-    er.raise_for_status()
+    if not er.ok:
+        try:
+            error_payload = er.json()
+            error_message = error_payload.get("error", {}).get(
+                "message", "Unknown Gemini API error"
+            )
+        except ValueError:
+            error_message = er.text or "Unknown Gemini API error"
+        raise RuntimeError(
+            f"Gemini excerpt API HTTP {er.status_code}: {error_message[:900]}"
+        )
     ej = er.json()
     excerpt = "\n".join(
         p.get("text", "") for p in
