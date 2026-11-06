@@ -132,13 +132,44 @@
   ];
 
   function toast(message) {
-    const el = $("#toast");
-    if (!el) return;
+    let el = $("#toast");
+
+    // Toast ko admin panel ke rerender se bachane ke liye body ke andar rakhein.
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "toast";
+      document.body.appendChild(el);
+    } else if (el.parentElement !== document.body) {
+      document.body.appendChild(el);
+    }
+
+    Object.assign(el.style, {
+      position: "fixed",
+      left: "50%",
+      bottom: "24px",
+      transform: "translateX(-50%)",
+      zIndex: "99999",
+      maxWidth: "min(92vw, 560px)",
+      padding: "12px 18px",
+      borderRadius: "10px",
+      background: "#172033",
+      color: "#fff",
+      boxShadow: "0 8px 28px rgba(0,0,0,.25)",
+      fontSize: "14px",
+      lineHeight: "1.45",
+      display: "block",
+      opacity: "1"
+    });
 
     el.textContent = message;
     el.classList.add("show");
 
-    setTimeout(() => el.classList.remove("show"), 2600);
+    clearTimeout(el._sjaToastTimer);
+    el._sjaToastTimer = setTimeout(() => {
+      el.classList.remove("show");
+      el.style.display = "none";
+    }, 7000);
+    el.style.display = "block";
   }
 
   async function loadJobs() {
@@ -979,7 +1010,9 @@ document.addEventListener("click", event => {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        toast("Push failed (" + response.status + "): " + (result.error || "Worker error"));
+        const reason = result.error || result.detail || result.message || "Worker error";
+        const stage = result.stage ? " [" + result.stage + "]" : "";
+        toast("Push failed (" + response.status + ")" + stage + ": " + reason);
         console.error("Push Worker error:", response.status, result);
         return;
       }
@@ -1150,11 +1183,11 @@ document.addEventListener("click", event => {
       return;
     }
 
+    toast(editingId ? "Changes saved" : "New update saved");
+
     if (data.status === "published" && result.data?.id) {
       await sendPublishNotification(result.data.id);
     }
-
-    toast(editingId ? "Changes saved" : "New update saved");
 
     await loadJobs();
     await renderAdmin();
@@ -1181,15 +1214,15 @@ document.addEventListener("click", event => {
       return;
     }
 
-    if (status === "published") {
-      await sendPublishNotification(data.id || id);
-    }
-
     toast(
       status === "published"
         ? "Post published"
         : "Post draft mein chali gayi"
     );
+
+    if (status === "published") {
+      await sendPublishNotification(data.id || id);
+    }
 
     await loadJobs();
     await renderAdmin();
