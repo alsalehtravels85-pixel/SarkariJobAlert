@@ -89,10 +89,20 @@
   <script defer src="firebase-config.js"></script>
   <script defer src="push-client.js"></script>
 <style>
-.push-optin-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin:14px auto;text-align:center}
-.push-optin-btn{border:0;border-radius:999px;padding:12px 18px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;font-weight:800;cursor:pointer}
-.push-optin-btn:disabled{opacity:.6}
-#pushNotificationStatus{font-size:12px;color:#64748b;max-width:520px}
+.push-popup-backdrop{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.62);backdrop-filter:blur(5px)}
+.push-popup-backdrop.is-open{display:flex}
+.push-popup{position:relative;width:min(100%,390px);padding:28px 22px 22px;border-radius:22px;background:#fff;color:#172033;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:pushPopupIn .25s ease-out}
+@keyframes pushPopupIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.push-popup-icon{width:62px;height:62px;margin:0 auto 13px;border-radius:20px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.push-popup h2{margin:0 0 9px;font-size:22px;line-height:1.25;color:#172033}
+.push-popup p{margin:0 0 18px;color:#64748b;font-size:14px;line-height:1.55}
+.push-popup-actions{display:grid;gap:9px}
+.push-optin-btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.push-optin-btn:disabled{opacity:.6;cursor:wait}
+.push-popup-later{border:0;background:transparent;color:#64748b;padding:9px;cursor:pointer;font-weight:600}
+#pushNotificationStatus{display:block;min-height:18px;margin-top:12px;font-size:12px;color:#475569;line-height:1.45}
+.push-popup-close{position:absolute;right:12px;top:10px;border:0;background:#f1f5f9;color:#64748b;width:30px;height:30px;border-radius:50%;font-size:19px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){.push-popup{animation:none}}
 </style>
 </head>
 <body>
@@ -141,11 +151,21 @@
         <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
       </div>
       </div>
-    <div class="push-optin-wrap">
-          <button type="button" id="enableJobNotifications" class="push-optin-btn">🔔 Get Vacancy, Admit Card & Result Alerts</button>
-          <small id="pushNotificationStatus" role="status" aria-live="polite">Nayi update ka alert paane ke liye notifications ON karein.</small>
-        </div>
       </section>
+
+    <div class="push-popup-backdrop" id="pushPopupBackdrop" role="dialog" aria-modal="true" aria-labelledby="pushPopupTitle">
+      <div class="push-popup">
+        <button type="button" class="push-popup-close" id="closePushPopup" aria-label="Close">×</button>
+        <div class="push-popup-icon" aria-hidden="true">🔔</div>
+        <h2 id="pushPopupTitle">Latest Job Alerts Paayein!</h2>
+        <p>Vacancy, Admit Card aur Result ki nayi update sabse pehle apne mobile ya computer par paayein.</p>
+        <div class="push-popup-actions">
+          <button type="button" id="enableJobNotifications" class="push-optin-btn">🔔 Enable Notifications</button>
+          <button type="button" class="push-popup-later" id="laterPushPopup">Abhi nahi</button>
+        </div>
+        <small id="pushNotificationStatus" role="status" aria-live="polite"></small>
+      </div>
+    </div>
 
     <section class="quick-cats" aria-label="Job categories">
       <button class="cat active" data-category="All"><span>▦</span>All Updates</button>
