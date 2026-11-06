@@ -35,7 +35,13 @@
       const token = await messaging.getToken({vapidKey:window.SJA_VAPID_PUBLIC_KEY, serviceWorkerRegistration:registration});
       if (!token) throw new Error("Device token nahi mila.");
       const db = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY);
-      const {error} = await db.from("push_subscriptions").upsert({token, user_agent:navigator.userAgent, enabled:true, updated_at:new Date().toISOString()},{onConflict:"token", ignoreDuplicates:true});
+      const {error} = await db.from("push_subscriptions").upsert({
+  token,
+  user_agent: navigator.userAgent,
+  enabled: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+},{onConflict:"token", ignoreDuplicates:true});
       if (error) throw new Error("Device register nahi hua: "+error.message);
       say("Notifications ON! Is device par Vacancy, Admit Card aur Result alerts milenge.");
       btn.textContent = "✓ Notifications Enabled";
