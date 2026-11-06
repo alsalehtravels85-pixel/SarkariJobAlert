@@ -73,7 +73,9 @@
     .education-news-note{color:#64748b;font-size:13px;margin:0 0 14px}
     @media(max-width:1000px){.home-education-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:600px){.home-education-grid{grid-template-columns:1fr;gap:12px}.home-education-card{padding:15px}}
-  </style>
+  
+    .home-guide-subtitle{margin:5px 0 0;color:var(--muted,#64748b);font-size:.88rem;line-height:1.45}
+</style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -184,7 +186,7 @@
 
     <section class="content-section home-education-section" aria-labelledby="homeGuideTitle">
       <div class="section-heading">
-        <div><h2 id="homeGuideTitle">📚 Education Guide</h2></div>
+        <div><h2 id="homeGuideTitle">📚 School &amp; Exam Guide</h2><p class="home-guide-subtitle">Class 9–12, BA, BSc, BCom, MA, MSc aur MCom • Study Tips • Revision • Practice</p></div>
         <a class="apply-btn" href="education.html">Saare Articles dekhein ↗</a>
       </div>
       <div id="homeEducationGuides" class="home-education-grid" aria-live="polite">
@@ -273,9 +275,9 @@
     guideBox.innerHTML=guides.length?guides.map(a=>`<article class="home-education-card"><span class="home-education-tag">${esc(a.grade)} • ${esc(a.subject)}</span><h3>${esc(a.title)}</h3><div class="home-education-meta"><span>Study Guide</span><time>${dateText(a.published_at)}</time></div><p>${esc(a.excerpt)}</p><a href="education.html">पूरा लेख पढ़ें ↗</a></article>`).join(''):'<div class="loading-card">Abhi koi Education Guide article publish nahi hua hai.</div>';
     let showAll=false;
     const renderNews=()=>{
-      const visible=showAll?news:news.slice(0,8);
+      const visible=showAll?news:news.slice(0,4);
       newsBox.innerHTML=visible.length?visible.map(n=>{const url=safeUrl(n.source_url);const date=n.original_published_at||n.published_at;return `<article class="home-education-card"><span class="home-education-tag">${esc(n.source_name||'Education News')}</span><h3>${esc(n.title)}</h3><div class="home-education-meta"><span>Education News</span><time>${dateText(date)}</time></div><p>${esc(n.excerpt)}</p>${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow">Original source par padhein ↗</a>`:'<a href="education-news.html">News details dekhein ↗</a>'}</article>`}).join(''):'<div class="loading-card">Abhi koi Education News available nahi hai.</div>';
-      if(moreBox){moreBox.innerHTML='';if(news.length>8&&!showAll){const btn=document.createElement('button');btn.type='button';btn.className='show-more-jobs';btn.textContent=`Show More News (${news.length-8} aur)`;btn.addEventListener('click',()=>{showAll=true;renderNews()});moreBox.appendChild(btn)}}
+      if(moreBox){moreBox.innerHTML='';if(news.length>4&&!showAll){const btn=document.createElement('button');btn.type='button';btn.className='show-more-jobs';btn.textContent=`Show More News (${news.length-4} aur)`;btn.addEventListener('click',()=>{showAll=true;renderNews()});moreBox.appendChild(btn)}}
     };
     renderNews();
   }catch(e){console.error('Homepage education content load error:',e);guideBox.innerHTML='<div class="loading-card">Education articles abhi load nahi ho paaye.</div>';newsBox.innerHTML='<div class="loading-card">Education news abhi load nahi ho paayi.</div>'; }
