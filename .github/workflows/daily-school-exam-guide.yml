@@ -9,21 +9,33 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: daily-school-exam-guide
+  cancel-in-progress: false
+
 jobs:
   publish-education:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install dependency
         run: pip install requests
-      - name: Publish one prepared study article
+
+      - name: Publish one AI-generated Hindi study article
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash
+          AUTO_PUBLISH_STUDY_GUIDES: "true"
+
         run: python scripts/publish_school_article.py
