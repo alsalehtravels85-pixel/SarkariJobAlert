@@ -962,17 +962,38 @@ document.addEventListener("click", event => {
   async function sendPublishNotification(jobId) {
     try {
       const cfg = window.SJA_CONFIG || {};
-      if (!cfg.PUSH_WORKER_URL || cfg.PUSH_WORKER_URL.includes("REPLACE-WITH")) return;
-      const { data } = await supabase.auth.getSession();
+      if (!cfg.PUSH_WORKER_URL || cfg.PUSH_WORKER_URL.includes("REPLACE-WITH")) {
+        toast("Push error: PUSH_WORKER_URL config missing");
+        return;
+      }
+      const { data, error: sessionError } = await supabase.auth.getSession();
       const token = data?.session?.access_token;
-      if (!token) return;
-      await fetch(cfg.PUSH_WORKER_URL.replace(/\/$/, "") + "/notify", {
+      if (sessionError || !token) {
+        toast("Push error: Admin login session nahi mila. Logout/login karke dobara try karein.");
+        return;
+      }
+      const response = await fetch(cfg.PUSH_WORKER_URL.replace(/\/$/, "") + "/notify", {
         method: "POST",
         headers: { "content-type": "application/json", "authorization": "Bearer " + token },
         body: JSON.stringify({ jobId: String(jobId) })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        toast("Push failed (" + response.status + "): " + (result.error || "Worker error"));
+        console.error("Push Worker error:", response.status, result);
+        return;
+      }
+      if (result.sent > 0) {
+        toast("Notification sent: " + result.sent + " device(s)");
+      } else if (result.duplicate) {
+        toast("Push skipped: is job ki notification pehle bheji ja chuki hai.");
+      } else {
+        toast("Push not sent: " + (result.message || "No subscribed devices"));
+      }
+      console.log("Push Worker result:", result);
     } catch (e) {
       console.warn("Push notification request failed:", e);
+      toast("Push request failed: " + (e.message || "Network/CORS error"));
     }
   }
 
