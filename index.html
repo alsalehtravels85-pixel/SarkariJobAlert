@@ -61,45 +61,11 @@
       .main-nav{gap:4px!important}
       .main-nav .nav-link{padding:7px 8px!important;font-size:11px!important}
     }
-    /* Compact School & Exam Guide strip */
-    .guide-promo-compact{
-      display:flex;align-items:center;gap:14px;padding:13px 18px!important;
-      min-height:unset;border-radius:16px;box-sizing:border-box;
-    }
-    .guide-compact-icon{
-      width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;
-      border-radius:12px;background:linear-gradient(135deg,#e0f2fe,#dbeafe);
-      font-size:22px;
-    }
-    .guide-compact-copy{min-width:0;flex:1}
-    .guide-compact-label{display:block;font-size:10px;font-weight:800;letter-spacing:1.2px;color:#2563eb;margin-bottom:2px}
-    .guide-compact-copy h2{font-size:18px;line-height:1.25;margin:0}
-    .guide-compact-copy p{font-size:12px;line-height:1.4;margin:4px 0 0;color:#64748b}
-    .guide-compact-link{
-      display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
-      padding:9px 12px;border-radius:10px;text-decoration:none;font-size:12px;font-weight:800;
-      color:#fff;background:linear-gradient(135deg,#2563eb,#0f766e);
-    }
-    .guide-compact-link span{font-size:14px}
-    @media(max-width:560px){
-      .guide-promo-compact{gap:10px;padding:11px 12px!important}
-      .guide-compact-icon{width:36px;height:36px;flex-basis:36px;font-size:19px}
-      .guide-compact-copy h2{font-size:15px}
-      .guide-compact-copy p{font-size:10px}
-      .guide-compact-label{font-size:9px}
-      .guide-compact-link{padding:8px 9px;font-size:11px}
-    }
-    @media(max-width:380px){
-      .guide-promo-compact{flex-wrap:wrap}
-      .guide-compact-copy{flex:1 1 calc(100% - 50px)}
-      .guide-compact-link{margin-left:46px}
-    }
-
     /* Education articles and news: four cards per row on desktop */
     .home-education-section{margin-top:28px}
     .home-education-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
     .home-education-card{min-width:0;background:#fff;border:1px solid #dce7f8;border-radius:16px;padding:17px;box-shadow:0 8px 25px #173a7510;display:flex;flex-direction:column}
-    .home-education-card h3{font-size:16px;line-height:1.45;margin:9px 0;overflow-wrap:anywhere;color:#172033}
+    .home-education-card h3{font-size:16px;line-height:1.45;margin:9px 0;color:#172033;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
     .home-education-card p{display:block!important;-webkit-line-clamp:unset!important;line-clamp:unset!important;-webkit-box-orient:initial!important;overflow:visible!important;white-space:normal!important;font-size:13px;line-height:1.6;color:#526581;margin:8px 0 12px}
     .home-education-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px;color:#64748b}
     .home-education-tag{display:inline-block;align-self:flex-start;border-radius:99px;background:#e5f0ff;color:#0954b5;padding:4px 9px;font-size:11px;font-weight:800}
@@ -214,19 +180,11 @@
       <div class="show-more-wrap"><button class="show-more-jobs" id="showMoreJobs" type="button" hidden>Show More Jobs</button></div>
     </section>
 
-    <section class="content-section guide-promo guide-promo-compact">
-      <div class="guide-compact-icon" aria-hidden="true">📚</div>
-      <div class="guide-compact-copy">
-        <span class="guide-compact-label">STUDENTS CORNER</span>
-        <h2>School &amp; Exam Guide</h2>
-        <p>Class 9–12, BA, BSc, BCom, MA, MSc aur MCom • Study Tips • Revision • Practice</p>
-      </div>
-      <a class="guide-compact-link" href="education.html">Open Guide <span aria-hidden="true">↗</span></a>
-    </section>
+
 
     <section class="content-section home-education-section" aria-labelledby="homeGuideTitle">
       <div class="section-heading">
-        <div><p class="eyebrow">STUDENTS CORNER</p><h2 id="homeGuideTitle">📚 Education Guide Articles</h2></div>
+        <div><h2 id="homeGuideTitle">📚 Education Guide</h2></div>
         <a class="apply-btn" href="education.html">Saare Articles dekhein ↗</a>
       </div>
       <div id="homeEducationGuides" class="home-education-grid" aria-live="polite">
@@ -236,10 +194,9 @@
 
     <section class="content-section home-education-section" aria-labelledby="educationNewsTitle">
       <div class="section-heading">
-        <div><p class="eyebrow">STUDENT NEWS DESK</p><h2 id="educationNewsTitle">📰 Education News</h2></div>
+        <div><h2 id="educationNewsTitle">📰 Education News</h2></div>
         <a class="apply-btn" href="education-news.html">Saari News dekhein ↗</a>
       </div>
-      <p class="education-news-note">Education headlines aur short summaries. Har khabar ki poori details original source par padhein.</p>
       <div id="homeEducationNews" class="home-education-grid" aria-live="polite">
         <div class="loading-card">Education news load ho rahi hai…</div>
       </div>
