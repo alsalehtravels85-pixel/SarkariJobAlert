@@ -1,4 +1,3 @@
-
 import os
 import re
 import json
@@ -33,78 +32,90 @@ HEADERS = {
     "Prefer": "return=representation",
 }
 
-def gemini_request_with_retry(url, payload, timeout=180, max_retries=6):
-    """Retry temporary Gemini overload/rate-limit/server errors with backoff."""
+def gemini_post_once(model, payload, timeout=95):
+    """One bounded Gemini request. Never wait indefinitely."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     headers = {
         "x-goog-api-key": GEMINI_API_KEY,
         "Content-Type": "application/json",
     }
-    retryable_statuses = {429, 500, 502, 503, 504}
+    return requests.post(url, headers=headers, json=payload, timeout=timeout)
 
-    for attempt in range(max_retries):
-        try:
-            response = requests.post(
-                url, headers=headers, json=payload, timeout=timeout
-            )
-        except requests.exceptions.RequestException as error:
-            if attempt == max_retries - 1:
-                raise RuntimeError(
-                    f"Gemini network request failed after {max_retries} attempts: {error}"
-                ) from error
-            delay = min(8 * (2 ** attempt), 90) + random.uniform(0, 3)
+
+def gemini_generate_with_fallback(payload):
+    """
+    Keep the complete AI phase below the GitHub Actions 10-minute limit:
+    primary model: at most 2 requests; fallback model: at most 1 request.
+    """
+    primary = GEMINI_MODEL or "gemini-3.8-flash"
+    fallback = GEMINI_FALLBACK_MODEL or "gemini-3.5-flash-lite"
+    retryable = {429, 500, 502, 503, 504}
+
+    models = [(primary, 2)]
+    if fallback and fallback != primary:
+        models.append((fallback, 1))
+
+    last_response = None
+
+    for model, attempts in models:
+        print(f"Requesting Gemini model: {model}", flush=True)
+
+        for attempt in range(1, attempts + 1):
+            try:
+                response = gemini_post_once(model, payload, timeout=95)
+            except requests.exceptions.Timeout:
+                print(
+                    f"{model} request timed out (attempt {attempt}/{attempts}).",
+                    flush=True
+                )
+                if attempt < attempts:
+                    time.sleep(5)
+                    continue
+                last_response = None
+                break
+            except requests.exceptions.RequestException as error:
+                print(
+                    f"{model} network error (attempt {attempt}/{attempts}): {error}",
+                    flush=True
+                )
+                if attempt < attempts:
+                    time.sleep(5)
+                    continue
+                last_response = None
+                break
+
+            last_response = response
+
+            if response.ok:
+                return response
+
+            if response.status_code not in retryable:
+                # Model not found, invalid key, bad request, etc. Fail immediately.
+                return response
+
             print(
-                f"Gemini network issue. Retry {attempt + 1}/{max_retries} "
-                f"in {delay:.1f} seconds..."
+                f"{model} temporarily unavailable (HTTP {response.status_code}), "
+                f"attempt {attempt}/{attempts}.",
+                flush=True
             )
-            time.sleep(delay)
-            continue
 
-        if response.status_code not in retryable_statuses:
-            return response
+            if attempt < attempts:
+                time.sleep(5)
 
-        if attempt == max_retries - 1:
-            return response
-
-        retry_after = response.headers.get("Retry-After")
-        try:
-            delay = float(retry_after) if retry_after else min(8 * (2 ** attempt), 90)
-        except (TypeError, ValueError):
-            delay = min(8 * (2 ** attempt), 90)
-        delay = min(delay, 120) + random.uniform(0, 3)
-
-        print(
-            f"Gemini temporarily unavailable (HTTP {response.status_code}). "
-            f"Retry {attempt + 1}/{max_retries} in {delay:.1f} seconds..."
-        )
-        time.sleep(delay)
-
-    raise RuntimeError("Gemini request failed after all retry attempts.")
-
-def gemini_generate_with_fallback(payload, timeout=180):
-    """Try the primary model first, then a lighter model if it remains overloaded."""
-    models = [GEMINI_MODEL]
-    if GEMINI_FALLBACK_MODEL and GEMINI_FALLBACK_MODEL != GEMINI_MODEL:
-        models.append(GEMINI_FALLBACK_MODEL)
-
-    for index, model in enumerate(models):
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        print(f"Requesting Gemini model: {model}")
-        response = gemini_request_with_retry(url, payload, timeout=timeout)
-
-        if response.ok:
-            return response
-
-        # If the primary model is overloaded/rate-limited, switch to fallback.
-        if response.status_code in {429, 500, 502, 503, 504} and index < len(models) - 1:
+        if model != models[-1][0]:
             print(
-                f"Primary Gemini model is still unavailable (HTTP {response.status_code}). "
-                f"Switching to fallback model: {models[index + 1]}"
+                f"Switching to fallback model: {fallback}",
+                flush=True
             )
-            continue
 
-        return response
+    if last_response is not None:
+        return last_response
 
-    raise RuntimeError("All configured Gemini models failed.")
+    raise RuntimeError(
+        "Gemini requests timed out or had network errors on all configured attempts. "
+        "The script stopped early to avoid GitHub Actions timeout."
+    )
+
 
 # Rotation: Class 10 se postgraduate level tak. University syllabus institution-wise
 # alag hota hai, isliye article prompt mein current syllabus verify karne ki hidayat hai.
@@ -220,10 +231,9 @@ def generate_article(course, subject, topic):
             "generationConfig": {
                 "temperature": 0.65,
                 "topP": 0.9,
-                "maxOutputTokens": 10000
+                "maxOutputTokens": 8500
             }
-        },
-        timeout=180,
+        }
     )
     try:
         payload = response.json()
@@ -249,7 +259,7 @@ def main():
     course, subject, topic, day_number = choose_lesson()
     title = f"{course} {subject}: {topic}"
     slug = f"{TODAY.isoformat()}-{slugify(course)}-{slugify(subject)}-{day_number}"
-    print(f"Generating Hindi lesson: {title}")
+    print(f"Generating Hindi lesson: {title}", flush=True)
 
     # Prevent duplicate publishing if workflow is manually re-run on the same date.
     check = requests.get(
@@ -281,47 +291,25 @@ def main():
 
     article = generate_article(course, subject, topic)
     count = word_count(article)
-    if count < 750:
-        print(f"Article short ({count} words); requesting one expansion pass.")
-        article += "\n\n" + generate_article(
-            course, subject,
-            topic + " — विस्तृत उदाहरण, अतिरिक्त अवधारणाएँ और अभ्यास सहित पूरक पाठ"
-        )
-        count = word_count(article)
 
+    # Do not launch a second full article generation: that can exceed the
+    # GitHub Actions time limit. Keep the article unpublished if too short.
     if count < 700:
-        raise RuntimeError(f"Generated article bahut chhota hai ({count} words). Publish nahi kiya.")
-
-    excerpt_prompt = (
-        "नीचे दिए गए हिंदी शैक्षिक लेख के लिए 35 से 50 शब्दों का मौलिक हिंदी सारांश लिखें। "
-        "केवल सारांश दें, शीर्षक या उद्धरण चिह्न नहीं।\n\n" + article[:5000]
-    )
-    er = gemini_generate_with_fallback(
-        {
-            "contents": [{"role": "user", "parts": [{"text": excerpt_prompt}]}],
-            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 250}
-        },
-        timeout=90,
-    )
-    if not er.ok:
-        try:
-            error_payload = er.json()
-            error_message = error_payload.get("error", {}).get(
-                "message", "Unknown Gemini API error"
-            )
-        except ValueError:
-            error_message = er.text or "Unknown Gemini API error"
         raise RuntimeError(
-            f"Gemini excerpt API HTTP {er.status_code}: {error_message[:900]}"
+            f"Generated article is too short ({count} words). "
+            "Not published; retry the workflow later."
         )
-    ej = er.json()
-    excerpt = "\n".join(
-        p.get("text", "") for p in
-        (ej.get("candidates", [{}])[0].get("content", {}).get("parts", []))
-        if p.get("text")
-    ).strip()
-    if not excerpt:
-        excerpt = f"{course} के विद्यार्थियों के लिए {subject} में {topic} की विस्तृत हिंदी व्याख्या, उदाहरण, महत्वपूर्ण प्रश्न और अभ्यास MCQ।"
+
+    # Build a short excerpt locally from the article to avoid a second Gemini
+    # API request, which previously caused long waits and extra 503 errors.
+    plain_excerpt = re.sub(r"[*_#>`\\-]+", " ", article)
+    excerpt_words = re.findall(r"\\S+", plain_excerpt)
+    excerpt = " ".join(excerpt_words[:45]).strip()
+    if len(excerpt_words) < 20:
+        excerpt = (
+            f"{course} के विद्यार्थियों के लिए {subject} में {topic} की "
+            "व्याख्या, उदाहरण, महत्वपूर्ण प्रश्न और अभ्यास MCQ।"
+        )
 
     payload = {
         "slug": slug,
@@ -340,7 +328,7 @@ def main():
     if not result.ok:
         raise RuntimeError(f"Supabase insert failed HTTP {result.status_code}: {result.text[:1000]}")
 
-    print(f"Created {STATUS} Hindi study guide: {title} ({count} words)")
+    print(f"Created {STATUS} Hindi study guide: {title} ({count} words)", flush=True)
 
 if __name__ == "__main__":
     main()
