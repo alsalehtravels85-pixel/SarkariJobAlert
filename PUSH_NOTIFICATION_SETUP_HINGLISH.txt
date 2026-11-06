@@ -1,0 +1,79 @@
+SARKARIJOBALERT - PUSH NOTIFICATION PACKAGE
+===========================================
+
+CATEGORIES: Vacancy, Admit Card, Result
+CLICK: https://sarkari-jobalert.com/?job=JOB_ID (exact job detail)
+
+STATUS
+------
+Prepared integration package; NOT deployed or live-tested. Do not upload before configuration.
+Do not replace the existing website Worker.
+
+FILES
+-----
+- Updated index.html: opt-in button for all three categories.
+- Updated firebase-messaging-sw.js: background push + notification click handling.
+- push-client.js: asks permission after visitor click; registers FCM token in Supabase.
+- Updated app.js: requests sender only after successful Publish.
+- notification-worker.js: separate Cloudflare Worker sender (Firebase FCM HTTP v1).
+- PUSH_NOTIFICATION_MIGRATION.sql: additive duplicate-prevention table.
+- Other supplied website files are retained.
+
+ONE-TIME CONFIGURATION
+----------------------
+1) FIREBASE
+Open Firebase project sarkarijobalert-32102 > Project Settings > Service accounts.
+Generate/download a private key JSON. Keep it private. Never send it in chat or add it to frontend/GitHub.
+Ensure Firebase Cloud Messaging HTTP v1 API is enabled.
+
+2) SUPABASE
+Aapne confirm kiya hai ki push_notification_log table pehle se bana hai; isliye migration dobara run na karein.
+The supplied schema already defines public.push_subscriptions. Do NOT blindly rerun schema.sql on production.
+
+3) SEPARATE CLOUDFLARE WORKER
+Create a NEW Worker, for example sarkarijobalert-push-sender.
+Deploy notification-worker.js as its entry point.
+Add these as Worker Secrets (not plain variables):
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- SUPABASE_SERVICE_ROLE_KEY
+- FIREBASE_SERVICE_ACCOUNT_JSON (entire service-account JSON text)
+Never expose the service-role key or Firebase private key.
+
+Do not edit/replace the existing sarkarijobalert website Worker, its routes, or DNS.
+
+4) CONFIGURE SENDER URL
+In config.js replace PUSH_WORKER_URL placeholder with the new Worker URL, e.g.
+https://sarkarijobalert-push-sender.gulfjob.workers.dev
+Keep the existing Supabase URL and public key unchanged.
+
+5) FRONTEND DEPLOY
+Back up current website files first. Upload updated files from this package to the existing frontend hosting root, preserving unrelated files and folders. Do not change DNS/routes or overwrite unrelated workflows.
+
+VISITOR FLOW
+------------
+Visitor opens site over HTTPS > taps notification button > allows browser permission.
+FCM token is stored in public.push_subscriptions.
+Admin publishes Vacancy/Admit Card/Result > app calls separate Worker using current Supabase login session.
+Worker validates the Supabase session and allowlists alsalehtravels85@gmail.com, confirms job status=published, deduplicates by job_id, then sends FCM data messages.
+Notification click opens the exact job details via ?job=ID.
+
+SECURITY / NOTES
+---------------
+- Never put service-account JSON/private key or Supabase service-role key in browser code, GitHub, screenshots, or chat.
+- Worker validates a logged-in Supabase user. The supplied schema permits authenticated users to manage jobs; if your project has non-admin authenticated users, restrict Worker to the actual admin identity before production.
+- Visitor permission is mandatory and per browser/device. No silent subscription.
+- HTTPS and supported browser/OS are required.
+- Existing public Firebase web config and VAPID public key remain in frontend; service-account credentials do not.
+- Frontend bundle static checks passed. Live push delivery and production deployment have not been independently tested.
+
+TEST
+----
+1. Separate Worker aur chaar required Secrets aap configure/deploy kar chuke hain. Is package ka notification-worker.js sirf tab use karein jab Worker code ko dobara update karna ho; live Worker ko bina zaroorat replace na karein.
+2. PUSH_WORKER_URL is set to the confirmed Worker URL in config.js. Deploy the updated frontend files.
+3. On Android Chrome, tap notification button and allow.
+4. Verify a row appears in public.push_subscriptions.
+5. Publish a test Draft in each category.
+6. Confirm notification arrives and opens that exact post.
+7. Confirm an already-notified post does not send duplicates.
+8. Repeat opt-in/test on other devices separately.

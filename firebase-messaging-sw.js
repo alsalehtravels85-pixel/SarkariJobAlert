@@ -1,29 +1,31 @@
-/* Keep this file in the website root so its scope includes the whole site. */
+/* SarkariJobAlert FCM background worker. Keep at website root. */
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js");
-
 firebase.initializeApp({
-  apiKey: "PASTE_FIREBASE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_STORAGE_BUCKET",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID",
-  appId: "PASTE_APP_ID"
+  apiKey: "AIzaSyCNc3P7587EOfMuwStAeB9dDy0ybk_1Jwc",
+  authDomain: "arkarijobalert-32102.firebaseapp.com",
+  projectId: "sarkarijobalert-32102",
+  storageBucket: "arkarijobalert-32102.firebasestorage.app",
+  messagingSenderId: "559517715385",
+  appId: "1:559517715385:web:96c8720e48ca0bcf988468"
 });
-
 const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
-  const title = payload?.notification?.title || payload?.data?.title || "Nayi Sarkari Job";
-  const options = {
-    body: payload?.notification?.body || payload?.data?.body || "Nayi job update available hai.",
-    icon: "/favicon.ico",
-    data: { url: payload?.data?.url || "/" }
-  };
-  self.registration.showNotification(title, options);
+  const d = payload && payload.data ? payload.data : {};
+  return self.registration.showNotification(d.title || "SarkariJobAlert Update", {
+    body: d.body || "Nayi update publish hui hai. Details dekhein.",
+    icon: "/favicon.png", badge: "/favicon.png",
+    tag: d.tag || ("sja-" + (d.jobId || Date.now())),
+    data: { url: d.url || "https://sarkari-jobalert.com/" },
+    renotify: false
+  });
 });
-
-self.addEventListener("notificationclick", (event) => {
+self.addEventListener("notificationclick", event => {
   event.notification.close();
-  const target = event.notification?.data?.url || "/";
-  event.waitUntil(clients.openWindow(target));
+  const target = event.notification.data && event.notification.data.url || "https://sarkari-jobalert.com/";
+  event.waitUntil((async () => {
+    const wins = await clients.matchAll({type:"window", includeUncontrolled:true});
+    for (const w of wins) { if ("navigate" in w) { await w.navigate(target); return w.focus(); } }
+    return clients.openWindow(target);
+  })());
 });

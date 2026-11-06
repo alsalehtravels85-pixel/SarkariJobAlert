@@ -171,6 +171,7 @@
 
     allJobs = data || [];
     renderJobs();
+    openSharedJobFromUrl();
   }
 
   function renderJobs() {
@@ -958,6 +959,23 @@ document.addEventListener("click", event => {
     });
   }
 
+  async function sendPublishNotification(jobId) {
+    try {
+      const cfg = window.SJA_CONFIG || {};
+      if (!cfg.PUSH_WORKER_URL || cfg.PUSH_WORKER_URL.includes("REPLACE-WITH")) return;
+      const { data } = await supabase.auth.getSession();
+      const token = data?.session?.access_token;
+      if (!token) return;
+      await fetch(cfg.PUSH_WORKER_URL.replace(/\/$/, "") + "/notify", {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": "Bearer " + token },
+        body: JSON.stringify({ jobId: String(jobId) })
+      });
+    } catch (e) {
+      console.warn("Push notification request failed:", e);
+    }
+  }
+
   async function saveJob(event) {
     event.preventDefault();
 
@@ -1111,6 +1129,10 @@ document.addEventListener("click", event => {
       return;
     }
 
+    if (data.status === "published" && result.data?.id) {
+      await sendPublishNotification(result.data.id);
+    }
+
     toast(editingId ? "Changes saved" : "New update saved");
 
     await loadJobs();
@@ -1136,6 +1158,10 @@ document.addEventListener("click", event => {
     if (!data) {
       toast("Status nahi badla. RLS policy ya record ID check karein.");
       return;
+    }
+
+    if (status === "published") {
+      await sendPublishNotification(data.id || id);
     }
 
     toast(

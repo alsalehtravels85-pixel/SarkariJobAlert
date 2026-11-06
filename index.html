@@ -82,8 +82,18 @@
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
   <script src="config.js"></script>
   <script defer src="app.js"></script>
+  <script defer src="firebase-config.js"></script>
+  <script defer src="push-client.js"></script>
+<style>
+.push-optin-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin:14px auto;text-align:center}
+.push-optin-btn{border:0;border-radius:999px;padding:12px 18px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;font-weight:800;cursor:pointer}
+.push-optin-btn:disabled{opacity:.6}
+#pushNotificationStatus{font-size:12px;color:#64748b;max-width:520px}
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -131,7 +141,11 @@
         <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
       </div>
       </div>
-    </section>
+    <div class="push-optin-wrap">
+          <button type="button" id="enableJobNotifications" class="push-optin-btn">🔔 Get Vacancy, Admit Card & Result Alerts</button>
+          <small id="pushNotificationStatus" role="status" aria-live="polite">Nayi update ka alert paane ke liye notifications ON karein.</small>
+        </div>
+      </section>
 
     <section class="quick-cats" aria-label="Job categories">
       <button class="cat active" data-category="All"><span>▦</span>All Updates</button>
