@@ -14,11 +14,13 @@ import requests
 # Optional GitHub Variables:
 # AUTO_PUBLISH_STUDY_GUIDES=true
 # GEMINI_MODEL=gemini-3.8-flash
+# GEMINI_FALLBACK_MODEL=gemini-3.5-flash-lite
 
 SUPABASE_URL = os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
+GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite").strip()
 AUTO_PUBLISH = os.getenv("AUTO_PUBLISH_STUDY_GUIDES", "true").strip().lower() == "true"
 STATUS = "published" if AUTO_PUBLISH else "draft"
 TODAY = dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
@@ -77,6 +79,32 @@ def gemini_request_with_retry(url, payload, timeout=180, max_retries=6):
         time.sleep(delay)
 
     raise RuntimeError("Gemini request failed after all retry attempts.")
+
+def gemini_generate_with_fallback(payload, timeout=180):
+    """Try the primary model first, then a lighter model if it remains overloaded."""
+    models = [GEMINI_MODEL]
+    if GEMINI_FALLBACK_MODEL and GEMINI_FALLBACK_MODEL != GEMINI_MODEL:
+        models.append(GEMINI_FALLBACK_MODEL)
+
+    for index, model in enumerate(models):
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        print(f"Requesting Gemini model: {model}")
+        response = gemini_request_with_retry(url, payload, timeout=timeout)
+
+        if response.ok:
+            return response
+
+        # If the primary model is overloaded/rate-limited, switch to fallback.
+        if response.status_code in {429, 500, 502, 503, 504} and index < len(models) - 1:
+            print(
+                f"Primary Gemini model is still unavailable (HTTP {response.status_code}). "
+                f"Switching to fallback model: {models[index + 1]}"
+            )
+            continue
+
+        return response
+
+    raise RuntimeError("All configured Gemini models failed.")
 
 # Rotation: Class 10 se postgraduate level tak. University syllabus institution-wise
 # alag hota hai, isliye article prompt mein current syllabus verify karne ki hidayat hai.
@@ -186,9 +214,7 @@ def generate_article(course, subject, topic):
 
 केवल लेख का पाठ लौटाएँ। Markdown headings और numbered lists इस्तेमाल कर सकते हैं। JSON, code fence या अतिरिक्त टिप्पणी न दें।
 """
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    response = gemini_request_with_retry(
-        url,
+    response = gemini_generate_with_fallback(
         {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -270,8 +296,7 @@ def main():
         "नीचे दिए गए हिंदी शैक्षिक लेख के लिए 35 से 50 शब्दों का मौलिक हिंदी सारांश लिखें। "
         "केवल सारांश दें, शीर्षक या उद्धरण चिह्न नहीं।\n\n" + article[:5000]
     )
-    er = gemini_request_with_retry(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+    er = gemini_generate_with_fallback(
         {
             "contents": [{"role": "user", "parts": [{"text": excerpt_prompt}]}],
             "generationConfig": {"temperature": 0.3, "maxOutputTokens": 250}
