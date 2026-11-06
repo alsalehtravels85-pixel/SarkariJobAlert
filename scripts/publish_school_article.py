@@ -176,17 +176,25 @@ def word_count(text):
     return len(re.findall(r"\S+", text))
 
 def choose_lesson():
-    pairs = [(course, subject) for course, subjects in COURSES for subject in subjects]
+    """Har 9 din mein har course ki baari; us course ke subjects bhi rotate hon."""
     day_number = (TODAY - dt.date(2026, 11, 6)).days
-    # Rotate subject/course each day; topic rotates independently for each subject.
-    pair_index = day_number % len(pairs)
-    course, subject = pairs[pair_index]
-    subject_day = day_number // len(pairs)
+
+    # Course rotation: Class 10, 11, 12, B.A., B.Sc., B.Com., M.A., M.Sc., M.Com.
+    course_index = day_number % len(COURSES)
+    course, subjects = COURSES[course_index]
+
+    # Jab wahi course 9 din baad aaye, agla subject choose ho.
+    course_cycle = day_number // len(COURSES)
+    subject_index = (course_cycle + course_index) % len(subjects)
+    subject = subjects[subject_index]
+
+    # Ek subject ke topics us course-subject ki agli baari par aage badhen.
+    subject_cycle = course_cycle // len(subjects)
     topic_list = TOPICS.get(subject, [
         "विषय की मूल अवधारणाएँ", "प्रमुख सिद्धांत और उनके अनुप्रयोग",
         "उदाहरणों द्वारा विषय की समझ", "विश्लेषण और अभ्यास"
     ])
-    topic = topic_list[subject_day % len(topic_list)]
+    topic = topic_list[subject_cycle % len(topic_list)]
     return course, subject, topic, day_number
 
 def generate_article(course, subject, topic):
@@ -198,6 +206,13 @@ def generate_article(course, subject, topic):
 विषय: {subject}
 मुख्य विषय: {topic}
 तिथि: {TODAY.isoformat()}
+
+बहुत महत्वपूर्ण निर्देश:
+- यहाँ "हिंदी" लेख की भाषा/माध्यम है, जरूरी नहीं कि विषय हिंदी हो। निर्धारित विषय {subject} ही पढ़ाएँ।
+- गणित का पाठ गणित पर, विज्ञान का पाठ विज्ञान पर, इतिहास का पाठ इतिहास पर और इसी तरह दिए गए विषय पर ही केंद्रित हो।
+- केवल तभी हिंदी व्याकरण, साहित्य या हिंदी भाषा पढ़ाएँ जब निर्धारित विषय स्वयं "हिंदी" हो।
+- अंग्रेज़ी विषय होने पर भी पूरी व्याख्या सरल हिंदी में दें; अंग्रेज़ी के उदाहरण/वाक्य जहाँ जरूरी हों, उनके हिंदी अर्थ और समझ भी दें।
+- सूत्र, समीकरण, तकनीकी शब्द और आवश्यक अंग्रेज़ी शब्द रख सकते हैं, लेकिन उनका अर्थ सरल हिंदी में समझाएँ।
 
 लक्ष्य:
 - पूरा लेख स्वाभाविक, सरल और स्पष्ट हिंदी में लिखें। अंग्रेज़ी शब्द केवल जहाँ आवश्यक हों, वहाँ हिंदी अर्थ के साथ दें।
@@ -303,7 +318,7 @@ def main():
     # Build a short excerpt locally from the article to avoid a second Gemini
     # API request, which previously caused long waits and extra 503 errors.
     plain_excerpt = re.sub(r"[*_#>`\\-]+", " ", article)
-    excerpt_words = re.findall(r"\\S+", plain_excerpt)
+    excerpt_words = re.findall(r"\S+", plain_excerpt)
     excerpt = " ".join(excerpt_words[:45]).strip()
     if len(excerpt_words) < 20:
         excerpt = (
