@@ -171,3 +171,30 @@ button.share-btn:hover,
 .share-btn:active {
   transform: scale(0.96);
 }
+
+
+/* SarkariJobAlert premium hero and government-update ticker */
+.hero{padding:42px 22px 32px;background:radial-gradient(ellipse at 18% 0%,#079af5 0,transparent 37%),radial-gradient(ellipse at 86% 10%,#742aff 0,transparent 36%),linear-gradient(125deg,#071d71,#075cd4 50%,#3521a3)}
+.hero-inner{grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);column-gap:28px;row-gap:0}
+.hero-glass-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.hero-glass-btn{display:inline-flex;align-items:center;gap:12px;padding:11px 16px;border:1px solid #ffffffa6;border-radius:12px;background:#ffffff20;color:#fff;text-decoration:none;font-size:13px;font-weight:850;backdrop-filter:blur(10px);box-shadow:0 6px 18px #001b5730;transition:background .2s,transform .2s}
+.hero-glass-btn:hover{background:#ffffff38;transform:translateY(-2px)}
+.hero-glass-btn-light{background:#071d7145;border-color:#ffffff75}
+.trust-panel{grid-column:2;grid-row:1;min-height:154px}
+.trust-panel>div{min-width:0}
+.trust-icon{font-size:16px}
+.search-row{margin-top:24px}
+.sja-breaking{min-height:48px;display:flex;align-items:center;gap:0;background:#fff;border-bottom:1px solid #dce7f8;box-shadow:0 5px 18px #123c8c0a;overflow:hidden}
+.sja-breaking-label{height:48px;flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:0 18px;background:linear-gradient(110deg,#08265f,#0b56bd);color:#fff;font-size:12px;font-weight:900;letter-spacing:.2px;white-space:nowrap}
+.sja-breaking-dot{width:8px;height:8px;border-radius:50%;background:#ffb02e;box-shadow:0 0 0 4px #ffb02e30;animation:sjaPulse 1.7s infinite}
+.sja-breaking-window{flex:1;min-width:0;overflow:hidden;padding:0 14px}
+.sja-breaking-track{display:flex;width:max-content;min-width:100%;animation:sjaTicker 32s linear infinite;will-change:transform}
+.sja-breaking-window:hover .sja-breaking-track{animation-play-state:paused}
+.sja-breaking-track span{display:inline-block;min-width:50vw;padding-right:70px;color:#17345f;font-size:13px;font-weight:750;white-space:nowrap}
+.sja-breaking-status{height:48px;flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 15px;border-left:1px solid #e4ebf6;color:#64748b;font-size:9px;font-weight:900;letter-spacing:1px;white-space:nowrap}
+.sja-monitor-dot{width:7px;height:7px;border-radius:50%;background:#0eaa72;box-shadow:0 0 0 3px #0eaa7220}
+@keyframes sjaTicker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes sjaPulse{50%{box-shadow:0 0 0 7px #ffb02e12;opacity:.75}}
+@media(max-width:900px){.hero{padding:34px 18px 28px}.hero-inner{grid-template-columns:1fr;row-gap:0}.hero-copy{grid-column:1;grid-row:1}.trust-panel{grid-column:1;grid-row:2;margin-top:20px;max-width:520px}.search-row{grid-row:3}.hero-points{grid-row:4}}
+@media(max-width:600px){.hero{padding:28px 14px 23px}.hero h1{font-size:clamp(31px,9vw,43px)}.hero-glass-actions{margin-top:15px}.hero-glass-btn{padding:10px 13px;font-size:12px}.trust-panel{padding:12px;gap:9px;border-radius:16px}.trust-panel>div{gap:7px;font-size:11px}.trust-icon{flex-basis:34px;width:34px;height:34px;font-size:13px}.sja-breaking{min-height:44px}.sja-breaking-label{height:44px;padding:0 10px;font-size:10px}.sja-breaking-window{padding:0 9px}.sja-breaking-track span{font-size:11px;padding-right:48px}.sja-breaking-status{height:44px;padding:0 8px;font-size:8px;letter-spacing:.5px}.sja-breaking-dot{width:6px;height:6px}}
+@media(prefers-reduced-motion:reduce){.sja-breaking-track,.sja-breaking-dot{animation:none}}

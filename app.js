@@ -131,6 +131,62 @@
     }
   ];
 
+
+  // Homepage ticker: read only published job updates; preserve the last headline locally.
+  const TICKER_CACHE_KEY = "sja_latest_govt_update_v1";
+  const tickerText = document.getElementById("sjaBreakingText");
+  const tickerTrack = document.getElementById("sjaBreakingTrack");
+
+  function tickerCategoryHindi(value) {
+    const c = displayCategory(value);
+    if (c === "Admit Card") return "एडमिट कार्ड";
+    if (c === "Result") return "रिजल्ट";
+    return "सरकारी भर्ती";
+  }
+
+  function paintTicker(item) {
+    if (!tickerText || !tickerTrack || !item?.title) return;
+    const headline = `${tickerCategoryHindi(item.category)}: ${item.title}`;
+    tickerText.textContent = headline;
+    // Duplicate the same latest headline so it loops continuously without a blank gap.
+    const clone = tickerText.cloneNode(true);
+    clone.removeAttribute("id");
+    tickerTrack.replaceChildren(tickerText, clone);
+  }
+
+  function readTickerCache() {
+    try { const raw = localStorage.getItem(TICKER_CACHE_KEY); return raw ? JSON.parse(raw) : null; }
+    catch (_) { return null; }
+  }
+
+  async function refreshGovernmentTicker() {
+    const cached = readTickerCache();
+    if (cached?.title) paintTicker(cached);
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase.from("jobs")
+        .select("id,title,category,created_at,updated_at")
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const latest = data?.[0];
+      if (latest?.title) {
+        const next = { id: latest.id, title: latest.title, category: latest.category, created_at: latest.created_at || null };
+        if (!cached || String(cached.id) !== String(next.id) || cached.title !== next.title) {
+          try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(next)); } catch (_) {}
+        }
+        paintTicker(next);
+      }
+    } catch (error) {
+      // Keep showing the last successfully fetched headline if the network is unavailable.
+      console.warn("Government updates ticker refresh skipped:", error);
+    }
+  }
+
+  refreshGovernmentTicker();
+  window.setInterval(refreshGovernmentTicker, 5 * 60 * 1000);
+
   function toast(message) {
     // Admin dialog is a browser top-layer element. Keep the diagnostic inside it
     // so it remains visible while the modal is open and after adminRoot rerenders.
