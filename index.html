@@ -316,5 +316,105 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
 });
 </script>
 
+
+<script>
+/* Automatic ticker: only the site's own published vacancies, admit cards, results and study guides. */
+(()=>{
+  const textEl=document.getElementById('sjaBreakingText');
+  const track=document.getElementById('sjaBreakingTrack');
+  const statusEl=document.getElementById('sjaMonitorStatus');
+  if(!textEl||!track) return;
+  const cfg=window.SJA_CONFIG||{};
+  const STORAGE_KEY='sja_published_ticker_v2';
+  const INTERVAL=5*60*1000;
+  let items=[];
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dateValue=v=>{const n=Date.parse(v||'');return Number.isFinite(n)?n:0};
+  const categoryInfo=value=>{
+    const c=String(value||'').trim().toLowerCase();
+    if(['vacancy','latest jobs','jobs'].includes(c)) return {label:'नई सरकारी भर्ती',type:'job'};
+    if(['admit card','admit cards'].includes(c)) return {label:'एडमिट कार्ड अपडेट',type:'job'};
+    if(['result','results','answer key'].includes(c)) return {label:'रिजल्ट अपडेट',type:'job'};
+    return null;
+  };
+  function save(list){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(list));}catch(e){}}
+  function showFallback(){
+    if(items.length) return;
+    textEl.textContent='सरकारी भर्ती, एडमिट कार्ड, रिजल्ट और स्कूल परीक्षा गाइड की नई प्रकाशित पोस्ट का इंतज़ार है।';
+    textEl.removeAttribute('data-href');
+  }
+  function render(){
+    if(!items.length){showFallback();return;}
+    const sequence=items.map(item=>`<span class="sja-ticker-item"><a class="sja-ticker-link" href="${esc(item.href)}">${esc(item.label)}: ${esc(item.title)}</a></span>`).join('');
+    track.innerHTML=sequence+sequence;
+    track.classList.remove('sja-ticker-refresh'); void track.offsetWidth; track.classList.add('sja-ticker-refresh');
+  }
+  function setItems(next){
+    if(!next.length) return;
+    const signature=next.map(x=>x.key).join('|');
+    const oldSignature=items.map(x=>x.key).join('|');
+    items=next; if(signature!==oldSignature) current=0; else current=current%items.length;
+    save(items); render();
+
+  }
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(Array.isArray(saved)&&saved.length){items=saved;render();}}catch(e){}
+  async function refresh(){
+    if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){showFallback();return;}
+    try{
+      const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+      const [jobsRes,guideRes]=await Promise.all([
+        sb.from('jobs').select('id,title,category,created_at,updated_at').eq('status','published').order('created_at',{ascending:false}).limit(30),
+        sb.from('school_articles').select('id,title,article_type,published_at,created_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false,nullsFirst:false}).limit(30)
+      ]);
+      if(jobsRes.error) throw jobsRes.error;
+      if(guideRes.error) throw guideRes.error;
+      const combined=[];
+      (jobsRes.data||[]).forEach(j=>{
+        const info=categoryInfo(j.category); if(!info) return;
+        combined.push({key:`job-${j.id}`,title:j.title,label:info.label,href:`./?job=${encodeURIComponent(j.id)}#updates`,time:dateValue(j.updated_at)||dateValue(j.created_at)});
+      });
+      (guideRes.data||[]).forEach(a=>combined.push({key:`guide-${a.id}`,title:a.title,label:'स्कूल एवं परीक्षा गाइड',href:`education.html#article-${encodeURIComponent(a.id)}`,time:dateValue(a.published_at)||dateValue(a.created_at)}));
+      combined.sort((a,b)=>b.time-a.time);
+      setItems(combined.slice(0,5));
+      if(statusEl) statusEl.textContent='MONITORING';
+    }catch(error){
+      console.warn('Ticker refresh failed; showing last saved published headlines.',error);
+      if(statusEl) statusEl.textContent='MONITORING';
+      if(!items.length) showFallback();
+    }
+  }
+  refresh(); setInterval(refresh,INTERVAL);
+})();
+</script>
+
+
+  <div class="sja-language-control" aria-label="Website language selector">
+    <span aria-hidden="true">🌐</span><label for="sjaLanguageSelect">Language</label>
+    <div id="google_translate_element"></div>
+  </div>
+  <style>
+    .sja-language-control{position:fixed;right:14px;bottom:16px;z-index:9998;display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #b9d6ff;border-radius:999px;background:rgba(255,255,255,.96);box-shadow:0 5px 22px rgba(9,45,105,.18);font:700 12px/1.2 Arial,sans-serif;color:#12336d;backdrop-filter:blur(10px)}
+    .sja-language-control>span{font-size:16px}.sja-language-control label{white-space:nowrap}
+    .sja-language-control .goog-te-gadget{font:12px Arial,sans-serif!important;color:#12336d!important}
+    .sja-language-control .goog-te-gadget select{max-width:112px!important;border:1px solid #c8d9f2!important;border-radius:8px!important;padding:5px 6px!important;background:#fff!important;color:#12336d!important;font-size:12px!important}
+    .sja-language-control .goog-te-gadget span,.sja-language-control .goog-logo-link{display:none!important}
+    body{top:0!important}.goog-te-banner-frame{display:none!important}
+    @media(max-width:600px){.sja-language-control{right:9px;bottom:10px;padding:6px 8px;gap:5px}.sja-language-control label{display:none}.sja-language-control .goog-te-gadget select{max-width:105px!important}}
+    /* Compact homepage hero without removing its search, trust panel or artwork. */
+    .hero{padding-top:27px!important;padding-bottom:23px!important}
+    .hero h1{margin-top:10px!important;margin-bottom:8px!important}
+    .hero .hero-inner{row-gap:0!important}
+    .hero .trust-panel{padding:13px!important;gap:9px!important}
+    .hero .search-row{margin-top:16px!important}
+    .hero .hero-points{margin-top:9px!important}
+    @media(max-width:760px){.hero{padding:22px 14px 18px!important}.hero .hero-inner{grid-template-columns:1fr!important}.hero .trust-panel{margin-top:14px!important}.hero .search-row{margin-top:14px!important}.hero .hero-points{gap:10px 16px!important}}
+  </style>
+  <script>
+    function googleTranslateElementInit(){
+      new google.translate.TranslateElement({pageLanguage:'hi',includedLanguages:'hi,en',autoDisplay:false,layout:google.translate.TranslateElement.InlineLayout.SIMPLE},'google_translate_element');
+    }
+  </script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+
 </body>
 </html>

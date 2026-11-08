@@ -190,7 +190,7 @@ button.share-btn:hover,
 .sja-breaking-window{flex:1;min-width:0;overflow:hidden;padding:0 14px}
 .sja-breaking-track{display:flex;width:max-content;min-width:100%;animation:sjaTicker 32s linear infinite;will-change:transform}
 .sja-breaking-window:hover .sja-breaking-track{animation-play-state:paused}
-.sja-breaking-track span{display:inline-block;min-width:50vw;padding-right:70px;color:#17345f;font-size:13px;font-weight:750;white-space:nowrap}
+.sja-breaking-track span{display:inline-block;flex:0 0 auto;padding-right:70px;color:#17345f;font-size:13px;font-weight:750;white-space:nowrap}.sja-ticker-link{color:#17345f;text-decoration:none}.sja-ticker-link:hover{text-decoration:underline;color:#075bd9}
 .sja-breaking-status{height:48px;flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 15px;border-left:1px solid #e4ebf6;color:#64748b;font-size:9px;font-weight:900;letter-spacing:1px;white-space:nowrap}
 .sja-monitor-dot{width:7px;height:7px;border-radius:50%;background:#0eaa72;box-shadow:0 0 0 3px #0eaa7220}
 @keyframes sjaTicker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
@@ -198,3 +198,11 @@ button.share-btn:hover,
 @media(max-width:900px){.hero{padding:34px 18px 28px}.hero-inner{grid-template-columns:1fr;row-gap:0}.hero-copy{grid-column:1;grid-row:1}.trust-panel{grid-column:1;grid-row:2;margin-top:20px;max-width:520px}.search-row{grid-row:3}.hero-points{grid-row:4}}
 @media(max-width:600px){.hero{padding:28px 14px 23px}.hero h1{font-size:clamp(31px,9vw,43px)}.hero-glass-actions{margin-top:15px}.hero-glass-btn{padding:10px 13px;font-size:12px}.trust-panel{padding:12px;gap:9px;border-radius:16px}.trust-panel>div{gap:7px;font-size:11px}.trust-icon{flex-basis:34px;width:34px;height:34px;font-size:13px}.sja-breaking{min-height:44px}.sja-breaking-label{height:44px;padding:0 10px;font-size:10px}.sja-breaking-window{padding:0 9px}.sja-breaking-track span{font-size:11px;padding-right:48px}.sja-breaking-status{height:44px;padding:0 8px;font-size:8px;letter-spacing:.5px}.sja-breaking-dot{width:6px;height:6px}}
 @media(prefers-reduced-motion:reduce){.sja-breaking-track,.sja-breaking-dot{animation:none}}
+
+/* Compact hero height refinement */
+.hero{padding-top:27px!important;padding-bottom:23px!important}
+.hero h1{margin-top:10px!important;margin-bottom:8px!important}
+.hero .trust-panel{padding:13px!important;gap:9px!important}
+.hero .search-row{margin-top:16px!important}
+.hero .hero-points{margin-top:9px!important}
+@media(max-width:760px){.hero{padding:22px 14px 18px!important}.hero .trust-panel{margin-top:14px!important}.hero .search-row{margin-top:14px!important}.hero .hero-points{gap:10px 16px!important}}
