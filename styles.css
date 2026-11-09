@@ -1,4 +1,4 @@
-/* SarkariJobAlert responsive visual fix — replace styles.css completely */
+/* Sarkari Job Alert responsive visual fix — replace styles.css completely */
 :root{--navy:#08265f;--blue:#0878f9;--ink:#102653;--muted:#5d6f92;--line:#dce7f8;--shadow:0 12px 34px rgba(20,48,95,.12)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f7ff;color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.55;font-size:16px}button,input{font:inherit}button{cursor:pointer}a{color:inherit}
 .topbar{min-height:84px;padding:12px clamp(16px,4vw,56px);display:flex;align-items:center;justify-content:space-between;gap:22px;background:linear-gradient(110deg,#071c54,#0848a7 58%,#24207f);color:#fff;position:relative;z-index:5;box-shadow:0 7px 25px #061d5030}
