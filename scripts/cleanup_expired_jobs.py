@@ -37,7 +37,7 @@ def main():
         while True:
             params = {
                 "select": "id,title,last_date",
-                "category": "eq.Latest Jobs",
+                "category": 'in.("Latest Jobs",Vacancy,Jobs)',
                 "last_date": "lte." + cutoff,
                 "order": "last_date.asc",
                 "limit": "100",
