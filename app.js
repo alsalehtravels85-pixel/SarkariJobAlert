@@ -89,47 +89,7 @@
       Date.now() - created < 3 * 24 * 60 * 60 * 1000;
   }
 
-  const demoJobs = [
-    {
-      id: "demo-1",
-      title: "Sample: Junior Assistant Recruitment",
-      department: "Sample Department (Demo only)",
-      category: "Vacancy",
-      vacancies: "Demo",
-      qualification: "As per official notice",
-      last_date: null,
-      status: "published",
-      description: "Demo entry only. Yeh real vacancy nahi hai.",
-      notification_url: "",
-      apply_url: ""
-    },
-    {
-      id: "demo-2",
-      title: "Sample: Admit Card Update",
-      department: "Sample Exam Board (Demo only)",
-      category: "Admit Card",
-      exam_date: null,
-      admit_card_release_date: null,
-      status: "published",
-      description: "Demo entry only. Official admit card link verify karein.",
-      notification_url: "",
-      admit_card_url: ""
-    },
-    {
-      id: "demo-3",
-      title: "Sample: Examination Result",
-      department: "Sample Recruitment Board (Demo only)",
-      category: "Result",
-      result_date: null,
-      result_status: "Demo",
-      status: "published",
-      description: "Demo entry only. Official result details verify karein.",
-      notification_url: "",
-      result_url: "",
-      cutoff_details: "",
-      merit_list_url: ""
-    }
-  ];
+  const demoJobs = [];
 
 
   // Homepage live ticker: latest published jobs + School & Exam Guide articles.
@@ -263,8 +223,11 @@
 
   async function loadJobs() {
     if (!supabase) {
-      if (notice) notice.hidden = false;
-      allJobs = demoJobs;
+      if (notice) {
+        notice.hidden = false;
+        notice.textContent = "Live updates abhi load nahi ho paaye. Kripya thodi der baad dobara try karein.";
+      }
+      allJobs = [];
       renderJobs();
       return;
     }
@@ -552,7 +515,7 @@
       <div class="detail-copy">
         ${escapeHtml(
           job.description ||
-          "Please read the official notification carefully."
+          "Detailed information is not available yet. Please check the official notification before taking action."
         )}
       </div>
 
