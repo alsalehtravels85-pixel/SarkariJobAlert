@@ -421,8 +421,8 @@
     // Never show broken PDF/OCR text as if it were verified information.
     function readableValue(value) {
       if (value === null || value === undefined || value === "") return "";
-      const text = String(value).replace(/\\s+/g, " ").trim();
-      const broken = /[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|â€|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b|\\bfor the post\\b/i.test(text);
+      const text = String(value).replace(/\s+/g, " ").trim();
+      const broken = /[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|â€|\bpage\s+\d+\s+of\s+\d+\b|\bfor the post\b/i.test(text);
       const tooLong = text.length > 260;
       if (broken || tooLong) {
         hiddenUnclearFields++;
@@ -432,11 +432,11 @@
     }
 
     function readableDescription(value) {
-      const raw = String(value || "").replace(/\\r/g, "").trim();
+      const raw = String(value || "").replace(/\r/g, "").trim();
       if (!raw) return "Detailed information abhi available nahi hai. Official notification zaroor dekhein.";
-      const parts = raw.split(/(?<=[.!?])\\s+/).filter(Boolean);
+      const parts = raw.split(/(?<=[.!?])\s+/).filter(Boolean);
       const good = parts.filter(part =>
-        !/[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b/i.test(part) &&
+        !/[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\bpage\s+\d+\s+of\s+\d+\b/i.test(part) &&
         !/This automatically collected entry is saved as a draft/i.test(part)
       );
       if (good.length !== parts.length) hiddenUnclearFields++;
