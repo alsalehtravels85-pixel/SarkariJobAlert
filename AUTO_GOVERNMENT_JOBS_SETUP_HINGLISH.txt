@@ -10,8 +10,9 @@ WHAT IT DOES
 - Requires a clear recruitment notice and an explicitly labelled future last date.
 - If essential information is missing, the candidate is skipped rather than cluttering Admin Drafts.
 - Automatically publishes only when an official PDF is readable, contains clear recruitment details and has its own explicit future last date.
-- If the PDF is missing, unreadable, incomplete or does not independently verify the deadline, the vacancy is saved as DRAFT.
-- HTML-only notices can create Draft entries but are never auto-published.
+- Minimum confirmed details are mandatory for every entry: clear recruitment title, future last date, vacancy count and qualification. If any is missing or unclear, the notice is SKIPPED (not Draft).
+- If these minimum details are confirmed from the official page but no readable official PDF independently confirms them, the entry is saved as DRAFT.
+- Automatic publishing additionally requires the official PDF itself to confirm the future last date, vacancy count and qualification.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Inserts new rows only; it does not update existing records.
 - Uses the existing public.jobs columns. No schema change is required.
@@ -44,7 +45,9 @@ SAFETY
 - Expired or unverified deadlines are skipped.
 - Results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out.
 - An official PDF is mandatory for automatic publishing.
-- PDF-less notices are Draft only. A PDF that is unreadable or lacks its own clear recruitment details and future last date is also Draft.
+- PDF-less notices with all minimum details confirmed from the official page are Draft only.
+- If vacancy count, qualification or future last date is missing/unclear on the official notice, skip the notice completely.
+- A PDF that is unreadable or lacks its own clear recruitment details and future last date cannot be auto-published; it may be Draft only if the official page confirms all minimum details.
 - A future last date must be present in the PDF itself for automatic publishing.
 - Missing optional details are left blank; the scanner does not guess them.
 - The scanner does not update or delete existing jobs.
