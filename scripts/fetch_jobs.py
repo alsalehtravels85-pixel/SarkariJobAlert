@@ -361,7 +361,8 @@ def discover_up_updates(html, page_url):
         if key == normalized_url(page_url) or key in seen:
             continue
         seen.add(key)
-        title = label if len(label) >= 8 else context
+        generic_label = label.lower() in {"click here", "click to view", "click to download", "view", "download", "here", "result", "admit card"}
+        title = context if generic_label or len(label) < 12 else label
         title = clean(title)[:220]
         if len(title) >= 5:
             found.append((category, title, url))
@@ -507,7 +508,7 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
 def seo_update_title(title, category):
     """Make titles clear and search-friendly without keyword stuffing."""
     title = clean(title).strip(" |•:-")
-    if title.lower() in {"click here", "view", "download", "click to view", "click to download", "here"} or len(title) < 10:
+    if title.lower() in {"click here", "view", "download", "click to view", "click to download", "here", "result notification", "admit card notification", "admit card", "result"} or len(title) < 12:
         return ""
     hindi = contains_devanagari(title)
     if category == "Admit Card":
@@ -516,7 +517,7 @@ def seo_update_title(title, category):
     else:
         if not any(x in title.lower() for x in ("result", "परिणाम", "रिजल्ट", "merit list", "scorecard")):
             title += " " + ("परिणाम" if hindi else "Result")
-    return re.sub(r"\\s+", " ", title).strip()[:180]
+    return re.sub(r"\s+", " ", title).strip()[:180]
 
 
 def official_action_link(html, page_url, category):
@@ -564,7 +565,7 @@ def build_up_update_description(title, department, category, action_url, exam_da
         if merit_url: parts.append("An official merit/selection-list link is also available.")
         parts.append("Check your name, roll number and all instructions shown with the result.")
     parts.append(f"Official {('admit card download' if category == 'Admit Card' else 'result check')} link: {action_url}")
-    return "\\n\\n".join(parts)
+    return "\n\n".join(parts)
 
 def main():
     if not DB.startswith("https://") or not KEY:
@@ -792,9 +793,9 @@ def main():
                 "notification_url": detail_url,
                 "description": build_up_update_description(
                     title, department, category, action_url,
-                    exam_date=labelled_date(detail_text, (r"exam(?:ination)\\s+date", r"date\\s+of\\s+exam")),
-                    release_date=labelled_date(detail_text, (r"admit\\s+card\\s+(?:available|released|download)", r"release\\s+date")),
-                    result_date=labelled_date(detail_text, (r"result\\s+(?:declared|published|date)", r"date\\s+of\\s+result")),
+                    exam_date=labelled_date(detail_text, (r"exam(?:ination)\s+date", r"date\s+of\s+exam")),
+                    release_date=labelled_date(detail_text, (r"admit\s+card\s+(?:available|released|download)", r"release\s+date")),
+                    result_date=labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result")),
                     merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
                     source_text=detail_text,
                 ),
