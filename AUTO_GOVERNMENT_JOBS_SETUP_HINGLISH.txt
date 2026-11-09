@@ -1,0 +1,54 @@
+SARKARIJOBALERT — AUTOMATIC GOVERNMENT JOB SCANNER
+
+WHAT IT DOES
+- Scans a starter set of official government recruitment portals and official aggregators.
+- Runs every 6 hours using GitHub Actions; manual run is also available.
+- Opens official notice pages and looks for official PDF notifications.
+- Extracts vacancy count, qualification, dates, fees, age limit and selection process where text is readable.
+- Checks official URLs and normalized title + department against existing jobs.
+- Auto-publishes only when readable official PDF, vacancy count, last date, qualification and official application URL are all available.
+- Incomplete or ambiguous records are saved as DRAFT; facts and application URLs are not guessed.
+- Uses existing public.jobs columns; no database schema change is required.
+- Vacancy records use the site's existing category value: Latest Jobs.
+
+STARTER SOURCES
+NCS Government Recruitment Directory, Employment News, UPSC, SSC, UPSSSC, UPPSC, IBPS, India Post, RBI, SBI Careers, DRDO, ISRO, Indian Railways, UP Police, NABARD, SEBI, TNPSC, Kerala PSC, RPSC, BPSC and MPPSC.
+
+COVERAGE LIMIT
+This cannot guarantee every vacancy in India. Some sites block automated requests, change layouts, or use scanned/image-only PDFs. The scanner does not bypass access controls. Source coverage needs maintenance.
+
+UPLOAD THESE 4 FILES, PRESERVING PATHS
+1. scripts/fetch_jobs.py
+2. scripts/cleanup_expired_jobs.py
+3. .github/workflows/auto-government-jobs.yml
+4. AUTO_GOVERNMENT_JOBS_SETUP_HINGLISH.txt
+
+GITHUB ACTIONS SECRETS
+The workflow uses existing repository secrets:
+- SUPABASE_URL
+- SUPABASE_SERVICE_ROLE_KEY
+If already present, do not change them. Never put the service-role key in website files or commit it to Git.
+
+FIRST TEST
+1. GitHub > Actions > SarkariJobAlert - Automatic Government Job Scanner.
+2. Click Run workflow.
+3. Inspect the run log and scan report.
+4. Supabase > Table Editor > jobs: verify any new published and draft rows.
+5. Check the live website. Existing rows are not updated by the scanner.
+
+SAFETY
+- Scanner inserts new rows only and checks duplicates before insert.
+- It does not update existing rows.
+- Website HTML/CSS/JS, schema.sql, Cloudflare Worker, admin, ticker, push notifications and education guides are not changed.
+- GitHub Actions concurrency prevents overlapping runs.
+- Service-role key stays in GitHub Actions Secrets.
+- Auto-publishing is conservative; incomplete notices remain drafts.
+
+AUTOMATIC EXPIRY + DELETION (SCANNER-MANAGED LATEST JOBS ONLY)
+- A Latest Jobs vacancy discovered and inserted by this scanner remains Published for 30 full calendar days after its last_date.
+- After the full 30-day grace period, the daily cleanup workflow permanently deletes that scanner-managed row from public.jobs.
+- Example: last_date 10 Nov -> remains visible through 10 Dec -> eligible for deletion on 11 Dec (India time).
+- Cleanup is restricted to category=Latest Jobs, status=published, source_url containing #sja-auto-scanner-managed, and last_date older than the 30-day cutoff.
+- It does not delete manually created jobs, Admit Cards, Results, Education Guides, drafts, or rows without last_date.
+- This is permanent deletion, not archive. Keep regular Supabase backups if recovery is required.
+- Scanner and cleanup use the existing GitHub Actions secrets; no new secrets or schema changes are needed.
