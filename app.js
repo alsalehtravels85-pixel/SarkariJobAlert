@@ -408,148 +408,115 @@
   }
 
   function showDetails(id) {
-    const job = allJobs.find(
-      item => String(item.id) === String(id)
-    );
-
+    const job = allJobs.find(item => String(item.id) === String(id));
     if (!job) return;
 
     const category = displayCategory(job.category);
     const rows = [];
     let hiddenUnclearFields = 0;
 
-    // Never show broken PDF/OCR text as if it were verified information.
+    // Keep the original notice language. Do not translate source facts.
+    const sourceText = [job.title, job.description, job.qualification, job.fees,
+      job.age_limit, job.selection_process].filter(Boolean).join(" ");
+    const hindi = /[\u0900-\u097F]/.test(sourceText);
+    const L = hindi ? {
+      total: "कुल पद", qualification: "योग्यता", noticeDate: "अधिसूचना की तारीख",
+      lastDate: "आवेदन की अंतिम तारीख", dob: "जन्मतिथि पात्रता",
+      fees: "आवेदन शुल्क", age: "आयु सीमा", selection: "चयन प्रक्रिया",
+      notification: "आधिकारिक अधिसूचना", apply: "ऑनलाइन आवेदन",
+      examDate: "परीक्षा की तारीख", admitDate: "प्रवेश पत्र जारी होने की तारीख",
+      downloadAdmit: "प्रवेश पत्र डाउनलोड करें", resultDate: "परिणाम की तारीख",
+      resultStatus: "परिणाम की स्थिति", checkResult: "परिणाम देखें",
+      cutoff: "कट-ऑफ विवरण", merit: "मेरिट सूची", department: "विभाग की जानकारी उपलब्ध नहीं",
+      complete: "पूरी जानकारी", verify: "आधिकारिक अधिसूचना में जाँचें",
+      unavailable: "विस्तृत जानकारी अभी उपलब्ध नहीं है। कृपया आधिकारिक अधिसूचना देखें।",
+      badText: "इस पोस्ट की कुछ जानकारी मूल सूचना से साफ़ नहीं पढ़ी जा सकी। सही जानकारी के लिए आधिकारिक अधिसूचना देखें।",
+      dates: "आवेदन करने से पहले तारीखों और लिंक की पुष्टि आधिकारिक वेबसाइट पर करें।"
+    } : {
+      total: "Total Vacancies", qualification: "Qualification", noticeDate: "Notification Date",
+      lastDate: "Last Date to Apply", dob: "DOB Eligibility", fees: "Application Fees",
+      age: "Age Limit", selection: "Selection Process", notification: "Official Notification",
+      apply: "Apply Online", examDate: "Exam Date", admitDate: "Admit Card Release Date",
+      downloadAdmit: "Download Admit Card", resultDate: "Result Date", resultStatus: "Result Status",
+      checkResult: "Check Result", cutoff: "Cut-off Details", merit: "Merit List",
+      department: "Department not specified", complete: "Complete Details",
+      verify: "Check official notification", unavailable: "Detailed information is not available yet. Please check the official notification.",
+      badText: "Some details could not be read clearly from the original notice. Please open the official notification to verify them.",
+      dates: "Verify dates and links on the official website before applying."
+    };
+
     function readableValue(value) {
       if (value === null || value === undefined || value === "") return "";
       const text = String(value).replace(/\s+/g, " ").trim();
-      const broken = /[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|â€|\bpage\s+\d+\s+of\s+\d+\b|\bfor the post\b/i.test(text);
-      const tooLong = text.length > 260;
-      if (broken || tooLong) {
+      const broken = /[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\bpage\s+\d+\s+of\s+\d+\b|\bfor the post\b/i.test(text);
+      if (broken || text.length > 260) {
         hiddenUnclearFields++;
-        return "Official notification mein verify karein";
+        return L.verify;
       }
       return text;
     }
 
     function readableDescription(value) {
       const raw = String(value || "").replace(/\r/g, "").trim();
-      if (!raw) return "Detailed information abhi available nahi hai. Official notification zaroor dekhein.";
-      const parts = raw.split(/(?<=[.!?])\s+/).filter(Boolean);
+      if (!raw) return L.unavailable;
+      const parts = raw.split(/(?<=[.!?।])\s+/).filter(Boolean);
       const good = parts.filter(part =>
         !/[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\bpage\s+\d+\s+of\s+\d+\b/i.test(part) &&
         !/This automatically collected entry is saved as a draft/i.test(part)
       );
       if (good.length !== parts.length) hiddenUnclearFields++;
-      return good.length
-        ? good.map(part => `<p>${escapeHtml(part)}</p>`).join("")
-        : "<p>Is post ke kuch details PDF se saaf extract nahi ho paaye. Sahi jankari ke liye official notification kholen.</p>";
+      return good.length ? good.map(part => `<p>${escapeHtml(part)}</p>`).join("") : L.badText;
     }
 
     function addRow(label, value) {
       if (value === null || value === undefined || value === "") return;
       value = readableValue(value);
-
-      rows.push(`
-        <tr>
-          <th>${escapeHtml(label)}</th>
-          <td>${escapeHtml(value)}</td>
-        </tr>
-      `);
+      rows.push(`<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value)}</td></tr>`);
     }
 
     function addLink(label, url) {
       if (!url) return;
-
-      rows.push(`
-        <tr>
-          <th>${escapeHtml(label)}</th>
-          <td>
-            <a href="${escapeHtml(url)}"
-               target="_blank"
-               rel="noopener noreferrer">
-              ${escapeHtml(label)} ↗
-            </a>
-          </td>
-        </tr>
-      `);
+      rows.push(`<tr><th>${escapeHtml(label)}</th><td><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ↗</a></td></tr>`);
     }
 
     if (category === "Vacancy") {
-      addRow("Total Vacancies", job.vacancies);
-      addRow("Qualification", job.qualification);
-      addRow("Notification Date", formatDate(job.notification_date));
-      addRow("Last Date to Apply", formatDate(job.last_date));
-
-      if (job.dob_from || job.dob_to) {
-        addRow(
-          "DOB Eligibility",
-          `${job.dob_from ? formatDate(job.dob_from) : "Any"} to ${
-            job.dob_to ? formatDate(job.dob_to) : "Any"
-          }`
-        );
-      }
-
-      addRow("Application Fees", job.fees);
-      addRow("Age Limit", job.age_limit);
-      addRow("Selection Process", job.selection_process);
-
-      addLink("Official Notification", job.notification_url);
-      addLink("Apply Online", job.apply_url);
+      addRow(L.total, job.vacancies);
+      addRow(L.qualification, job.qualification);
+      addRow(L.noticeDate, formatDate(job.notification_date));
+      addRow(L.lastDate, formatDate(job.last_date));
+      if (job.dob_from || job.dob_to) addRow(L.dob, `${job.dob_from ? formatDate(job.dob_from) : "—"} से ${job.dob_to ? formatDate(job.dob_to) : "—"}`);
+      addRow(L.fees, job.fees);
+      addRow(L.age, job.age_limit);
+      addRow(L.selection, job.selection_process);
+      addLink(L.notification, job.notification_url);
+      addLink(L.apply, job.apply_url);
     }
 
     if (category === "Admit Card") {
-      addRow("Exam Date", formatDate(job.exam_date));
-      addRow(
-        "Admit Card Release Date",
-        formatDate(job.admit_card_release_date)
-      );
-
-      addLink("Download Admit Card", job.admit_card_url);
-      addLink("Official Notification", job.notification_url);
+      addRow(L.examDate, formatDate(job.exam_date));
+      addRow(L.admitDate, formatDate(job.admit_card_release_date));
+      addLink(L.downloadAdmit, job.admit_card_url);
+      addLink(L.notification, job.notification_url);
     }
 
     if (category === "Result") {
-      addRow("Result Date", formatDate(job.result_date));
-      addRow(
-        "Result Status",
-        job.result_status || "See official notification"
-      );
-
-      addLink("Check Result", job.result_url);
-
-      addRow(
-        "Cut-off Details",
-        job.cutoff_details || job.cutoff || ""
-      );
-
-      addLink("Merit List", job.merit_list_url);
-      addLink("Official Notification", job.notification_url);
+      addRow(L.resultDate, formatDate(job.result_date));
+      addRow(L.resultStatus, job.result_status || (hindi ? "आधिकारिक सूचना देखें" : "See official notification"));
+      addLink(L.checkResult, job.result_url);
+      addRow(L.cutoff, job.cutoff_details || job.cutoff || "");
+      addLink(L.merit, job.merit_list_url);
+      addLink(L.notification, job.notification_url);
     }
 
     $("#detailContent").innerHTML = `
       <span class="tag">${escapeHtml(category)}</span>
-
       <h2 class="detail-title">${escapeHtml(job.title)}</h2>
-
-      <p class="detail-dept">
-        ${escapeHtml(job.department || "Department not specified")}
-      </p>
-
-      <table class="detail-table detail-info-list">
-        <tbody>${rows.join("")}</tbody>
-      </table>
-
-      <h3 class="detail-section-heading">Complete Details</h3>
-
-      <div class="detail-copy">
-        ${readableDescription(job.description)}
-      </div>
-
-      ${hiddenUnclearFields ? '<p class="detail-quality-note">⚠️ Kuch details original PDF se saaf read nahi ho paayi hain. Galat jankari dikhane ke bajay unhe verify karne ke liye mark kiya gaya hai. Official Notification kholkar confirm karein.</p>' : ''}
-
-      <p class="tiny-note">
-        Dates aur links ko apply karne se pehle official website par verify karein.
-      </p>
+      <p class="detail-dept">${escapeHtml(job.department || L.department)}</p>
+      <table class="detail-table detail-info-list"><tbody>${rows.join("")}</tbody></table>
+      <h3 class="detail-section-heading">${L.complete}</h3>
+      <div class="detail-copy">${readableDescription(job.description)}</div>
+      ${hiddenUnclearFields ? `<p class="detail-quality-note">⚠️ ${L.badText}</p>` : ""}
+      <p class="tiny-note">${L.dates}</p>
     `;
 
     updateJobSeo(job);
