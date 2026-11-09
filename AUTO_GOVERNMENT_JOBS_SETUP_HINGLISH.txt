@@ -71,3 +71,13 @@ FILES USED
 2. scripts/cleanup_expired_jobs.py
 3. .github/workflows/auto-government-jobs.yml
 4. AUTO_GOVERNMENT_JOBS_SETUP_HINGLISH.txt
+
+POST DESCRIPTION REQUIREMENT (MANUAL + AUTOMATIC)
+- Every Vacancy, Admit Card and Result post must have a meaningful, post-specific description in the Complete Details section.
+- The description must be based on that post's title and verified official information; do not use generic filler text such as "Verified update detected...".
+- Vacancy descriptions should explain the post/recruitment, eligibility, selection process and application steps when those details are officially available.
+- Admit Card descriptions should explain the exam/admit-card update, exam date or release details when verified, and download instructions.
+- Result descriptions should explain which result was declared, result-checking steps, and merit-list/cut-off information only when officially available.
+- Apply this requirement to both manually entered and scanner-created posts.
+- Never invent missing dates, fees, eligibility, vacancy counts, cut-offs or links. Leave unavailable details blank or clearly state that the official notice should be checked.
+- Preserve the existing website design and admin/database structure unless a separate approved change is requested.
