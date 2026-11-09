@@ -5,11 +5,13 @@ WHAT IT DOES
 - Central/national recruitment portals are checked after UP sources.
 - GitHub Actions runs the scanner every 6 hours; manual scanner run is also available.
 - Uses retry/backoff for temporary network errors and keeps TLS certificate verification enabled.
-- Reads official HTML recruitment notices; an official PDF is helpful but not mandatory.
+- Reads official HTML recruitment pages and linked official notification PDFs.
 - Extracts vacancy count, qualification, dates, fees, age limit and selection process when readable.
 - Requires a clear recruitment notice and an explicitly labelled future last date.
 - If essential information is missing, the candidate is skipped rather than cluttering Admin Drafts.
-- Verified candidates are saved as DRAFT for manual admin verification. The scanner never auto-publishes.
+- Automatically publishes only when an official PDF is readable, contains clear recruitment details and has its own explicit future last date.
+- If the PDF is missing, unreadable, incomplete or does not independently verify the deadline, the vacancy is saved as DRAFT.
+- HTML-only notices can create Draft entries but are never auto-published.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Inserts new rows only; it does not update existing records.
 - Uses the existing public.jobs columns. No schema change is required.
@@ -33,15 +35,17 @@ FIRST TEST
 1. GitHub > Actions > SarkariJobAlert - Automatic Government Job Scanner.
 2. Click Run workflow.
 3. Inspect the run log and final SCAN REPORT.
-4. Supabase > Table Editor > jobs: inspect newly created Draft rows.
-5. Verify the official notice, deadline, eligibility and application link before manually publishing.
+4. Supabase > Table Editor > jobs: check newly created Published and Draft rows.
+5. Review auto-published PDF-backed vacancies too; scanner checks reduce risk but do not replace human review.
 
 SAFETY
 - TLS verification remains enabled. Certificate errors are logged and skipped, never bypassed.
 - Only official government domains/approved official portals are accepted, including after redirects.
 - Expired or unverified deadlines are skipped.
 - Results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out.
-- PDF is optional; official HTML notice pages are acceptable.
+- An official PDF is mandatory for automatic publishing.
+- PDF-less notices are Draft only. A PDF that is unreadable or lacks its own clear recruitment details and future last date is also Draft.
+- A future last date must be present in the PDF itself for automatic publishing.
 - Missing optional details are left blank; the scanner does not guess them.
 - The scanner does not update or delete existing jobs.
 - Cleanup runs only on its daily schedule and only affects scanner-managed Published Latest Jobs after the 30-day grace period.
@@ -49,7 +53,7 @@ SAFETY
 - Website UI, admin logic, schema, Cloudflare Worker, ticker and push notifications are not changed.
 
 AUTOMATIC EXPIRY + DELETION (SCANNER-MANAGED LATEST JOBS ONLY)
-- A vacancy inserted by this scanner remains Published only after an admin manually publishes it.
+- A vacancy with a verified official PDF may be auto-published by the scanner; PDF-less or uncertain notices remain Draft.
 - Once Published, it remains visible for at least 30 full calendar days after its last_date.
 - After the full 30-day grace period, the daily cleanup can permanently delete that scanner-managed row.
 - Cleanup is restricted to category=Latest Jobs, status=published, source_url containing #sja-auto-scanner-managed, and last_date older than the 30-day cutoff.
