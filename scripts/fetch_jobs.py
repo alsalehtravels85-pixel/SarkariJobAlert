@@ -508,7 +508,7 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
 def seo_vacancy_title(title):
     """Keep official recruitment titles readable, concise and free of CTA clutter."""
     title = clean(title).strip(" |•:-")
-    title = re.sub(r"\\s+", " ", title)
+    title = re.sub(r"\s+", " ", title)
     title = re.sub(r"^(click here|download|view details)[: -]*", "", title, flags=re.I)
     if len(title) < 12 or title.lower() in {"recruitment notification", "latest vacancy", "click here"}:
         return ""
