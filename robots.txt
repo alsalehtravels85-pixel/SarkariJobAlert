@@ -4,3 +4,4 @@ Disallow: /admin
 Disallow: /admin.html
 
 Sitemap: https://sarkari-jobalert.com/sitemap.xml
+Sitemap: https://sarkari-jobalert.com/sitemap-jobs.xml
