@@ -893,7 +893,7 @@ document.addEventListener("click", event => {
         </label>
 
         <label class="full">Complete Details
-          <textarea id="jobDescription" maxlength="10000"></textarea>
+          <textarea id="jobDescription" maxlength="10000" minlength="80" required placeholder="Verified vacancy / admit card / result details yahan likhein..."></textarea>
         </label>
 
         <label>Status
