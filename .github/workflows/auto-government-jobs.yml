@@ -52,7 +52,31 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add sitemap-jobs.xml
             git commit -m "Update published jobs sitemap"
-            git push
+
+            # Another workflow or a manual commit may update main while this
+            # run is scanning. Rebase and retry instead of failing on a
+            # non-fast-forward push. If sitemap itself conflicts, regenerate
+            # it from the latest published database state and retry.
+            for attempt in 1 2 3; do
+              git fetch origin main
+              if ! git rebase origin/main; then
+                git rebase --abort
+                python scripts/generate_job_sitemap.py
+                git add sitemap-jobs.xml
+                git commit --amend --no-edit
+                continue
+              fi
+
+              if git push origin HEAD:main; then
+                echo "Published jobs sitemap pushed successfully."
+                exit 0
+              fi
+
+              echo "Push race detected (attempt $attempt/3); retrying."
+            done
+
+            echo "Could not push sitemap after 3 safe retries."
+            exit 1
           else
             echo "Published jobs sitemap is already up to date."
           fi
