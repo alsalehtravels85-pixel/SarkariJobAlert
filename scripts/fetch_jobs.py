@@ -279,6 +279,51 @@ def discover_links(html, page_url):
             found.append((title[:240], url))
     return found
 
+
+UP_OFFICIAL_HOSTS = {
+    "upsssc.gov.in", "uppsc.up.nic.in", "uppbpb.gov.in", "upnrhm.gov.in",
+}
+UP_RESULT_HINTS = (
+    "result", "merit list", "merit-list", "score card", "scorecard",
+    "final selection list", "selected candidates", "परिणाम", "रिजल्ट",
+)
+UP_ADMIT_HINTS = (
+    "admit card", "admit-card", "hall ticket", "download admit",
+    "प्रवेश पत्र", "प्रवेशपत्र",
+)
+
+def up_official(url):
+    h = host(url)
+    return h in UP_OFFICIAL_HOSTS or h.endswith(".up.gov.in") or h.endswith(".up.nic.in")
+
+def discover_up_updates(html, page_url):
+    soup = BeautifulSoup(html, "html.parser")
+    found, seen = [], set()
+    for anchor in soup.select("a[href]"):
+        label = clean(anchor.get_text(" ", strip=True))
+        parent = anchor.find_parent(["tr", "li", "article"])
+        context = clean(parent.get_text(" ", strip=True)) if parent else label
+        searchable = (context + " " + label).lower()
+        category = None
+        if any(term in searchable for term in UP_ADMIT_HINTS):
+            category = "Admit Card"
+        elif any(term in searchable for term in UP_RESULT_HINTS):
+            category = "Result"
+        if not category:
+            continue
+        url = safe_url(anchor.get("href"), page_url)
+        if not url or not up_official(url):
+            continue
+        key = normalized_url(url)
+        if key == normalized_url(page_url) or key in seen:
+            continue
+        seen.add(key)
+        title = label if len(label) >= 8 else context
+        title = clean(title)[:220]
+        if len(title) >= 5:
+            found.append((category, title, url))
+    return found
+
 def find_notice_pdf(session, html, page_url):
     soup = BeautifulSoup(html, "html.parser")
     pdf_urls = []
@@ -364,6 +409,8 @@ def main():
         return 2
 
     candidates = []
+    up_update_candidates = []
+    seen_up_updates = set()
     seen_links = set()
     source_errors = 0
     print("SCAN DATE (Asia/Kolkata):", TODAY.isoformat())
@@ -380,6 +427,12 @@ def main():
                 if key not in known_urls and key not in seen_links:
                     seen_links.add(key)
                     candidates.append((source_name, title, link))
+            if source_name in {name for name, _ in UP_SOURCES}:
+                for category, title, link in discover_up_updates(data, final_url):
+                    key = normalized_url(link)
+                    if key not in known_urls and key not in seen_up_updates:
+                        seen_up_updates.add(key)
+                        up_update_candidates.append((source_name, category, title, link))
         except Exception as exc:
             source_errors += 1
             print("SOURCE PARSE ERROR", source_name, str(exc)[:200])
@@ -528,6 +581,63 @@ def main():
             print("PROCESS ERROR:", candidate_title[:160], str(exc)[:280])
         time.sleep(0.2)
 
+
+    # UP Admit Card + Result updates: official UP portal verification only.
+    # No PDF, vacancy-count, qualification, or application-deadline requirement.
+    up_updates_published = up_updates_duplicates = up_updates_skipped = 0
+    for source_name, category, candidate_title, link in up_update_candidates:
+        try:
+            data, detail_url, content_type = fetch(session, link)
+            if not data or not detail_url or not up_official(detail_url):
+                up_updates_skipped += 1
+                print("UP UPDATE SKIP - official UP detail page unavailable:", candidate_title[:160])
+                continue
+            if "pdf" in (content_type or "") or data[:4] == b"%PDF":
+                detail_text, _ = extract_pdf_text(session, detail_url)
+            else:
+                html_soup = BeautifulSoup(data, "html.parser")
+                detail_text = clean(html_soup.get_text(" ", strip=True))
+            lowered = (candidate_title + " " + detail_text).lower()
+            hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
+            if len(detail_text) < 40 or not any(term in lowered for term in hints):
+                up_updates_skipped += 1
+                print("UP UPDATE SKIP - authenticity/category not confirmed:", candidate_title[:160])
+                continue
+            title = clean(candidate_title)[:180]
+            department = source_name
+            title_key = (normalize_text(title), normalize_text(department))
+            if normalized_url(detail_url) in known_urls or title_key in known_titles:
+                up_updates_duplicates += 1
+                continue
+            record = {
+                "title": title,
+                "department": department,
+                "category": category,
+                "notification_url": detail_url,
+                "description": "Verified update detected from an official Uttar Pradesh government portal. Use the official link for details and download.",
+                "status": "published",
+                "source_url": detail_url + MARKER,
+            }
+            if category == "Admit Card":
+                record["admit_card_url"] = detail_url
+                record["exam_date"] = labelled_date(detail_text, (r"exam(?:ination)?\s+date", r"date\s+of\s+exam"))
+                record["admit_card_release_date"] = labelled_date(detail_text, (r"admit\s+card\s+(?:available|released|download)", r"release\s+date"))
+            else:
+                record["result_url"] = detail_url
+                record["result_date"] = labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result"))
+                record["result_status"] = "Declared / Published"
+                record["merit_list_url"] = detail_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
+            response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
+            response.raise_for_status()
+            known_urls.add(normalized_url(detail_url))
+            known_titles.add(title_key)
+            up_updates_published += 1
+            print("UP UPDATE AUTO-PUBLISHED:", category, title, "| official source:", source_name)
+        except Exception as exc:
+            process_errors += 1
+            print("UP UPDATE PROCESS ERROR:", candidate_title[:160], str(exc)[:260])
+        time.sleep(0.2)
+
     print(
         "\nSCAN REPORT | date:", TODAY.isoformat(),
         "| official source pages:", len(SOURCES),
@@ -538,8 +648,11 @@ def main():
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| auto-published:", published,
-        "| published only with verified official PDF; HTML-only notices remain drafts",
+        "| vacancy auto-published:", published,
+        "| UP admit/result candidates:", len(up_update_candidates),
+        "| UP admit/result published:", up_updates_published,
+        "| UP admit/result skipped (not verified/duplicate/fetch issue):", up_updates_skipped + up_updates_duplicates,
+        "| vacancy publishing requires verified official PDF; UP admit/result uses official-source verification",
     )
     return 1 if process_errors else 0
 
