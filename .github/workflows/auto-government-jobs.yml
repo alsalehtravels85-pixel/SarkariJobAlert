@@ -7,7 +7,7 @@ on:
     - cron: "35 19 * * *" # 01:05 IST daily cleanup
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: sja-auto-government-jobs
@@ -32,6 +32,23 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/fetch_jobs.py
+
+      - name: Generate sitemap for published job posts
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/generate_job_sitemap.py
+          if [ -n "$(git status --porcelain -- sitemap-jobs.xml)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add sitemap-jobs.xml
+            git commit -m "Update published jobs sitemap"
+            git push
+          else
+            echo "Published jobs sitemap is already up to date."
+          fi
       - name: Delete all expired vacancies (manual and automatic) after 30 days
         if: github.event.schedule == '35 19 * * *'
         env:
