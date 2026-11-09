@@ -230,7 +230,7 @@ def extract_pdf_text(session, url):
 def parse_date(value):
     value = clean(value).replace(",", " ")
     value = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", value, flags=re.I)
-    value = re.sub(r"\\s+", " ", value)
+    value = re.sub(r"\s+", " ", value)
     formats = (
         "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y",
         "%d/%m/%y", "%d-%m-%y", "%d.%m.%y",
@@ -258,10 +258,11 @@ def labelled_date(text, labels):
 def extract_fields(text):
     vacancy = None
     patterns = (
-        r"(?:total\s+(?:number\s+of\s+)?vacanc(?:y|ies)|total\s+posts?|"
-        r"number\s+of\s+vacanc(?:y|ies)|no\.\s*of\s*vacanc(?:y|ies))"
-        r"\s*[:\-]?\s*(\d[\d,]*)",
-        r"(\d[\d,]*)\s+(?:vacancies|vacant posts|posts)\b",
+        r"(?:total\\s+(?:number\\s+of\\s+)?vacanc(?:y|ies)|total\\s+posts?|"
+        r"number\\s+of\\s+vacanc(?:y|ies)|no\\.?\\s*of\\s*(?:vacanc(?:y|ies)|posts?)|"
+        r"number\\s+of\\s+posts?|posts?\\s+available)"
+        r"\\s*[:\\-]?\\s*(\\d[\\d,]*)",
+        r"(\\d[\\d,]*)\\s+(?:vacancies|vacant posts|posts)\\b",
     )
     for pattern in patterns:
         match = re.search(pattern, text, re.I)
@@ -272,12 +273,16 @@ def extract_fields(text):
                 break
 
     last_date = labelled_date(text, (
-        r"last\s+date(?:\s+for|\s+of)?\s+(?:submission|receipt|apply|application)?",
-        r"closing\s+date",
-        r"apply\s+online\s+up\s+to",
-        r"applications?\s+may\s+be\s+submitted\s+up\s+to",
-        r"last\s+date\s+to\s+apply",
-        r"online\s+application\s+ends?",
+        r"last\\s+date(?:\\s+for|\\s+of)?\\s+(?:submission|receipt|apply|application)?",
+        r"closing\\s+date",
+        r"apply\\s+online\\s+up\\s+to",
+        r"applications?\\s+may\\s+be\\s+submitted\\s+up\\s+to",
+        r"last\\s+date\\s+to\\s+apply",
+        r"online\\s+application\\s+ends?",
+        r"application\\s+(?:closing|submission)\\s+date",
+        r"applications?\\s+close(?:s)?\\s+on",
+        r"apply\\s+before",
+        r"due\\s+date",
     ))
     notification_date = labelled_date(text, (
         r"date\s+of\s+notification", r"notification\s+date",
@@ -285,9 +290,11 @@ def extract_fields(text):
         r"published\s+on",
     ))
     qualification = re.search(
-        r"(?:educational|essential|minimum|prescribed)\s+qualification(?:s)?"
-        r"\s*[:\-]?\s*(.{20,260}?)(?:\b(?:age limit|pay scale|salary|"
-        r"application fee|selection process|how to apply|important dates)\b)",
+        r"(?:educational|essential|minimum|prescribed|eligibility)\\s+"
+        r"(?:qualification|criteria|requirements?)(?:s)?"
+        r"\\s*[:\\-]?\\s*(.{20,320}?)(?:\\b(?:age limit|pay scale|salary|"
+        r"application fee|selection process|how to apply|important dates|"
+        r"number of vacancies|total posts?)\\b)",
         text, re.I,
     )
     fee = re.search(r"(?:application fee|examination fee|exam fee|registration fee)\s*[:\-]?\s*([^\n.]{3,120})", text, re.I)
