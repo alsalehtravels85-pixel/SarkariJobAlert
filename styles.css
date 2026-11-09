@@ -418,3 +418,64 @@ button.share-btn:hover,
 @media(prefers-reduced-motion:reduce){
   .admin-dialog *{scroll-behavior:auto!important;transition:none!important}
 }
+
+
+/* Slim, polished live government job ticker — presentation only */
+.sja-live-ticker{
+  border-bottom:1px solid #dce6f4;
+  background:#fff;
+  box-shadow:0 3px 11px rgba(16,53,105,.055);
+}
+.sja-live-heading{
+  min-height:28px;
+  padding:4px 12px;
+  background:linear-gradient(105deg,#082a64 0%,#0867d8 52%,#5031a4 100%);
+}
+.sja-live-brand{
+  gap:7px;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.3px;
+}
+.sja-live-brand b{
+  margin-left:4px;
+  padding:2px 7px;
+  border-radius:999px;
+  background:linear-gradient(110deg,#ffe17c,#ffac46);
+  color:#1b2b49;
+  font-size:8px;
+  letter-spacing:.7px;
+  box-shadow:0 1px 5px rgba(255,184,70,.25);
+}
+.sja-live-emblem{font-size:14px}
+.sja-live-news{
+  height:30px;
+  background:linear-gradient(90deg,#f7faff,#fff 25%,#f8fbff);
+}
+.sja-live-badge{
+  padding:0 11px;
+  background:linear-gradient(110deg,#d8203a,#f04358);
+  font-size:9px;
+  letter-spacing:1px;
+  box-shadow:2px 0 9px rgba(216,32,58,.12);
+}
+.sja-live-badge i{width:5px;height:5px}
+.sja-news-window{padding:0 12px}
+.sja-news-track a,.sja-news-track span{
+  padding-right:46px;
+  color:#183b6c;
+  font-size:11px;
+  font-weight:750;
+  letter-spacing:.08px;
+}
+.sja-news-track a:hover{color:#075bd9}
+@media(max-width:600px){
+  .sja-live-heading{min-height:25px;padding:3px 8px}
+  .sja-live-brand{font-size:10px;gap:5px}
+  .sja-live-brand b{font-size:7px;padding:2px 5px}
+  .sja-live-emblem{font-size:12px}
+  .sja-live-news{height:28px}
+  .sja-live-badge{padding:0 8px;font-size:8px}
+  .sja-news-window{padding:0 8px}
+  .sja-news-track a,.sja-news-track span{font-size:10px;padding-right:32px}
+}
