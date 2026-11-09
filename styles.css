@@ -216,3 +216,28 @@ button.share-btn:hover,
 .hero .search-row{margin-top:16px!important}
 .hero .hero-points{margin-top:9px!important}
 @media(max-width:760px){.hero{padding:22px 14px 18px!important}.hero .trust-panel{margin-top:14px!important}.hero .search-row{margin-top:14px!important}.hero .hero-points{gap:10px 16px!important}}
+
+
+/* Requested update 1: clearer, attractive, line-by-line job details dialog only */
+.detail-dialog{padding:clamp(16px,3vw,28px);width:min(720px,calc(100% - 20px));}
+.detail-dialog #detailContent{clear:both;min-width:0;}
+.detail-dialog .tag{display:inline-flex;align-items:center;margin:2px 0 10px;padding:6px 11px;border-radius:999px;background:#e8f0ff;color:#1746a2;font-size:11px;font-weight:900;letter-spacing:.3px;}
+.detail-dialog .detail-title{margin:4px 42px 7px 0;color:#10264d;font-size:clamp(20px,4vw,28px);line-height:1.3;font-weight:900;overflow-wrap:anywhere;}
+.detail-dialog .detail-dept{margin:0 0 18px;padding:10px 12px;border-left:4px solid #2563eb;border-radius:8px;background:#f1f6ff;color:#415675;font-size:13px;font-weight:750;line-height:1.5;}
+.detail-dialog .detail-info-list{width:100%;border:0;border-collapse:separate;border-spacing:0 8px;table-layout:fixed;}
+.detail-dialog .detail-info-list tbody{display:block;width:100%;}
+.detail-dialog .detail-info-list tr{display:grid;grid-template-columns:minmax(118px,.72fr) minmax(0,1.28fr);width:100%;overflow:hidden;border:1px solid #e0e9f7;border-radius:11px;background:#fff;box-shadow:0 3px 12px rgba(21,55,105,.055);}
+.detail-dialog .detail-info-list th,.detail-dialog .detail-info-list td{display:block;min-width:0;padding:11px 13px;border:0;text-align:left;vertical-align:top;line-height:1.5;overflow-wrap:anywhere;}
+.detail-dialog .detail-info-list th{background:#f3f7fd;color:#536985;font-size:12px;font-weight:850;}
+.detail-dialog .detail-info-list td{color:#172b4d;font-size:13px;font-weight:750;}
+.detail-dialog .detail-info-list td a{display:inline-flex;align-items:center;gap:5px;color:#075bd9;text-decoration:none;font-weight:900;}
+.detail-dialog .detail-info-list td a:hover{text-decoration:underline;}
+.detail-dialog .detail-section-heading{margin:20px 0 9px;color:#10264d;font-size:16px;font-weight:900;}
+.detail-dialog .detail-copy{padding:14px 15px;border:1px solid #e0e9f7;border-radius:12px;background:linear-gradient(135deg,#f8fbff,#fff);color:#344762;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;}
+.detail-dialog .tiny-note{padding:10px 12px;border-radius:9px;background:#fff8e8;color:#8a5b12;font-size:11px;line-height:1.55;}
+@media(max-width:520px){
+  .detail-dialog{max-height:92vh;border-radius:16px;padding:15px;}
+  .detail-dialog .detail-info-list tr{grid-template-columns:1fr;}
+  .detail-dialog .detail-info-list th{padding:8px 11px 3px;background:#f3f7fd;}
+  .detail-dialog .detail-info-list td{padding:3px 11px 10px;}
+}

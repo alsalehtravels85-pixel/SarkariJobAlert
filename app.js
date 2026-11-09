@@ -543,11 +543,11 @@
         ${escapeHtml(job.department || "Department not specified")}
       </p>
 
-      <table class="detail-table">
+      <table class="detail-table detail-info-list">
         <tbody>${rows.join("")}</tbody>
       </table>
 
-      <h3>Complete Details</h3>
+      <h3 class="detail-section-heading">Complete Details</h3>
 
       <div class="detail-copy">
         ${escapeHtml(
