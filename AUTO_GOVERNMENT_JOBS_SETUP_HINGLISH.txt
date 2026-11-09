@@ -16,6 +16,8 @@ WHAT IT DOES
 - Scanner-created entries remain Draft until a human admin reviews and publishes them. This editorial review is important for accuracy and AdSense content quality.
 - UP Admit Card/Result collection follows separate official-UP-source verification and does not require a PDF or vacancy fields; entries still remain Draft until admin approval.
 - Existing jobs are checked by URL and normalized title/department before insertion.
+- Published job sitemap is generated from the existing Supabase jobs table after each scanner/cleanup workflow run. It includes public ?job=ID deep links, excludes Drafts and expired Vacancy posts, and adds lastmod where available.
+- The workflow commits sitemap-jobs.xml only when its content changes; GitHub Actions needs contents: write for this step.
 - Inserts new rows only; it does not update existing records.
 - Uses the existing public.jobs columns. No schema change is required.
 - Vacancy category uses the existing database value: Latest Jobs.
@@ -28,6 +30,12 @@ The workflow uses the existing repository secrets:
 - SUPABASE_URL
 - SUPABASE_SERVICE_ROLE_KEY
 If already configured, do not change them. Never place the service-role key in website files or commit it to Git.
+
+SITEMAP
+- Static pages remain in https://sarkari-jobalert.com/sitemap.xml.
+- Published Vacancy, Admit Card and Result detail links are listed in https://sarkari-jobalert.com/sitemap-jobs.xml.
+- robots.txt advertises both sitemap files. Submit sitemap-jobs.xml in Google Search Console once the first workflow run generates it.
+- Job detail links use the site's existing ?job=ID deep-link and dynamic title/description/canonical handling. Search engines must be able to execute the public page JavaScript and access published Supabase rows for full detail rendering.
 
 SCHEDULE
 - Scanner: every 6 hours (UTC cron 17 */6 * * *; India time 05:47, 11:47, 17:47 and 23:47).
