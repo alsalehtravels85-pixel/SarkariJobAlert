@@ -114,18 +114,18 @@ def valid_extracted_field(value, kind):
     if kind == "qualification":
         if len(value) < 18 or len(value) > 220:
             return None
-        if re.search(r"\\b(page|chapter|annexure|serial no)\\b", lowered):
+        if re.search(r"\b(page|chapter|annexure|serial no)\b", lowered):
             return None
-        if re.match(r"^(for the post|those who possess|as on)\\b", lowered):
+        if re.match(r"^(for the post|those who possess|as on)\b", lowered):
             return None
     elif kind == "fees":
-        if len(value) < 5 or len(value) > 100 or re.match(r"^(पद\\s*सं|post\\s*no)\\b", lowered):
+        if len(value) < 5 or len(value) > 100 or re.match(r"^(पद\s*सं|post\s*no)\b", lowered):
             return None
     elif kind == "age":
-        if len(value) < 8 or len(value) > 90 or re.match(r"^\\(?as on\\b", lowered):
+        if len(value) < 8 or len(value) > 90 or re.match(r"^\(?as on\b", lowered):
             return None
     elif kind == "selection":
-        if len(value) < 8 or len(value) > 120 or re.match(r"^(पद\\s*सं|post\\s*no)\\b", lowered):
+        if len(value) < 8 or len(value) > 120 or re.match(r"^(पद\s*सं|post\s*no)\b", lowered):
             return None
     return value
 
