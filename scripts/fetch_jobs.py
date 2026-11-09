@@ -98,7 +98,20 @@ DATE_TOKEN = (
 )
 
 def clean(value):
-    return re.sub(r"\\s+", " ", value or "").strip()
+    """Normalize whitespace without altering Hindi or English wording."""
+    value = str(value or "").replace("\x00", " ")
+    value = re.sub(r"[\u200b\ufeff]", "", value)
+    value = re.sub(r"\s+", " ", value)
+    return value.strip()
+
+
+def has_corrupt_text(value):
+    """Flag common PDF/OCR encoding damage."""
+    value = str(value or "")
+    if any(mark in value for mark in ("�", "Ã", "Â", "â€", "\x00")):
+        return True
+    visible = [ch for ch in value if not ch.isspace()]
+    return bool(visible and sum(not ch.isprintable() for ch in visible) / len(visible) > 0.02)
 
 
 def valid_extracted_field(value, kind):
@@ -107,9 +120,8 @@ def valid_extracted_field(value, kind):
     if not value:
         return None
     lowered = value.lower()
-    bad_markers = ("�", "Ã", "Â", "â€", "page ", "for the post",
-                   "contents", "table of contents", "advertisement no.")
-    if any(marker in lowered for marker in bad_markers):
+    bad_markers = ("page ", "table of contents", "advertisement no.")
+    if has_corrupt_text(value) or any(marker in lowered for marker in bad_markers):
         return None
     if kind == "qualification":
         if len(value) < 18 or len(value) > 220:
@@ -432,14 +444,23 @@ def contains_devanagari(value):
 
 
 def build_vacancy_description(title, department, vacancies, qualification, last_date, fees, age_limit, selection_process, pdf_verified):
-    """Compose a short note in the source notice language; extracted values stay verbatim."""
-    source_text = " ".join(str(x or "") for x in (title, qualification, fees, age_limit, selection_process))
-    if contains_devanagari(source_text):
-        parts = [f"{title} की भर्ती संबंधी जानकारी {department} की आधिकारिक सूचना से ली गई है।"]
+    """Write a readable article in the language used by the source notice."""
+    facts = " ".join(str(x or "") for x in (title, qualification, fees, age_limit, selection_process))
+    hindi = contains_devanagari(facts)
+    qualification = valid_extracted_field(qualification, "qualification") if qualification else None
+    fees = valid_extracted_field(fees, "fees") if fees else None
+    age_limit = valid_extracted_field(age_limit, "age") if age_limit else None
+    selection_process = valid_extracted_field(selection_process, "selection") if selection_process else None
+
+    if hindi:
+        parts = [
+            f"{title} के संबंध में {department} की आधिकारिक वेबसाइट पर भर्ती सूचना उपलब्ध है।",
+            "इस लेख में वही जानकारी शामिल की गई है जो उपलब्ध आधिकारिक सूचना से स्पष्ट रूप से पढ़ी जा सकी है।"
+        ]
         if vacancies:
-            parts.append(f"कुल पद: {vacancies}।")
+            parts.append(f"इस भर्ती में कुल {vacancies} पद बताए गए हैं।")
         if qualification:
-            parts.append(f"योग्यता: {qualification}")
+            parts.append(f"शैक्षणिक योग्यता: {qualification}")
         if age_limit:
             parts.append(f"आयु सीमा: {age_limit}")
         if fees:
@@ -447,15 +468,22 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
         if selection_process:
             parts.append(f"चयन प्रक्रिया: {selection_process}")
         if last_date:
-            parts.append(f"आवेदन की अंतिम तिथि: {last_date}")
-        parts.append("आवेदन करने से पहले आधिकारिक अधिसूचना पढ़ें और पात्रता व तारीखों की पुष्टि करें।")
-        parts.append("यह जानकारी समीक्षा के लिए ड्राफ्ट में रखी गई है। प्रकाशित करने से पहले मूल आधिकारिक सूचना की मानवीय जाँच आवश्यक है।")
+            parts.append(f"आवेदन की अंतिम तिथि {last_date} है।")
+        else:
+            parts.append("आवेदन की अंतिम तिथि उपलब्ध पाठ से स्पष्ट नहीं हुई है। कृपया आधिकारिक अधिसूचना में इसकी पुष्टि करें।")
+        parts.extend([
+            "आवेदन करने से पहले आधिकारिक अधिसूचना ध्यान से पढ़ें और पद के अनुसार अपनी पात्रता जाँच लें।",
+            "यह जानकारी पहले ड्राफ्ट के रूप में रखी गई है। प्रकाशित करने से पहले मूल अधिसूचना से सभी विवरणों की जाँच आवश्यक है।"
+        ])
     else:
-        parts = [f"{title} is a recruitment update from {department}, based on its official notice."]
+        parts = [
+            f"{title} is listed on the official {department} recruitment portal.",
+            "This article includes only details that could be clearly identified in the available official notice."
+        ]
         if vacancies:
-            parts.append(f"Total vacancies: {vacancies}.")
+            parts.append(f"The notice lists {vacancies} vacancies.")
         if qualification:
-            parts.append(f"Qualification: {qualification}")
+            parts.append(f"Educational qualification: {qualification}")
         if age_limit:
             parts.append(f"Age limit: {age_limit}")
         if fees:
@@ -463,10 +491,15 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
         if selection_process:
             parts.append(f"Selection process: {selection_process}")
         if last_date:
-            parts.append(f"Last date to apply: {last_date}.")
-        parts.append("Read the official notification and confirm eligibility and dates before applying.")
-        parts.append("This entry is saved as a Draft for human review before publication.")
-    return " ".join(parts)
+            parts.append(f"The last date to apply is {last_date}.")
+        else:
+            parts.append("The application deadline could not be clearly extracted. Confirm it in the official notification.")
+        parts.extend([
+            "Read the official notification carefully and check your eligibility for the post before applying.",
+            "This entry is saved as a Draft. All details must be checked against the original notice before publication."
+        ])
+    return "\n\n".join(parts)
+
 
 
 def build_up_update_description(title, department, category, official_text):
