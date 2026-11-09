@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Delete expired vacancies (manual or scanner-created) 30 days after last_date.
 
-Only category=Latest Jobs is eligible. Admit Cards, Results and other
-categories are excluded. Missing or invalid last_date is not deleted.
+Only Latest Jobs, Vacancy and Jobs categories are eligible. Admit Cards,
+Results and other categories are excluded. Missing or invalid last_date is not deleted.
 """
 import os
 import sys
@@ -58,7 +58,6 @@ def main():
 
             delete_params = {
                 "id": "in.(" + ",".join(ids) + ")",
-                "category": "eq.Latest Jobs",
                 "last_date": "lte." + cutoff,
             }
             result = session.delete(
