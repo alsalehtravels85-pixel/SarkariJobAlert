@@ -25,7 +25,7 @@ WHAT IT DOES
 STARTER SOURCES
 UPSSSC, UPPSC, UP Police, UP NHM, NCS Government Jobs, UPSC, SSC, IBPS, India Post, RBI, SBI Careers, DRDO, ISRO, Indian Railways, NABARD, SEBI, TNPSC, Kerala PSC, RPSC, BPSC, MPPSC and Employment News.
 
-GITHUB ACTIONS SECRETS
+SUPABASE MIGRATION (ONE TIME)\n- Supabase Dashboard > SQL Editor mein repository ki ADMIT_RESULT_FIELDS_MIGRATION.sql file ka poora SQL run karein. Yeh sirf missing Admit Card/Result columns add karta hai; existing rows delete ya update nahi karta.\n\nGITHUB ACTIONS SECRETS
 The workflow uses the existing repository secrets:
 - SUPABASE_URL
 - SUPABASE_SERVICE_ROLE_KEY
