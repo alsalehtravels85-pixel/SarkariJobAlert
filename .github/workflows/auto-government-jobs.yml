@@ -26,7 +26,7 @@ jobs:
         run: python -m pip install --upgrade requests beautifulsoup4 pypdf
       - name: Validate Python scanner and cleanup syntax
         run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py
-      - name: Scan vacancies plus UP Admit Cards/Results; publish verified items by category rules
+      - name: Scan vacancies plus UP Admit Cards/Results; auto-publish only strictly verified records
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 */6 * * *'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

@@ -2,7 +2,7 @@ SARKARIJOBALERT — OFFICIAL GOVERNMENT JOB SCANNER
 
 WHAT IT DOES
 - UPSSSC, UPPSC, UP Police and UP NHM are checked first for vacancies, Admit Cards and Results.
-- Admit Card and Result scanning is UP-only; verified updates from official UP portals are collected as Drafts for admin review.
+- Admit Card and Result scanning is UP-only. Verified official UP pages with a relevant official action link are auto-published; uncertain items are skipped.
 - Duplicate Admit Card/Result notices are not inserted again; unofficial sources or updates whose official UP origin cannot be verified are not published.
 - Central/national recruitment portals are checked after UP sources.
 - GitHub Actions runs the scanner every 6 hours; manual scanner run is also available.
@@ -11,10 +11,10 @@ WHAT IT DOES
 - Extracts vacancy count, qualification, dates, fees, age limit and selection process when readable.
 - Requires a clear official recruitment notice and at least two independently confirmed core facts: future last date, vacancy count and qualification.
 - Missing fields stay blank for admin review; expired deadlines, weak evidence and unclear titles are skipped.
-- Automatically collected vacancy, Admit Card and Result entries are saved as Drafts first. An admin must review the official source and publish manually.
+- A Vacancy is auto-published only when a readable official PDF on the same official host confirms the future deadline, vacancy count and qualification. Other eligible vacancies remain Draft. UP Admit Card/Result are auto-published only after strict official-page and action-link checks.
 - Vacancy Drafts require a clear title and at least two of these verified facts: future last date, vacancy count, qualification. A missing third fact is left blank for the admin to verify.
-- Scanner-created entries remain Draft until a human admin reviews and publishes them. This editorial review is important for accuracy and AdSense content quality.
-- UP Admit Card/Result collection follows separate official-UP-source verification and does not require a PDF or vacancy fields; entries still remain Draft until admin approval.
+- Only newly discovered, strictly verified records can be auto-published. Existing records are never status-changed by the scanner; incomplete or ambiguous records remain Draft or are skipped.
+- UP Admit Card/Result collection is limited to approved UP government portals and requires a sufficiently detailed official page plus a same-UP-host action link labelled for admit card/result/merit list.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Published job sitemap is generated from the existing Supabase jobs table after each scanner/cleanup workflow run. It includes public ?job=ID deep links, excludes Drafts and expired Vacancy posts, and adds lastmod where available.
 - The workflow commits sitemap-jobs.xml only when its content changes; GitHub Actions needs contents: write for this step.
@@ -47,7 +47,7 @@ FIRST TEST
 2. Click Run workflow.
 3. Inspect the run log and final SCAN REPORT.
 4. Supabase > Table Editor > jobs: check newly created Draft rows, then review and publish only verified items.
-5. All scanner-created vacancies, Admit Cards and Results must appear as Drafts. No scanner item is auto-published.
+5. Only strict verified vacancies and UP Admit Card/Result items should be Published; uncertain vacancy candidates remain Draft.
 
 SAFETY
 - TLS verification remains enabled. Certificate errors are logged and skipped, never bypassed.
@@ -59,10 +59,10 @@ SAFETY
 - A PDF is preferred and linked when available, but a PDF is not required to save a Draft if the official HTML notice provides enough evidence. Every scanner-created entry remains Draft.
 - A future last date must be confirmed from the official source before an admin publishes a vacancy.
 - Missing optional details are left blank; the scanner does not guess them.
-- The scanner does not update or delete existing jobs.
+- The scanner does not update or delete existing jobs. It inserts new verified records only.
 - Cleanup runs only on its daily schedule and affects every Latest Jobs vacancy (manual or scanner-created, Draft or Published) once the 30-day grace period has passed.
 - Manual workflow runs do not run cleanup.
-- Website UI, admin logic, schema, Cloudflare Worker, ticker and push notifications are not changed.
+- Website UI, Cloudflare Worker, ticker and push notifications are unchanged. schema.sql now safely adds the Admin Panel's Admit Card/Result detail columns.
 
 AUTOMATIC EXPIRY + DELETION (ALL VACANCIES)
 - Every Vacancy, whether manually created or scanner-created, remains eligible for deletion 30 full calendar days after its last_date.

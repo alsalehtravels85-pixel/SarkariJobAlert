@@ -6,8 +6,10 @@ Safety policy:
 - Never disables TLS certificate verification.
 - Requires a clear recruitment notice and an explicit future last date.
 - PDF is optional; an official HTML notice is acceptable.
-- Auto-publishes only when an official PDF itself supports the recruitment and future deadline.
+- Auto-publishes a vacancy only when a readable official PDF confirms all core facts and a future deadline.
 - Keeps HTML-only notices and uncertain/incomplete PDF notices as DRAFT.
+- UP Admit Card/Result are UP-only and auto-publish only when an official UP page confirms the update and contains a relevant official action link.
+- Inserts new rows only; never edits existing jobs.
 - Inserts new rows only; never edits existing jobs or changes the database schema.
 """
 import io
@@ -473,7 +475,7 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
             parts.append("आवेदन की अंतिम तिथि उपलब्ध पाठ से स्पष्ट नहीं हुई है। कृपया आधिकारिक अधिसूचना में इसकी पुष्टि करें।")
         parts.extend([
             "आवेदन करने से पहले आधिकारिक अधिसूचना ध्यान से पढ़ें और पद के अनुसार अपनी पात्रता जाँच लें।",
-            "यह जानकारी पहले ड्राफ्ट के रूप में रखी गई है। प्रकाशित करने से पहले मूल अधिसूचना से सभी विवरणों की जाँच आवश्यक है।"
+            ("इस भर्ती की जानकारी आधिकारिक अधिसूचना PDF से मिलान करके तैयार की गई है।" if pdf_verified else "यह जानकारी ड्राफ्ट में है; प्रकाशित करने से पहले मूल अधिसूचना से जाँच आवश्यक है।")
         ])
     else:
         parts = [
@@ -496,52 +498,73 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
             parts.append("The application deadline could not be clearly extracted. Confirm it in the official notification.")
         parts.extend([
             "Read the official notification carefully and check your eligibility for the post before applying.",
-            "This entry is saved as a Draft. All details must be checked against the original notice before publication."
+            ("The recruitment details above were cross-checked against the readable official notification PDF." if pdf_verified else "This entry remains a Draft until its details are checked against the original notice.")
         ])
     return "\n\n".join(parts)
 
 
 
-def build_up_update_description(title, department, category, official_text):
-    """Create a concise update note in the source page language; retain original excerpt."""
-    text = clean(official_text)
-    terms = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
-    positions = [text.lower().find(term.lower()) for term in terms if text.lower().find(term.lower()) >= 0]
-    excerpt = ""
-    if positions:
-        pos = min(positions)
-        excerpt = text[max(0, pos - 100):pos + 360].strip(" .:-")
-        if len(excerpt) > 360:
-            excerpt = excerpt[:357].rsplit(" ", 1)[0] + "..."
-    if contains_devanagari(title + " " + text):
-        if category == "Admit Card":
-            parts = [
-                f"{title} के संबंध में {department} की आधिकारिक वेबसाइट पर प्रवेश पत्र/परीक्षा अपडेट दिया गया है।",
-                "उम्मीदवार आधिकारिक पेज खोलकर परीक्षा, प्रवेश पत्र की उपलब्धता और परीक्षा संबंधी निर्देश स्वयं जाँचें।"
-            ]
-        else:
-            parts = [
-                f"{title} के संबंध में {department} की आधिकारिक वेबसाइट पर परिणाम संबंधी अपडेट दिया गया है।",
-                "उम्मीदवार आधिकारिक परिणाम पेज पर परीक्षा का विवरण मिलाकर अपना परिणाम या मेरिट सूची जाँचें।"
-            ]
-        if excerpt:
-            parts.append(f"आधिकारिक पेज पर उपलब्ध संबंधित जानकारी: {excerpt}")
-        parts.append("यह पोस्ट समीक्षा के लिए ड्राफ्ट में रखी गई है। प्रकाशित करने से पहले आधिकारिक पेज की मानवीय जाँच आवश्यक है।")
+def seo_update_title(title, category):
+    """Make titles clear and search-friendly without keyword stuffing."""
+    title = clean(title).strip(" |•:-")
+    if title.lower() in {"click here", "view", "download", "click to view", "click to download", "here"} or len(title) < 10:
+        return ""
+    hindi = contains_devanagari(title)
+    if category == "Admit Card":
+        if not any(x in title.lower() for x in ("admit card", "hall ticket", "प्रवेश पत्र", "प्रवेशपत्र")):
+            title += " " + ("प्रवेश पत्र" if hindi else "Admit Card")
     else:
-        if category == "Admit Card":
-            parts = [
-                f"{title} is an admit-card or examination update listed by {department} on its official portal.",
-                "Open the official page and confirm the examination, admit-card availability and exam instructions."
-            ]
-        else:
-            parts = [
-                f"{title} is a result-related update listed by {department} on its official portal.",
-                "Open the official result page, match the examination details and check the result or merit-list status."
-            ]
-        if excerpt:
-            parts.append(f"Relevant text on the official page: {excerpt}")
-        parts.append("This entry is saved as a Draft for human review before publication.")
-    return " ".join(parts)
+        if not any(x in title.lower() for x in ("result", "परिणाम", "रिजल्ट", "merit list", "scorecard")):
+            title += " " + ("परिणाम" if hindi else "Result")
+    return re.sub(r"\\s+", " ", title).strip()[:180]
+
+
+def official_action_link(html, page_url, category):
+    """Find a clearly labelled action link hosted on an approved UP government domain."""
+    if not html:
+        return None
+    soup = BeautifulSoup(html, "html.parser")
+    terms = (("admit card", "hall ticket", "download admit", "प्रवेश पत्र", "प्रवेशपत्र")
+             if category == "Admit Card"
+             else ("result", "merit list", "scorecard", "score card", "परिणाम", "रिजल्ट"))
+    for anchor in soup.select("a[href]"):
+        label = clean(anchor.get_text(" ", strip=True)).lower()
+        href = safe_url(anchor.get("href"), page_url)
+        if href and up_official(href) and any(term in label for term in terms):
+            return href
+    return None
+
+
+def build_up_update_description(title, department, category, action_url, exam_date=None, release_date=None, result_date=None, merit_url=None):
+    """Write a clean, useful article in the language of the official source."""
+    hindi = contains_devanagari(title)
+    parts = []
+    if hindi and category == "Admit Card":
+        parts = [f"{title} का प्रवेश पत्र {department} की आधिकारिक वेबसाइट पर उपलब्ध है।",
+                 "आधिकारिक डाउनलोड लिंक खोलें और प्रवेश पत्र डाउनलोड करने से पहले अपना परीक्षा/भर्ती विवरण मिलान करें।"]
+        if exam_date: parts.append(f"परीक्षा की तिथि: {exam_date}")
+        if release_date: parts.append(f"प्रवेश पत्र जारी होने की तिथि: {release_date}")
+        parts.append("डाउनलोड के बाद परीक्षा केंद्र, रिपोर्टिंग समय और प्रवेश पत्र पर दिए गए निर्देश ध्यान से पढ़ें।")
+    elif hindi:
+        parts = [f"{title} का परिणाम {department} की आधिकारिक वेबसाइट पर जारी किया गया है।",
+                 "आधिकारिक परिणाम लिंक खोलें और मांगी गई जानकारी भरकर अपना परिणाम देखें।"]
+        if result_date: parts.append(f"परिणाम जारी होने की तिथि: {result_date}")
+        if merit_url: parts.append("आधिकारिक मेरिट सूची/चयन सूची का लिंक भी उपलब्ध है।")
+        parts.append("परिणाम में अपना नाम, रोल नंबर और दिए गए निर्देशों का मिलान अवश्य करें।")
+    elif category == "Admit Card":
+        parts = [f"{title} is available on the official {department} website.",
+                 "Open the official download link and match your exam/recruitment details before downloading."]
+        if exam_date: parts.append(f"Exam date: {exam_date}")
+        if release_date: parts.append(f"Admit card release date: {release_date}")
+        parts.append("After downloading, check the exam centre, reporting time and instructions.")
+    else:
+        parts = [f"{title} has been published on the official {department} website.",
+                 "Open the official result link and enter the required details to check your result."]
+        if result_date: parts.append(f"Result date: {result_date}")
+        if merit_url: parts.append("An official merit/selection-list link is also available.")
+        parts.append("Check your name, roll number and all instructions shown with the result.")
+    parts.append(f"Official {('admit card download' if category == 'Admit Card' else 'result check')} link: {action_url}")
+    return "\\n\\n".join(parts)
 
 def main():
     if not DB.startswith("https://") or not KEY:
@@ -585,7 +608,7 @@ def main():
             print("SOURCE PARSE ERROR", source_name, str(exc)[:200])
         time.sleep(0.2)
 
-    saved = drafts = skipped = duplicates = process_errors = 0
+    saved = drafts = published = skipped = duplicates = process_errors = 0
     for source_name, candidate_title, link in candidates:
         try:
             if any(word in candidate_title.lower() for word in EXCLUDE_HINTS):
@@ -647,9 +670,15 @@ def main():
                 skipped += 1
                 continue
 
-            # All automatic vacancies stay Draft. A linked official PDF is evidence,
-            # not permission to publish without human review.
-            pdf_is_publishable = False
+            # Strict vacancy auto-publish gate: the readable PDF must be hosted
+            # on the same official host and confirm all three core facts.
+            pdf_is_publishable = bool(
+                pdf_url and official(pdf_url) and host(pdf_url) == host(detail_url)
+                and len(pdf_text) >= 300 and not has_corrupt_text(pdf_text)
+                and fields["last_date"] and fields["last_date"] >= TODAY.isoformat()
+                and fields["vacancies"] and fields["qualification"] and core_facts == 3
+                and not has_corrupt_text(candidate_title)
+            )
             notification_url = pdf_url or detail_url
             title = clean(candidate_title)[:180]
             department = source_name
@@ -687,7 +716,7 @@ def main():
                     pdf_verified=pdf_is_publishable,
                     source_notice_text=notice_text,
                 ),
-                "status": "draft",
+                "status": "published" if pdf_is_publishable else "draft",
             }
             response = session.post(
                 DB + "/rest/v1/jobs",
@@ -699,15 +728,18 @@ def main():
             known_urls.update((normalized_url(notification_url), normalized_url(detail_url)))
             known_titles.add(title_key)
             saved += 1
-            drafts += 1
+            if pdf_is_publishable:
+                published += 1
+            else:
+                drafts += 1
             optional_missing = [
                 key for key in ("vacancies", "qualification", "fees", "age_limit", "selection_process")
                 if not fields.get(key)
             ]
             print(
-                "DRAFT SAVED:",
+                "AUTO-PUBLISHED:" if pdf_is_publishable else "DRAFT SAVED:",
                 title,
-                "| PDF linked:", "yes" if bool(pdf_url) else "no",
+                "| PDF verified:", "yes" if pdf_is_publishable else "no",
                 "| confirmed core facts:", core_facts, "/3",
                 "| optional fields not extracted:", ", ".join(optional_missing) or "none"
             )
@@ -727,18 +759,27 @@ def main():
                 up_updates_skipped += 1
                 print("UP UPDATE SKIP - official UP detail page unavailable:", candidate_title[:160])
                 continue
-            if "pdf" in (content_type or "") or data[:4] == b"%PDF":
-                detail_text, _ = extract_pdf_text(session, detail_url)
+            is_pdf_page = "pdf" in (content_type or "") or data[:4] == b"%PDF"
+            if is_pdf_page:
+                detail_text, pdf_final_url = extract_pdf_text(session, detail_url)
+                html_soup = None
+                action_url = pdf_final_url if pdf_final_url and up_official(pdf_final_url) else None
             else:
                 html_soup = BeautifulSoup(data, "html.parser")
                 detail_text = clean(html_soup.get_text(" ", strip=True))
+                action_url = official_action_link(data, detail_url, category)
             lowered = (candidate_title + " " + detail_text).lower()
             hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
-            if not any(term in lowered for term in hints):
+            if (not any(term in lowered for term in hints) or len(detail_text) < 100
+                    or has_corrupt_text(detail_text) or not action_url or not up_official(action_url)):
                 up_updates_skipped += 1
-                print("UP UPDATE SKIP - official page does not confirm Admit Card/Result category:", candidate_title[:160])
+                print("UP UPDATE SKIP - official category/action link not sufficiently verified:", candidate_title[:160])
                 continue
-            title = clean(candidate_title)[:180]
+            title = seo_update_title(candidate_title, category)
+            if not title:
+                up_updates_skipped += 1
+                print("UP UPDATE SKIP - unclear SEO title:", candidate_title[:160])
+                continue
             department = source_name
             title_key = (normalize_text(title), normalize_text(department))
             if normalized_url(detail_url) in known_urls or title_key in known_titles:
@@ -749,25 +790,31 @@ def main():
                 "department": department,
                 "category": category,
                 "notification_url": detail_url,
-                "description": build_up_update_description(title, department, category, detail_text) + " This automatically collected update is saved as a draft for admin review and will not appear publicly until approved.",
-                "status": "draft",
+                "description": build_up_update_description(
+                    title, department, category, action_url,
+                    exam_date=labelled_date(detail_text, (r"exam(?:ination)\\s+date", r"date\\s+of\\s+exam")),
+                    release_date=labelled_date(detail_text, (r"admit\\s+card\\s+(?:available|released|download)", r"release\\s+date")),
+                    result_date=labelled_date(detail_text, (r"result\\s+(?:declared|published|date)", r"date\\s+of\\s+result")),
+                    merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
+                ),
+                "status": "published",
                 "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
-                record["admit_card_url"] = detail_url
+                record["admit_card_url"] = action_url
                 record["exam_date"] = labelled_date(detail_text, (r"exam(?:ination)?\s+date", r"date\s+of\s+exam"))
                 record["admit_card_release_date"] = labelled_date(detail_text, (r"admit\s+card\s+(?:available|released|download)", r"release\s+date"))
             else:
-                record["result_url"] = detail_url
+                record["result_url"] = action_url
                 record["result_date"] = labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result"))
                 record["result_status"] = "Check official result notice"
-                record["merit_list_url"] = detail_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
+                record["merit_list_url"] = action_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
             known_urls.add(normalized_url(detail_url))
             known_titles.add(title_key)
             up_updates_saved += 1
-            print("UP UPDATE DRAFT SAVED:", category, title, "| official source:", source_name)
+            print("UP UPDATE AUTO-PUBLISHED:", category, title, "| official action:", action_url, "| source:", source_name)
         except Exception as exc:
             process_errors += 1
             print("UP UPDATE PROCESS ERROR:", candidate_title[:160], str(exc)[:260])
@@ -783,11 +830,11 @@ def main():
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| vacancy auto-published: 0 (manual admin review required)",
+        "| vacancy auto-published:", published, "(strict official-PDF gate)",
         "| UP admit/result candidates:", len(up_update_candidates),
-        "| UP admit/result drafts saved:", up_updates_saved,
+        "| UP admit/result auto-published:", up_updates_saved,
         "| UP admit/result skipped (not verified/duplicate/fetch issue):", up_updates_skipped + up_updates_duplicates,
-        "| all scanner entries remain Draft until manual admin approval",
+        "| UP Admit Card/Result auto-publish only with verified official action links",
     )
     return 1 if process_errors else 0
 
