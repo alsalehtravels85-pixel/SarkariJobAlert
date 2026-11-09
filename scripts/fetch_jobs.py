@@ -418,10 +418,7 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
         "Before applying, read the official notification, confirm your eligibility and dates, "
         "and submit the form only through the official application portal."
     )
-    if not pdf_verified:
-        parts.append("This entry is saved as a draft for admin verification; do not publish until the official notice is checked.")
-    else:
-        parts.append("The scanner found the required recruitment details in the official PDF; applicants should still recheck the live notice before applying.")
+    parts.append("This automatically collected entry is saved as a draft for admin review. Publish only after a person checks the original official notification, dates and application instructions.")
     return " ".join(parts)
 
 
@@ -606,7 +603,7 @@ def main():
                     selection_process=fields["selection_process"],
                     pdf_verified=pdf_is_publishable,
                 ),
-                "status": "published" if pdf_is_publishable else "draft",
+                "status": "draft",
             }
             response = session.post(
                 DB + "/rest/v1/jobs",
@@ -671,8 +668,8 @@ def main():
                 "department": department,
                 "category": category,
                 "notification_url": detail_url,
-                "description": build_up_update_description(title, department, category, detail_text),
-                "status": "published",
+                "description": build_up_update_description(title, department, category, detail_text) + " This automatically collected update is saved as a draft for admin review and will not appear publicly until approved.",
+                "status": "draft",
                 "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
