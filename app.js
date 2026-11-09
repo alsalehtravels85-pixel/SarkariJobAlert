@@ -416,9 +416,38 @@
 
     const category = displayCategory(job.category);
     const rows = [];
+    let hiddenUnclearFields = 0;
+
+    // Never show broken PDF/OCR text as if it were verified information.
+    function readableValue(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const text = String(value).replace(/\\s+/g, " ").trim();
+      const broken = /[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|â€|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b|\\bfor the post\\b/i.test(text);
+      const tooLong = text.length > 260;
+      if (broken || tooLong) {
+        hiddenUnclearFields++;
+        return "Official notification mein verify karein";
+      }
+      return text;
+    }
+
+    function readableDescription(value) {
+      const raw = String(value || "").replace(/\\r/g, "").trim();
+      if (!raw) return "Detailed information abhi available nahi hai. Official notification zaroor dekhein.";
+      const parts = raw.split(/(?<=[.!?])\\s+/).filter(Boolean);
+      const good = parts.filter(part =>
+        !/[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b/i.test(part) &&
+        !/This automatically collected entry is saved as a draft/i.test(part)
+      );
+      if (good.length !== parts.length) hiddenUnclearFields++;
+      return good.length
+        ? good.map(part => `<p>${escapeHtml(part)}</p>`).join("")
+        : "<p>Is post ke kuch details PDF se saaf extract nahi ho paaye. Sahi jankari ke liye official notification kholen.</p>";
+    }
 
     function addRow(label, value) {
       if (value === null || value === undefined || value === "") return;
+      value = readableValue(value);
 
       rows.push(`
         <tr>
@@ -513,11 +542,10 @@
       <h3 class="detail-section-heading">Complete Details</h3>
 
       <div class="detail-copy">
-        ${escapeHtml(
-          job.description ||
-          "Detailed information is not available yet. Please check the official notification before taking action."
-        )}
+        ${readableDescription(job.description)}
       </div>
+
+      ${hiddenUnclearFields ? '<p class="detail-quality-note">⚠️ Kuch details original PDF se saaf read nahi ho paayi hain. Galat jankari dikhane ke bajay unhe verify karne ke liye mark kiya gaya hai. Official Notification kholkar confirm karein.</p>' : ''}
 
       <p class="tiny-note">
         Dates aur links ko apply karne se pehle official website par verify karein.
