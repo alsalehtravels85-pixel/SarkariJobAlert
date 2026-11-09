@@ -560,3 +560,56 @@ button.share-btn:hover,
  .detail-dialog .detail-copy{font-size:13px;line-height:1.7;padding:13px}
  .detail-dialog .detail-info-list th{width:auto}
 }
+
+
+/* Compact glass-style category buttons: Vacancy, Admit Card and Result */
+.quick-cats .cat[data-category="Vacancy"],
+.quick-cats .cat[data-category="Admit Card"],
+.quick-cats .cat[data-category="Result"]{
+  min-width:0;
+  padding:9px 14px;
+  gap:7px;
+  border:1px solid rgba(255,255,255,.72);
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(255,255,255,.76),rgba(231,241,255,.42));
+  color:#17345f;
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 5px 16px rgba(17,54,105,.10),inset 0 1px 0 rgba(255,255,255,.85);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  transition:background .2s ease,box-shadow .2s ease,transform .2s ease,border-color .2s ease;
+}
+.quick-cats .cat[data-category="Vacancy"]>span,
+.quick-cats .cat[data-category="Admit Card"]>span,
+.quick-cats .cat[data-category="Result"]>span{font-size:16px}
+.quick-cats .cat[data-category="Vacancy"].active,
+.quick-cats .cat[data-category="Admit Card"].active,
+.quick-cats .cat[data-category="Result"].active,
+.quick-cats .cat[data-category="Vacancy"]:hover,
+.quick-cats .cat[data-category="Admit Card"]:hover,
+.quick-cats .cat[data-category="Result"]:hover{
+  border-color:rgba(255,255,255,.88);
+  background:linear-gradient(125deg,rgba(8,120,255,.86),rgba(5,190,220,.76));
+  color:#fff;
+  box-shadow:0 7px 19px rgba(8,120,255,.22),inset 0 1px 0 rgba(255,255,255,.32);
+  transform:translateY(-1px);
+}
+.quick-cats .cat[data-category="Vacancy"].active>span,
+.quick-cats .cat[data-category="Admit Card"].active>span,
+.quick-cats .cat[data-category="Result"].active>span,
+.quick-cats .cat[data-category="Vacancy"]:hover>span,
+.quick-cats .cat[data-category="Admit Card"]:hover>span,
+.quick-cats .cat[data-category="Result"]:hover>span{color:#fff}
+@media(max-width:760px){
+  .quick-cats .cat[data-category="Vacancy"],
+  .quick-cats .cat[data-category="Admit Card"],
+  .quick-cats .cat[data-category="Result"]{
+    padding:8px 12px;
+    font-size:11px;
+    border-radius:10px;
+  }
+  .quick-cats .cat[data-category="Vacancy"]>span,
+  .quick-cats .cat[data-category="Admit Card"]>span,
+  .quick-cats .cat[data-category="Result"]>span{font-size:14px}
+}
