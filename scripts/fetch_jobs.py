@@ -535,9 +535,9 @@ def official_action_link(html, page_url, category):
     return None
 
 
-def build_up_update_description(title, department, category, action_url, exam_date=None, release_date=None, result_date=None, merit_url=None):
+def build_up_update_description(title, department, category, action_url, exam_date=None, release_date=None, result_date=None, merit_url=None, source_text=""):
     """Write a clean, useful article in the language of the official source."""
-    hindi = contains_devanagari(title)
+    hindi = contains_devanagari(title + " " + source_text)
     parts = []
     if hindi and category == "Admit Card":
         parts = [f"{title} का प्रवेश पत्र {department} की आधिकारिक वेबसाइट पर उपलब्ध है।",
@@ -796,6 +796,7 @@ def main():
                     release_date=labelled_date(detail_text, (r"admit\\s+card\\s+(?:available|released|download)", r"release\\s+date")),
                     result_date=labelled_date(detail_text, (r"result\\s+(?:declared|published|date)", r"date\\s+of\\s+result")),
                     merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
+                    source_text=detail_text,
                 ),
                 "status": "published",
                 "source_url": detail_url + MARKER,
@@ -807,7 +808,7 @@ def main():
             else:
                 record["result_url"] = action_url
                 record["result_date"] = labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result"))
-                record["result_status"] = "Check official result notice"
+                record["result_status"] = "परिणाम जारी" if contains_devanagari(detail_text) else "Declared"
                 record["merit_list_url"] = action_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
