@@ -2,7 +2,7 @@ SARKARIJOBALERT — OFFICIAL GOVERNMENT JOB SCANNER
 
 WHAT IT DOES
 - UPSSSC, UPPSC, UP Police and UP NHM are checked first for vacancies, Admit Cards and Results.
-- Admit Card and Result scanning is UP-only; genuine updates verified on official UP portals are auto-published without requiring a PDF, vacancy count, qualification or application deadline.
+- Admit Card and Result scanning is UP-only; verified updates from official UP portals are collected as Drafts for admin review.
 - Duplicate Admit Card/Result notices are not inserted again; unofficial sources or updates whose official UP origin cannot be verified are not published.
 - Central/national recruitment portals are checked after UP sources.
 - GitHub Actions runs the scanner every 6 hours; manual scanner run is also available.
@@ -14,7 +14,7 @@ WHAT IT DOES
 - Automatically collected vacancy, Admit Card and Result entries are saved as Drafts first. An admin must review the official source and publish manually.
 - Minimum confirmed details are mandatory for every entry: clear recruitment title, future last date, vacancy count and qualification. If any is missing or unclear, the notice is SKIPPED (not Draft).
 - Scanner-created entries remain Draft until a human admin reviews and publishes them. This editorial review is important for accuracy and AdSense content quality.
-- UP Admit Card/Result automatic publishing follows separate official-UP-source verification and does not require a PDF or vacancy fields.
+- UP Admit Card/Result collection follows separate official-UP-source verification and does not require a PDF or vacancy fields; entries still remain Draft until admin approval.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Inserts new rows only; it does not update existing records.
 - Uses the existing public.jobs columns. No schema change is required.
@@ -38,7 +38,7 @@ FIRST TEST
 1. GitHub > Actions > SarkariJobAlert - Automatic Government Job Scanner.
 2. Click Run workflow.
 3. Inspect the run log and final SCAN REPORT.
-4. Supabase > Table Editor > jobs: check newly created Published and Draft rows.
+4. Supabase > Table Editor > jobs: check newly created Draft rows, then review and publish only verified items.
 5. Review auto-published PDF-backed vacancies too; scanner checks reduce risk but do not replace human review.
 
 SAFETY
@@ -48,18 +48,17 @@ SAFETY
 - For the vacancy scanner, results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out. UP Admit Cards and Results are handled by a separate UP-only scanner.
 - An official PDF is preferred for vacancy verification, but all scanner-created entries remain Draft pending human review.
 - If vacancy count, qualification or future last date is missing/unclear on the official notice, skip the notice completely.
-- A PDF that is unreadable or lacks its own clear recruitment details and future last date cannot be auto-published; it may be Draft only if the official page confirms all minimum details.
-- A future last date must be present in the PDF itself for automatic publishing.
+- A PDF that is unreadable or lacks its own clear recruitment details and future last date should be carefully reviewed; scanner-created items remain Draft.
+- A future last date must be confirmed from the official source before an admin publishes a vacancy.
 - Missing optional details are left blank; the scanner does not guess them.
 - The scanner does not update or delete existing jobs.
-- Cleanup runs only on its daily schedule and only affects scanner-managed Published Latest Jobs after the 30-day grace period.
+- Cleanup runs only on its daily schedule and affects every Latest Jobs vacancy (manual or scanner-created, Draft or Published) once the 30-day grace period has passed.
 - Manual workflow runs do not run cleanup.
 - Website UI, admin logic, schema, Cloudflare Worker, ticker and push notifications are not changed.
 
-AUTOMATIC EXPIRY + DELETION (SCANNER-MANAGED LATEST JOBS ONLY)
-- A vacancy with a verified official PDF may be auto-published by the scanner; PDF-less or uncertain notices remain Draft.
-- Once Published, it remains visible for at least 30 full calendar days after its last_date.
-- After the full 30-day grace period, the daily cleanup can permanently delete that scanner-managed row.
+AUTOMATIC EXPIRY + DELETION (ALL VACANCIES)
+- Every Vacancy, whether manually created or scanner-created, remains eligible for deletion 30 full calendar days after its last_date.
+- The daily cleanup can permanently delete the expired vacancy regardless of Draft/Published status.
 - Cleanup is restricted to category=Latest Jobs and last_date at least 30 days past. It applies to manual and scanner-created vacancies, regardless of Draft/Published status.
 - It does not delete Admit Cards, Results, Education Guides, or rows without last_date.
 - This is permanent deletion, not archive. Keep regular Supabase backups if recovery is required.
