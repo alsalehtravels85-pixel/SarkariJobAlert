@@ -546,3 +546,17 @@ button.share-btn:hover,
     padding-right:28px;
   }
 }
+
+
+/* Job detail readability and extracted-text quality notice */
+.detail-dialog .detail-copy{display:grid;gap:10px;padding:16px;border:1px solid #dce6f3;border-radius:14px;background:#f8fbff;color:#334760;font-size:14px;line-height:1.75;overflow-wrap:anywhere}
+.detail-dialog .detail-copy p{margin:0}
+.detail-dialog .detail-info-list{border-collapse:separate;border-spacing:0 8px;width:100%}
+.detail-dialog .detail-info-list th,.detail-dialog .detail-info-list td{padding:11px 14px;vertical-align:top;overflow-wrap:anywhere}
+.detail-dialog .detail-info-list th{width:38%;background:#f0f5fc;color:#52647c;font-weight:750}
+.detail-dialog .detail-info-list td{background:#fff;color:#1d2e48;font-weight:600}
+.detail-quality-note{margin:12px 0;padding:12px 14px;border:1px solid #f3d28a;border-radius:11px;background:#fff8e8;color:#805514;font-size:12px;line-height:1.6}
+@media(max-width:520px){
+ .detail-dialog .detail-copy{font-size:13px;line-height:1.7;padding:13px}
+ .detail-dialog .detail-info-list th{width:auto}
+}
