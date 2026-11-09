@@ -9,10 +9,10 @@ WHAT IT DOES
 - Uses retry/backoff for temporary network errors and keeps TLS certificate verification enabled.
 - Reads official HTML recruitment pages and linked official notification PDFs.
 - Extracts vacancy count, qualification, dates, fees, age limit and selection process when readable.
-- Requires a clear recruitment notice and an explicitly labelled future last date.
-- If essential information is missing, the candidate is skipped rather than cluttering Admin Drafts.
+- Requires a clear official recruitment notice and at least two independently confirmed core facts: future last date, vacancy count and qualification.
+- Missing fields stay blank for admin review; expired deadlines, weak evidence and unclear titles are skipped.
 - Automatically collected vacancy, Admit Card and Result entries are saved as Drafts first. An admin must review the official source and publish manually.
-- Minimum confirmed details are mandatory for every entry: clear recruitment title, future last date, vacancy count and qualification. If any is missing or unclear, the notice is SKIPPED (not Draft).
+- Vacancy Drafts require a clear title and at least two of these verified facts: future last date, vacancy count, qualification. A missing third fact is left blank for the admin to verify.
 - Scanner-created entries remain Draft until a human admin reviews and publishes them. This editorial review is important for accuracy and AdSense content quality.
 - UP Admit Card/Result collection follows separate official-UP-source verification and does not require a PDF or vacancy fields; entries still remain Draft until admin approval.
 - Existing jobs are checked by URL and normalized title/department before insertion.
@@ -39,7 +39,7 @@ FIRST TEST
 2. Click Run workflow.
 3. Inspect the run log and final SCAN REPORT.
 4. Supabase > Table Editor > jobs: check newly created Draft rows, then review and publish only verified items.
-5. Review auto-published PDF-backed vacancies too; scanner checks reduce risk but do not replace human review.
+5. All scanner-created vacancies, Admit Cards and Results must appear as Drafts. No scanner item is auto-published.
 
 SAFETY
 - TLS verification remains enabled. Certificate errors are logged and skipped, never bypassed.
@@ -47,8 +47,8 @@ SAFETY
 - Expired or unverified deadlines are skipped.
 - For the vacancy scanner, results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out. UP Admit Cards and Results are handled by a separate UP-only scanner.
 - An official PDF is preferred for vacancy verification, but all scanner-created entries remain Draft pending human review.
-- If vacancy count, qualification or future last date is missing/unclear on the official notice, skip the notice completely.
-- A PDF that is unreadable or lacks its own clear recruitment details and future last date should be carefully reviewed; scanner-created items remain Draft.
+- For vacancy Drafts, at least two core facts (future last date, vacancy count, qualification) must be confirmed. Missing facts are left blank for human review.
+- A PDF is preferred and linked when available, but a PDF is not required to save a Draft if the official HTML notice provides enough evidence. Every scanner-created entry remains Draft.
 - A future last date must be confirmed from the official source before an admin publishes a vacancy.
 - Missing optional details are left blank; the scanner does not guess them.
 - The scanner does not update or delete existing jobs.
@@ -59,7 +59,7 @@ SAFETY
 AUTOMATIC EXPIRY + DELETION (ALL VACANCIES)
 - Every Vacancy, whether manually created or scanner-created, remains eligible for deletion 30 full calendar days after its last_date.
 - The daily cleanup can permanently delete the expired vacancy regardless of Draft/Published status.
-- Cleanup is restricted to category=Latest Jobs and last_date at least 30 days past. It applies to manual and scanner-created vacancies, regardless of Draft/Published status.
+- Cleanup is restricted to vacancy categories Latest Jobs, Vacancy and Jobs, with last_date at least 30 days past. It applies to manual and scanner-created vacancies, regardless of Draft/Published status. The delete request is scoped to the exact eligible row IDs returned by the category/date filter.
 - It does not delete Admit Cards, Results, Education Guides, or rows without last_date.
 - This is permanent deletion, not archive. Keep regular Supabase backups if recovery is required.
 
