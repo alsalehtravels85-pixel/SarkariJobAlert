@@ -599,9 +599,9 @@ def main():
                 detail_text = clean(html_soup.get_text(" ", strip=True))
             lowered = (candidate_title + " " + detail_text).lower()
             hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
-            if len(detail_text) < 40 or not any(term in lowered for term in hints):
+            if not any(term in lowered for term in hints):
                 up_updates_skipped += 1
-                print("UP UPDATE SKIP - authenticity/category not confirmed:", candidate_title[:160])
+                print("UP UPDATE SKIP - official page does not confirm Admit Card/Result category:", candidate_title[:160])
                 continue
             title = clean(candidate_title)[:180]
             department = source_name
