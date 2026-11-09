@@ -613,3 +613,48 @@ button.share-btn:hover,
   .quick-cats .cat[data-category="Admit Card"]>span,
   .quick-cats .cat[data-category="Result"]>span{font-size:14px}
 }
+
+
+/* Stylish action buttons for every official link inside View Details */
+.detail-dialog .detail-info-list td a{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  max-width:100%;
+  min-height:42px;
+  padding:10px 16px;
+  border:1px solid rgba(37,99,235,.24);
+  border-radius:11px;
+  background:linear-gradient(135deg,#eef6ff 0%,#dcecff 100%);
+  color:#0756b7;
+  font-size:13px;
+  font-weight:900;
+  line-height:1.35;
+  text-decoration:none;
+  box-shadow:0 4px 12px rgba(37,99,235,.10),inset 0 1px 0 rgba(255,255,255,.9);
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease,border-color .18s ease;
+}
+.detail-dialog .detail-info-list td a:hover{
+  transform:translateY(-2px);
+  border-color:rgba(37,99,235,.45);
+  background:linear-gradient(135deg,#dcecff 0%,#c8e2ff 100%);
+  box-shadow:0 7px 17px rgba(37,99,235,.17),inset 0 1px 0 rgba(255,255,255,.9);
+  text-decoration:none;
+}
+.detail-dialog .detail-info-list td a:active{transform:scale(.98)}
+.detail-dialog .detail-info-list td a:focus-visible{
+  outline:3px solid rgba(37,99,235,.28);
+  outline-offset:3px;
+}
+@media(max-width:520px){
+  .detail-dialog .detail-info-list td a{
+    min-height:40px;
+    padding:9px 13px;
+    font-size:12px;
+    border-radius:10px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .detail-dialog .detail-info-list td a{transition:none}
+}
