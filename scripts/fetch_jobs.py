@@ -14,14 +14,14 @@ HEAD={'User-Agent':'SarkariJobAlertOfficialScanner/2.0 (+https://github.com/alsa
 TIMEOUT=(20,45)
 EXACT={'upsc.gov.in','upsconline.nic.in','ssc.gov.in','upsssc.gov.in','uppsc.up.nic.in','ibps.in','sbi.co.in','indiapost.gov.in','opportunities.rbi.org.in','drdo.gov.in','isro.gov.in','indianrailways.gov.in','rrbapply.gov.in','uppbpb.gov.in','nabard.org','sebi.gov.in','tnpsc.gov.in','keralapsc.gov.in','rpsc.rajasthan.gov.in','bpsc.bihar.gov.in','mppsc.mp.gov.in','ncs.gov.in','employmentnews.gov.in'}
 SOURCES=[
-('NCS Government Recruitment Directory','https://www.ncs.gov.in/pages/govt-job-vacancies.aspx'),
-('Employment News','https://employmentnews.gov.in/NewEmp/Home.aspx'),
+('UPSSSC','https://upsssc.gov.in/'),('UPPSC','https://uppsc.up.nic.in/'),('UP Police','https://uppbpb.gov.in/'),
+('UP NHM','https://upnrhm.gov.in/'),('UP Government Jobs - NCS','https://www.ncs.gov.in/pages/govt-job-vacancies.aspx'),
 ('UPSC','https://www.upsc.gov.in/recruitment/recruitment-advertisement'),('SSC','https://ssc.gov.in/'),
-('UPSSSC','https://upsssc.gov.in/'),('UPPSC','https://uppsc.up.nic.in/'),('IBPS','https://www.ibps.in/index.php/recruitment/'),
+('IBPS','https://www.ibps.in/index.php/recruitment/'),
 ('India Post','https://www.indiapost.gov.in/vacancies'),('RBI','https://opportunities.rbi.org.in/scripts/vacancies.aspx'),
 ('SBI Careers','https://sbi.co.in/web/careers/current-openings'),('DRDO','https://www.drdo.gov.in/drdo/careers'),
 ('ISRO','https://www.isro.gov.in/Careers.html'),('Indian Railways','https://indianrailways.gov.in/railwayboard/'),
-('UP Police','https://uppbpb.gov.in/'),('NABARD','https://www.nabard.org/careers-notices1.aspx'),
+('NABARD','https://www.nabard.org/careers-notices1.aspx'),
 ('SEBI','https://www.sebi.gov.in/sebiweb/about/AboutAction.do?doVacancies=yes'),
 ('TNPSC','https://www.tnpsc.gov.in/'),('Kerala PSC','https://www.keralapsc.gov.in/'),
 ('RPSC','https://rpsc.rajasthan.gov.in/'),('BPSC','https://bpsc.bihar.gov.in/'),('MPPSC','https://mppsc.mp.gov.in/')]
@@ -127,20 +127,25 @@ def main():
    html,detail,ct=get(s,link); pdftxt='';pdfurl=None
    if html and ('pdf' in (ct or '') or html[:4]==b'%PDF'):pdftxt,pdfurl=pdf_text(s,detail)
    elif html:
-    soup=BeautifulSoup(html,'html.parser'); purls=[]
+    soup=BeautifulSoup(html,'html.parser')
+    page_text=txt(soup.get_text(' ',strip=True))
+    pdftxt=page_text
+    purls=[]
     for a in soup.select('a[href]'):
      label=txt(a.get_text(' ',strip=True)).lower();u=safe(a.get('href'),detail)
      if u and ('.pdf' in urlparse(u).path.lower() or 'notification' in label or 'advertisement' in label or 'download' in label):purls.append(u)
     for pu in purls[:8]:
      t,fu=pdf_text(s,pu)
      if len(t)>len(pdftxt):pdftxt,pdfurl=t,fu
-   if not pdfurl or len(pdftxt)<300:continue
+   if len(pdftxt)<180:continue
+   # PDF is optional: a genuine, current recruitment detail page on an official government site is also acceptable.
+   notice_url=pdfurl or detail
    f=fields(pdftxt);apply=apply_link(s,html,detail,pdftxt)
    
    # Publish only when essential proof and a valid future deadline are present.
    # Missing optional details must never create Draft clutter in the admin panel.
    missing=[]
-   if not pdfurl: missing.append('official notification PDF')
+   if not official(detail): missing.append('official government source')
    if not f['last_date']: missing.append('last date')
    elif f['last_date']<today: missing.append('deadline expired')
    if len(txt(title))<12: missing.append('clear job title')
@@ -154,14 +159,14 @@ def main():
    record={'title':txt(title)[:180],'department':dept,'category':'Latest Jobs','vacancies':f['vacancies'] or '',
     'notification_date':f['notification_date'],'last_date':f['last_date'],'qualification':f['qualification'] or '',
     'fees':f['fees'] or '', 'age_limit':f['age_limit'] or '', 'selection_process':f['selection_process'] or '',
-    'notification_url':pdfurl,'apply_url':apply or '', 'source_url':detail+'#sja-auto-scanner-managed',
-    'description':'Official recruitment notice automatically detected. Some details may not be available in the extracted fields. Please read the linked official notification for complete terms, category-wise vacancies, age relaxation and application instructions.','status':status}
+    'notification_url':notice_url,'apply_url':apply or '', 'source_url':detail+'#sja-auto-scanner-managed',
+    'description':'Official recruitment notice detected on an official government website. PDF may not be available; open the official notice/source link for complete terms, category-wise vacancies, age relaxation and application instructions.','status':status}
    tk=(norm(record['title']),norm(record['department']))
-   if pdfurl.rstrip('/') in urls or detail.rstrip('/') in urls or tk in titles:dupes+=1;continue
-   chk=s.get(DB+'/rest/v1/jobs',headers=dbheaders(),params={'select':'id','notification_url':'eq.'+pdfurl,'limit':1},timeout=25);chk.raise_for_status()
+   if notice_url.rstrip('/') in urls or detail.rstrip('/') in urls or tk in titles:dupes+=1;continue
+   chk=s.get(DB+'/rest/v1/jobs',headers=dbheaders(),params={'select':'id','notification_url':'eq.'+notice_url,'limit':1},timeout=25);chk.raise_for_status()
    if chk.json():dupes+=1;continue
    r=s.post(DB+'/rest/v1/jobs',headers=dbheaders(),json=record,timeout=30);r.raise_for_status()
-   urls.update((pdfurl.rstrip('/'),detail.rstrip('/')));titles.add(tk)
+   urls.update((notice_url.rstrip('/'),detail.rstrip('/')));titles.add(tk)
    if status=='published':pub+=1;print('AUTO-PUBLISHED',record['title'],'| optional details missing:',', '.join(missing) if missing else 'none')
    else:drafts+=1;print('DRAFT - deadline missing/expired or official PDF not verified',record['title'],'| missing:',', '.join(missing) if missing else 'deadline/PDF verification')
   except Exception as e:errors+=1;print('PROCESS ERROR',title,e)
