@@ -426,28 +426,46 @@ def load_existing(session):
     return known_urls, known_titles
 
 
+def contains_devanagari(value):
+    """Detect Hindi/Devanagari text without translating or changing source wording."""
+    return bool(re.search(r"[\u0900-\u097F]", value or ""))
+
+
 def build_vacancy_description(title, department, vacancies, qualification, last_date, fees, age_limit, selection_process, pdf_verified):
-    """Build a useful post-specific summary using only extracted official-notice fields."""
-    parts = [
-        f"{title} is a recruitment update from {department}.",
-    ]
-    if vacancies:
-        parts.append(f"Total vacancies: {vacancies}.")
-    if qualification:
-        parts.append(f"Educational qualification: {qualification}.")
-    if age_limit:
-        parts.append(f"Age limit: {age_limit}.")
-    if fees:
-        parts.append(f"Application fee: {fees}.")
-    if selection_process:
-        parts.append(f"Selection process: {selection_process}.")
-    if last_date:
-        parts.append(f"Last date to apply: {last_date}.")
-    parts.append(
-        "Before applying, read the official notification, confirm your eligibility and dates, "
-        "and submit the form only through the official application portal."
-    )
-    parts.append("This automatically collected entry is saved as a draft for admin review. Publish only after a person checks the original official notification, dates and application instructions.")
+    """Compose a short note in the source notice language; extracted values stay verbatim."""
+    source_text = " ".join(str(x or "") for x in (title, qualification, fees, age_limit, selection_process))
+    if contains_devanagari(source_text):
+        parts = [f"{title} की भर्ती संबंधी जानकारी {department} की आधिकारिक सूचना से ली गई है।"]
+        if vacancies:
+            parts.append(f"कुल पद: {vacancies}।")
+        if qualification:
+            parts.append(f"योग्यता: {qualification}")
+        if age_limit:
+            parts.append(f"आयु सीमा: {age_limit}")
+        if fees:
+            parts.append(f"आवेदन शुल्क: {fees}")
+        if selection_process:
+            parts.append(f"चयन प्रक्रिया: {selection_process}")
+        if last_date:
+            parts.append(f"आवेदन की अंतिम तिथि: {last_date}")
+        parts.append("आवेदन करने से पहले आधिकारिक अधिसूचना पढ़ें और पात्रता व तारीखों की पुष्टि करें।")
+        parts.append("यह जानकारी समीक्षा के लिए ड्राफ्ट में रखी गई है। प्रकाशित करने से पहले मूल आधिकारिक सूचना की मानवीय जाँच आवश्यक है।")
+    else:
+        parts = [f"{title} is a recruitment update from {department}, based on its official notice."]
+        if vacancies:
+            parts.append(f"Total vacancies: {vacancies}.")
+        if qualification:
+            parts.append(f"Qualification: {qualification}")
+        if age_limit:
+            parts.append(f"Age limit: {age_limit}")
+        if fees:
+            parts.append(f"Application fee: {fees}")
+        if selection_process:
+            parts.append(f"Selection process: {selection_process}")
+        if last_date:
+            parts.append(f"Last date to apply: {last_date}.")
+        parts.append("Read the official notification and confirm eligibility and dates before applying.")
+        parts.append("This entry is saved as a Draft for human review before publication.")
     return " ".join(parts)
 
 
