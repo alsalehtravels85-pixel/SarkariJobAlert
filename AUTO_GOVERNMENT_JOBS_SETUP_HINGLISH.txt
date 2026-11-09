@@ -100,3 +100,10 @@ ADSENSE READINESS CHANGES (9 NOVEMBER 2026)
 - Scanner-created posts now remain Draft until an admin manually verifies and publishes them. This is intended to add human review/curation before public display.
 - Scanner descriptions are generated from extracted official vacancy fields or the official UP page context; missing details are not guessed.
 - AdSense approval is not guaranteed. Before applying, verify the live site, ads.txt availability, privacy disclosures, actual post quality and Google policy compliance. If serving ads to users in the EEA, UK or Switzerland, configure an appropriate Google-certified consent solution where required.
+
+ARTICLE LANGUAGE & CLEAN TEXT
+- Scanner detects Hindi/Devanagari from the complete official notice text, not only the job title. Hindi notices get a Hindi article; English notices get an English article.
+- Official facts are retained in their source wording; the scanner does not invent or silently translate qualification, fee, age, selection or dates.
+- Extracted PDF text whitespace is normalized. Common mojibake/replacement-character corruption is rejected from structured fields rather than shown as factual details.
+- Vacancy article descriptions are written as short, separated paragraphs. The job detail page uses the article language for field labels and separates paragraphs for mobile readability.
+- If extraction is unclear, the field is left blank or marked for official-notification verification. All scanner entries remain Draft until an admin checks the original source.
