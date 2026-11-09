@@ -6,7 +6,8 @@ Safety policy:
 - Never disables TLS certificate verification.
 - Requires a clear recruitment notice and an explicit future last date.
 - PDF is optional; an official HTML notice is acceptable.
-- Saves verified candidates as DRAFT for human review. It never auto-publishes.
+- Auto-publishes only when an official PDF itself supports the recruitment and future deadline.
+- Keeps HTML-only notices and uncertain/incomplete PDF notices as DRAFT.
 - Inserts new rows only; never edits existing jobs or changes the database schema.
 """
 import io
@@ -397,15 +398,17 @@ def main():
 
             page_is_pdf = "pdf" in (content_type or "") or data[:4] == b"%PDF"
             if page_is_pdf:
-                notice_text, pdf_url = extract_pdf_text(session, detail_url)
+                pdf_text, pdf_url = extract_pdf_text(session, detail_url)
                 html = None
+                page_text = ""
             else:
                 html = data
                 soup = BeautifulSoup(data, "html.parser")
                 page_text = clean(soup.get_text(" ", strip=True))
                 pdf_text, pdf_url = find_notice_pdf(session, data, detail_url)
-                # Keep the page's own context and supplement it with PDF text.
-                notice_text = clean(page_text + " " + pdf_text)
+            # Page context can help prepare a draft, but auto-publishing is
+            # decided only from substantive text extracted from the official PDF.
+            notice_text = clean(page_text + " " + pdf_text)
 
             if len(notice_text) < 180:
                 print("SKIP - notice text too short:", candidate_title)
@@ -422,6 +425,7 @@ def main():
                 continue
 
             fields = extract_fields(notice_text)
+            pdf_fields = extract_fields(pdf_text)
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
@@ -436,6 +440,19 @@ def main():
                 skipped += 1
                 continue
 
+            # Strict auto-publish gate: a real official PDF must be fetched,
+            # parsed into substantial text, identify recruitment, and contain
+            # its own explicit future application deadline. Otherwise save draft.
+            pdf_recruitment_text = (candidate_title + " " + pdf_text).lower()
+            pdf_is_publishable = bool(
+                pdf_url
+                and official(pdf_url)
+                and len(pdf_text) >= 300
+                and any(word in pdf_recruitment_text for word in RECRUITMENT_HINTS)
+                and pdf_fields["last_date"]
+                and pdf_fields["last_date"] >= TODAY.isoformat()
+                and not any(word in pdf_text.lower() for word in EXCLUDE_HINTS)
+            )
             notification_url = pdf_url or detail_url
             title = clean(candidate_title)[:180]
             department = source_name
@@ -463,11 +480,15 @@ def main():
                 "source_url": detail_url + MARKER,
                 "description": (
                     "Official recruitment notice detected by SarkariJobAlert scanner. "
-                    "This entry is saved as Draft for admin verification. "
-                    "PDF is optional; open the official notice/source link and confirm all "
-                    "eligibility, dates, fees, age relaxation and application instructions before publishing."
+                    + (
+                        "Official PDF and its recruitment details/deadline passed the scanner checks. "
+                        "Admin should still review the notice and application instructions."
+                        if pdf_is_publishable else
+                        "Saved as Draft because an official, readable PDF with a verified future deadline "
+                        "was not available. Admin verification is required before publishing."
+                    )
                 ),
-                "status": "draft",
+                "status": "published" if pdf_is_publishable else "draft",
             }
             response = session.post(
                 DB + "/rest/v1/jobs",
@@ -483,7 +504,12 @@ def main():
                 key for key in ("vacancies", "qualification", "fees", "age_limit", "selection_process")
                 if not fields.get(key)
             ]
-            print("DRAFT SAVED:", title, "| optional fields not extracted:", ", ".join(optional_missing) or "none")
+            print(
+                ("AUTO-PUBLISHED:" if pdf_is_publishable else "DRAFT SAVED:"),
+                title,
+                "| PDF verified:", "yes" if pdf_is_publishable else "no",
+                "| optional fields not extracted:", ", ".join(optional_missing) or "none"
+            )
         except Exception as exc:
             process_errors += 1
             print("PROCESS ERROR:", candidate_title[:160], str(exc)[:280])
@@ -498,7 +524,8 @@ def main():
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| published: 0 (manual admin approval required)",
+        "| auto-published:", sum(1 for line in []),
+        "| published only with verified official PDF; HTML-only notices remain drafts",
     )
     return 1 if process_errors else 0
 
