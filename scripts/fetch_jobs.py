@@ -385,7 +385,7 @@ def main():
             print("SOURCE PARSE ERROR", source_name, str(exc)[:200])
         time.sleep(0.2)
 
-    saved = skipped = duplicates = process_errors = 0
+    saved = published = drafts = skipped = duplicates = process_errors = 0
     for source_name, candidate_title, link in candidates:
         try:
             if any(word in candidate_title.lower() for word in EXCLUDE_HINTS):
@@ -500,6 +500,10 @@ def main():
             known_urls.update((normalized_url(notification_url), normalized_url(detail_url)))
             known_titles.add(title_key)
             saved += 1
+            if pdf_is_publishable:
+                published += 1
+            else:
+                drafts += 1
             optional_missing = [
                 key for key in ("vacancies", "qualification", "fees", "age_limit", "selection_process")
                 if not fields.get(key)
@@ -520,11 +524,12 @@ def main():
         "| official source pages:", len(SOURCES),
         "| source fetch/parse issues:", source_errors,
         "| candidate links:", len(candidates),
-        "| drafts saved:", saved,
+        "| rows saved:", saved,
+        "| drafts saved:", drafts,
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| auto-published:", sum(1 for line in []),
+        "| auto-published:", published,
         "| published only with verified official PDF; HTML-only notices remain drafts",
     )
     return 1 if process_errors else 0
