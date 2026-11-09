@@ -396,6 +396,62 @@ def load_existing(session):
         offset += 1000
     return known_urls, known_titles
 
+
+def build_vacancy_description(title, department, vacancies, qualification, last_date, fees, age_limit, selection_process, pdf_verified):
+    """Build a useful post-specific summary using only extracted official-notice fields."""
+    parts = [
+        f"{title} is a recruitment update from {department}.",
+    ]
+    if vacancies:
+        parts.append(f"Total vacancies: {vacancies}.")
+    if qualification:
+        parts.append(f"Educational qualification: {qualification}.")
+    if age_limit:
+        parts.append(f"Age limit: {age_limit}.")
+    if fees:
+        parts.append(f"Application fee: {fees}.")
+    if selection_process:
+        parts.append(f"Selection process: {selection_process}.")
+    if last_date:
+        parts.append(f"Last date to apply: {last_date}.")
+    parts.append(
+        "Before applying, read the official notification, confirm your eligibility and dates, "
+        "and submit the form only through the official application portal."
+    )
+    if not pdf_verified:
+        parts.append("This entry is saved as a draft for admin verification; do not publish until the official notice is checked.")
+    else:
+        parts.append("The scanner found the required recruitment details in the official PDF; applicants should still recheck the live notice before applying.")
+    return " ".join(parts)
+
+
+def build_up_update_description(title, department, category, official_text):
+    """Create a category-specific summary and a short excerpt from the verified official page."""
+    text = clean(official_text)
+    terms = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
+    positions = [text.lower().find(term.lower()) for term in terms if text.lower().find(term.lower()) >= 0]
+    excerpt = ""
+    if positions:
+        pos = min(positions)
+        excerpt = text[max(0, pos - 100):pos + 360].strip(" .:-")
+        if len(excerpt) > 360:
+            excerpt = excerpt[:357].rsplit(" ", 1)[0] + "..."
+    if category == "Admit Card":
+        parts = [
+            f"{title} is an admit-card or examination update listed by {department} on its official portal.",
+            "Candidates should open the official page, confirm the relevant examination and check the admit-card availability and exam instructions before travelling to the exam centre."
+        ]
+    else:
+        parts = [
+            f"{title} is a result-related update listed by {department} on its official portal.",
+            "Candidates should open the official result page, match the examination/recruitment details and follow the department's instructions to check their result or merit-list status."
+        ]
+    if excerpt:
+        parts.append(f"Relevant text on the official page: {excerpt}.")
+    parts.append("Dates, result status and download details should be confirmed on the official page; details not shown there are not assumed.")
+    return " ".join(parts)
+
+
 def main():
     if not DB.startswith("https://") or not KEY:
         print("CONFIG ERROR: GitHub secrets SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.")
@@ -539,15 +595,16 @@ def main():
                 "notification_url": notification_url,
                 "apply_url": apply_url or "",
                 "source_url": detail_url + MARKER,
-                "description": (
-                    "Official recruitment notice detected by SarkariJobAlert scanner. "
-                    + (
-                        "Official PDF and its recruitment details/deadline passed the scanner checks. "
-                        "Admin should still review the notice and application instructions."
-                        if pdf_is_publishable else
-                        "Saved as Draft because the official PDF did not independently confirm all "
-                        "minimum details or a readable PDF was unavailable. Admin verification is required."
-                    )
+                "description": build_vacancy_description(
+                    title=title,
+                    department=department,
+                    vacancies=fields["vacancies"],
+                    qualification=fields["qualification"],
+                    last_date=fields["last_date"],
+                    fees=fields["fees"],
+                    age_limit=fields["age_limit"],
+                    selection_process=fields["selection_process"],
+                    pdf_verified=pdf_is_publishable,
                 ),
                 "status": "published" if pdf_is_publishable else "draft",
             }
@@ -614,7 +671,7 @@ def main():
                 "department": department,
                 "category": category,
                 "notification_url": detail_url,
-                "description": "Verified update detected from an official Uttar Pradesh government portal. Use the official link for details and download.",
+                "description": build_up_update_description(title, department, category, detail_text),
                 "status": "published",
                 "source_url": detail_url + MARKER,
             }
