@@ -632,7 +632,16 @@ def main():
 
             page_is_pdf = "pdf" in (content_type or "") or data[:4] == b"%PDF"
             if page_is_pdf:
-                pdf_text, pdf_url = extract_pdf_text(session, detail_url)
+                # The PDF bytes were already downloaded by fetch(). Parse those
+                # same verified bytes rather than requesting the URL a second time.
+                # A second request can time out or return a different response.
+                try:
+                    pdf_reader = PdfReader(io.BytesIO(data))
+                    pdf_text = clean(" ".join(page.extract_text() or "" for page in pdf_reader.pages[:60]))
+                    pdf_url = detail_url
+                except Exception as exc:
+                    print("PDF PARSE ERROR", detail_url, str(exc)[:200])
+                    pdf_text, pdf_url = "", None
                 html = None
                 page_text = ""
             else:
@@ -776,9 +785,16 @@ def main():
                 continue
             is_pdf_page = "pdf" in (content_type or "") or data[:4] == b"%PDF"
             if is_pdf_page:
-                detail_text, pdf_final_url = extract_pdf_text(session, detail_url)
+                # Reuse the fetched PDF bytes; never turn an unreadable PDF into
+                # a published update merely because its URL looks official.
+                try:
+                    pdf_reader = PdfReader(io.BytesIO(data))
+                    detail_text = clean(" ".join(page.extract_text() or "" for page in pdf_reader.pages[:60]))
+                    action_url = detail_url if detail_text and up_official(detail_url) else None
+                except Exception as exc:
+                    print("UP PDF PARSE ERROR", detail_url, str(exc)[:200])
+                    detail_text, action_url = "", None
                 html_soup = None
-                action_url = pdf_final_url if pdf_final_url and up_official(pdf_final_url) else None
             else:
                 html_soup = BeautifulSoup(data, "html.parser")
                 detail_text = clean(html_soup.get_text(" ", strip=True))
