@@ -665,7 +665,7 @@ def main():
             else:
                 record["result_url"] = detail_url
                 record["result_date"] = labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result"))
-                record["result_status"] = "Declared / Published"
+                record["result_status"] = "Check official result notice"
                 record["merit_list_url"] = detail_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
