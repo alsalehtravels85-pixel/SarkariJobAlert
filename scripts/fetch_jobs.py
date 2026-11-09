@@ -470,7 +470,7 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
 
 
 def build_up_update_description(title, department, category, official_text):
-    """Create a category-specific summary and a short excerpt from the verified official page."""
+    """Create a concise update note in the source page language; retain original excerpt."""
     text = clean(official_text)
     terms = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
     positions = [text.lower().find(term.lower()) for term in terms if text.lower().find(term.lower()) >= 0]
@@ -480,21 +480,35 @@ def build_up_update_description(title, department, category, official_text):
         excerpt = text[max(0, pos - 100):pos + 360].strip(" .:-")
         if len(excerpt) > 360:
             excerpt = excerpt[:357].rsplit(" ", 1)[0] + "..."
-    if category == "Admit Card":
-        parts = [
-            f"{title} is an admit-card or examination update listed by {department} on its official portal.",
-            "Candidates should open the official page, confirm the relevant examination and check the admit-card availability and exam instructions before travelling to the exam centre."
-        ]
+    if contains_devanagari(title + " " + text):
+        if category == "Admit Card":
+            parts = [
+                f"{title} के संबंध में {department} की आधिकारिक वेबसाइट पर प्रवेश पत्र/परीक्षा अपडेट दिया गया है।",
+                "उम्मीदवार आधिकारिक पेज खोलकर परीक्षा, प्रवेश पत्र की उपलब्धता और परीक्षा संबंधी निर्देश स्वयं जाँचें।"
+            ]
+        else:
+            parts = [
+                f"{title} के संबंध में {department} की आधिकारिक वेबसाइट पर परिणाम संबंधी अपडेट दिया गया है।",
+                "उम्मीदवार आधिकारिक परिणाम पेज पर परीक्षा का विवरण मिलाकर अपना परिणाम या मेरिट सूची जाँचें।"
+            ]
+        if excerpt:
+            parts.append(f"आधिकारिक पेज पर उपलब्ध संबंधित जानकारी: {excerpt}")
+        parts.append("यह पोस्ट समीक्षा के लिए ड्राफ्ट में रखी गई है। प्रकाशित करने से पहले आधिकारिक पेज की मानवीय जाँच आवश्यक है।")
     else:
-        parts = [
-            f"{title} is a result-related update listed by {department} on its official portal.",
-            "Candidates should open the official result page, match the examination/recruitment details and follow the department's instructions to check their result or merit-list status."
-        ]
-    if excerpt:
-        parts.append(f"Relevant text on the official page: {excerpt}.")
-    parts.append("Dates, result status and download details should be confirmed on the official page; details not shown there are not assumed.")
+        if category == "Admit Card":
+            parts = [
+                f"{title} is an admit-card or examination update listed by {department} on its official portal.",
+                "Open the official page and confirm the examination, admit-card availability and exam instructions."
+            ]
+        else:
+            parts = [
+                f"{title} is a result-related update listed by {department} on its official portal.",
+                "Open the official result page, match the examination details and check the result or merit-list status."
+            ]
+        if excerpt:
+            parts.append(f"Relevant text on the official page: {excerpt}")
+        parts.append("This entry is saved as a Draft for human review before publication.")
     return " ".join(parts)
-
 
 def main():
     if not DB.startswith("https://") or not KEY:
