@@ -8,6 +8,7 @@ Current public detail URLs use the site's existing ?job=<id> deep-link route.
 import os
 import sys
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 from xml.etree.ElementTree import Element, SubElement, ElementTree, register_namespace
 from pathlib import Path
 
@@ -18,7 +19,7 @@ DB = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
 KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 OUT = Path("sitemap-jobs.xml")
 PAGE_SIZE = 1000
-TODAY = date.today()
+TODAY = datetime.now(ZoneInfo("Asia/Kolkata")).date()
 
 
 def iso_date(value):
