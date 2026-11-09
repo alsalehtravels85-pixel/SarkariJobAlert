@@ -1155,6 +1155,12 @@ document.addEventListener("click", event => {
     message.textContent = "";
 
     const category = $("#jobCategory").value;
+    const descriptionText = $("#jobDescription").value.trim();
+    if (descriptionText.length < 80) {
+      message.textContent = "Complete Details mein kam se kam 80 characters ki useful, post-specific description likhein.";
+      $("#jobDescription").focus();
+      return;
+    }
 
     const data = {
       title: $("#jobTitle").value.trim(),
