@@ -443,9 +443,9 @@ def contains_devanagari(value):
     return bool(re.search(r"[\u0900-\u097F]", value or ""))
 
 
-def build_vacancy_description(title, department, vacancies, qualification, last_date, fees, age_limit, selection_process, pdf_verified):
+def build_vacancy_description(title, department, vacancies, qualification, last_date, fees, age_limit, selection_process, pdf_verified, source_notice_text=''):
     """Write a readable article in the language used by the source notice."""
-    facts = " ".join(str(x or "") for x in (title, qualification, fees, age_limit, selection_process))
+    facts = " ".join(str(x or "") for x in (title, qualification, fees, age_limit, selection_process, source_notice_text))
     hindi = contains_devanagari(facts)
     qualification = valid_extracted_field(qualification, "qualification") if qualification else None
     fees = valid_extracted_field(fees, "fees") if fees else None
@@ -685,6 +685,7 @@ def main():
                     age_limit=fields["age_limit"],
                     selection_process=fields["selection_process"],
                     pdf_verified=pdf_is_publishable,
+                    source_notice_text=notice_text,
                 ),
                 "status": "draft",
             }
