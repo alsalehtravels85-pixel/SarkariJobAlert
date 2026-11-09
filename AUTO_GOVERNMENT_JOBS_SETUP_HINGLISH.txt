@@ -1,7 +1,9 @@
 SARKARIJOBALERT — OFFICIAL GOVERNMENT JOB SCANNER
 
 WHAT IT DOES
-- UPSSSC, UPPSC, UP Police and UP NHM are checked first.
+- UPSSSC, UPPSC, UP Police and UP NHM are checked first for vacancies, Admit Cards and Results.
+- Admit Card and Result scanning is UP-only; genuine updates verified on official UP portals are auto-published without requiring a PDF, vacancy count, qualification or application deadline.
+- Duplicate Admit Card/Result notices are not inserted again; unofficial sources or updates whose official UP origin cannot be verified are not published.
 - Central/national recruitment portals are checked after UP sources.
 - GitHub Actions runs the scanner every 6 hours; manual scanner run is also available.
 - Uses retry/backoff for temporary network errors and keeps TLS certificate verification enabled.
@@ -12,7 +14,8 @@ WHAT IT DOES
 - Automatically publishes only when an official PDF is readable, contains clear recruitment details and has its own explicit future last date.
 - Minimum confirmed details are mandatory for every entry: clear recruitment title, future last date, vacancy count and qualification. If any is missing or unclear, the notice is SKIPPED (not Draft).
 - If these minimum details are confirmed from the official page but no readable official PDF independently confirms them, the entry is saved as DRAFT.
-- Automatic publishing additionally requires the official PDF itself to confirm the future last date, vacancy count and qualification.
+- Vacancy automatic publishing additionally requires the official PDF itself to confirm the future last date, vacancy count and qualification.
+- UP Admit Card/Result automatic publishing follows separate official-UP-source verification and does not require a PDF or vacancy fields.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Inserts new rows only; it does not update existing records.
 - Uses the existing public.jobs columns. No schema change is required.
@@ -43,7 +46,7 @@ SAFETY
 - TLS verification remains enabled. Certificate errors are logged and skipped, never bypassed.
 - Only official government domains/approved official portals are accepted, including after redirects.
 - Expired or unverified deadlines are skipped.
-- Results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out.
+- For the vacancy scanner, results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out. UP Admit Cards and Results are handled by a separate UP-only scanner.
 - An official PDF is mandatory for automatic publishing.
 - PDF-less notices with all minimum details confirmed from the official page are Draft only.
 - If vacancy count, qualification or future last date is missing/unclear on the official notice, skip the notice completely.
