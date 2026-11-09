@@ -184,20 +184,40 @@ button.share-btn:hover,
 .trust-panel>div{min-width:0}
 .trust-icon{font-size:16px}
 .search-row{margin-top:24px}
-.sja-breaking{min-height:48px;display:flex;align-items:center;gap:0;background:#fff;border-bottom:1px solid #dce7f8;box-shadow:0 5px 18px #123c8c0a;overflow:hidden}
-.sja-breaking-label{height:48px;flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:0 18px;background:linear-gradient(110deg,#08265f,#0b56bd);color:#fff;font-size:12px;font-weight:900;letter-spacing:.2px;white-space:nowrap}
-.sja-breaking-dot{width:8px;height:8px;border-radius:50%;background:#ffb02e;box-shadow:0 0 0 4px #ffb02e30;animation:sjaPulse 1.7s infinite}
-.sja-breaking-window{flex:1;min-width:0;overflow:hidden;padding:0 14px}
-.sja-breaking-track{display:flex;width:max-content;min-width:100%;animation:sjaTicker 32s linear infinite;will-change:transform}
-.sja-breaking-window:hover .sja-breaking-track{animation-play-state:paused}
-.sja-breaking-track span{display:inline-block;flex:0 0 auto;padding-right:70px;color:#17345f;font-size:13px;font-weight:750;white-space:nowrap}.sja-ticker-link{color:#17345f;text-decoration:none}.sja-ticker-link:hover{text-decoration:underline;color:#075bd9}
-.sja-breaking-status{height:48px;flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 15px;border-left:1px solid #e4ebf6;color:#64748b;font-size:9px;font-weight:900;letter-spacing:1px;white-space:nowrap}
+/* GulfJobsIndia-inspired two-row live ticker */
+.sja-live-ticker{margin:0;background:#fff;border-bottom:1px solid #dce7f8;box-shadow:0 5px 18px #123c8c0a;overflow:hidden}
+.sja-live-heading{min-height:42px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 18px;background:linear-gradient(105deg,#09265f 0%,#075bd1 48%,#6428b8 100%);color:#fff}
+.sja-live-brand{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:950;letter-spacing:.2px}
+.sja-live-brand b{display:inline-block;margin-left:5px;padding:3px 7px;border-radius:5px;background:linear-gradient(90deg,#ffb21c,#ff6b35);color:#172033;font-size:9px;letter-spacing:.6px}
+.sja-live-emblem{font-size:19px;line-height:1}
+.sja-india-clock{display:flex;align-items:center;gap:7px;white-space:nowrap;font-size:9px;font-weight:850;letter-spacing:.8px;color:#eaf3ff}
+.sja-india-clock strong{font-size:12px;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+.sja-india-clock small{font-size:9px;color:#d3e4ff;font-weight:700;letter-spacing:0}
+.sja-clock-dot{width:6px;height:6px;border-radius:50%;background:#53f5a6;box-shadow:0 0 0 4px #53f5a622}
+.sja-live-news{height:43px;display:flex;align-items:center;gap:0;background:#fff}
+.sja-live-badge{height:100%;flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 17px;background:linear-gradient(110deg,#e11d35,#fa394b);color:#fff;font-size:11px;font-weight:950;letter-spacing:1px}
+.sja-live-badge i{width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #ffffff35;animation:sjaPulse 1.5s infinite}
+.sja-news-window{flex:1;min-width:0;overflow:hidden;padding:0 14px}
+.sja-news-track{display:flex;align-items:center;width:max-content;min-width:100%;animation:sjaTicker 38s linear infinite;will-change:transform}
+.sja-news-window:hover .sja-news-track{animation-play-state:paused}
+.sja-news-track a,.sja-news-track span{display:inline-block;flex:0 0 auto;padding-right:68px;color:#17345f;font-size:12px;font-weight:800;white-space:nowrap;text-decoration:none}
+.sja-news-track a:hover{color:#075bd9;text-decoration:underline}
+.sja-live-status{height:100%;flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:0 14px;border-left:1px solid #e4ebf6;color:#64748b;font-size:9px;font-weight:900;letter-spacing:.8px;white-space:nowrap}
 .sja-monitor-dot{width:7px;height:7px;border-radius:50%;background:#0eaa72;box-shadow:0 0 0 3px #0eaa7220}
 @keyframes sjaTicker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 @keyframes sjaPulse{50%{box-shadow:0 0 0 7px #ffb02e12;opacity:.75}}
-@media(max-width:900px){.hero{padding:34px 18px 28px}.hero-inner{grid-template-columns:1fr;row-gap:0}.hero-copy{grid-column:1;grid-row:1}.trust-panel{grid-column:1;grid-row:2;margin-top:20px;max-width:520px}.search-row{grid-row:3}.hero-points{grid-row:4}}
-@media(max-width:600px){.hero{padding:28px 14px 23px}.hero h1{font-size:clamp(31px,9vw,43px)}.hero-glass-actions{margin-top:15px}.hero-glass-btn{padding:10px 13px;font-size:12px}.trust-panel{padding:12px;gap:9px;border-radius:16px}.trust-panel>div{gap:7px;font-size:11px}.trust-icon{flex-basis:34px;width:34px;height:34px;font-size:13px}.sja-breaking{min-height:44px}.sja-breaking-label{height:44px;padding:0 10px;font-size:10px}.sja-breaking-window{padding:0 9px}.sja-breaking-track span{font-size:11px;padding-right:48px}.sja-breaking-status{height:44px;padding:0 8px;font-size:8px;letter-spacing:.5px}.sja-breaking-dot{width:6px;height:6px}}
-@media(prefers-reduced-motion:reduce){.sja-breaking-track,.sja-breaking-dot{animation:none}}
+@media(max-width:600px){
+.sja-live-heading{min-height:38px;padding:6px 10px;gap:5px}
+.sja-live-brand{gap:6px;font-size:10px}.sja-live-brand b{font-size:7px;margin-left:2px;padding:3px 5px}
+.sja-live-emblem{font-size:16px}
+.sja-india-clock{gap:4px;font-size:7px;letter-spacing:.4px}
+.sja-india-clock strong{font-size:10px}.sja-india-clock small{font-size:7px}
+.sja-live-news{height:40px}.sja-live-badge{padding:0 10px;font-size:9px;gap:6px}
+.sja-news-window{padding:0 9px}.sja-news-track a,.sja-news-track span{font-size:10px;padding-right:44px}
+.sja-live-status{padding:0 8px;font-size:7px;letter-spacing:.3px}.sja-monitor-dot{width:6px;height:6px}
+}
+@media(max-width:360px){.sja-india-clock small{display:none}.sja-live-brand{font-size:9px}.sja-live-status{display:none}}
+@media(prefers-reduced-motion:reduce){.sja-news-track,.sja-live-badge i{animation:none}}
 
 /* Compact hero height refinement */
 .hero{padding-top:27px!important;padding-bottom:23px!important}

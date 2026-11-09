@@ -132,10 +132,11 @@
   ];
 
 
-  // Homepage ticker: read only published job updates; preserve the last headline locally.
-  const TICKER_CACHE_KEY = "sja_latest_govt_update_v1";
-  const tickerText = document.getElementById("sjaBreakingText");
+  // Homepage live ticker: only published SarkariJobAlert jobs, newest five.
+  const TICKER_CACHE_KEY = "sja_latest_govt_updates_v2";
   const tickerTrack = document.getElementById("sjaBreakingTrack");
+  const indiaClock = document.getElementById("sjaIndiaClock");
+  const indiaDate = document.getElementById("sjaIndiaDate");
 
   function tickerCategoryHindi(value) {
     const c = displayCategory(value);
@@ -144,46 +145,61 @@
     return "सरकारी भर्ती";
   }
 
-  function paintTicker(item) {
-    if (!tickerText || !tickerTrack || !item?.title) return;
-    const headline = `${tickerCategoryHindi(item.category)}: ${item.title}`;
-    tickerText.textContent = headline;
-    // Duplicate the same latest headline so it loops continuously without a blank gap.
-    const clone = tickerText.cloneNode(true);
-    clone.removeAttribute("id");
-    tickerTrack.replaceChildren(tickerText, clone);
+  function escapeTicker(value) {
+    return String(value ?? "").replace(/[&<>"']/g, ch => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[ch]));
+  }
+
+  function paintTicker(items) {
+    if (!tickerTrack) return;
+    const valid = (Array.isArray(items) ? items : [items]).filter(item => item?.title);
+    if (!valid.length) return;
+    const makeLinks = () => valid.map(item =>
+      `<a href="?job=${encodeURIComponent(item.id)}" aria-label="Open ${escapeTicker(item.title)}">${escapeTicker(tickerCategoryHindi(item.category))}: ${escapeTicker(item.title)}</a>`
+    ).join("");
+    tickerTrack.innerHTML = makeLinks() + makeLinks();
   }
 
   function readTickerCache() {
-    try { const raw = localStorage.getItem(TICKER_CACHE_KEY); return raw ? JSON.parse(raw) : null; }
-    catch (_) { return null; }
+    try {
+      const raw = localStorage.getItem(TICKER_CACHE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) { return null; }
   }
 
   async function refreshGovernmentTicker() {
     const cached = readTickerCache();
-    if (cached?.title) paintTicker(cached);
+    if (cached?.length) paintTicker(cached);
     if (!supabase) return;
     try {
       const { data, error } = await supabase.from("jobs")
-        .select("id,title,category,created_at,updated_at")
+        .select("id,title,category,created_at")
         .eq("status", "published")
         .order("created_at", { ascending: false })
-        .limit(1);
+        .limit(5);
       if (error) throw error;
-      const latest = data?.[0];
-      if (latest?.title) {
-        const next = { id: latest.id, title: latest.title, category: latest.category, created_at: latest.created_at || null };
-        if (!cached || String(cached.id) !== String(next.id) || cached.title !== next.title) {
-          try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(next)); } catch (_) {}
-        }
-        paintTicker(next);
+      const latest = (data || []).filter(item => item?.title);
+      if (latest.length) {
+        try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(latest)); } catch (_) {}
+        paintTicker(latest);
       }
     } catch (error) {
-      // Keep showing the last successfully fetched headline if the network is unavailable.
       console.warn("Government updates ticker refresh skipped:", error);
     }
   }
 
+  function updateIndiaClock() {
+    const now = new Date();
+    if (indiaClock) indiaClock.textContent = new Intl.DateTimeFormat("en-IN", {
+      timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true
+    }).format(now);
+    if (indiaDate) indiaDate.textContent = new Intl.DateTimeFormat("en-IN", {
+      timeZone:"Asia/Kolkata",day:"2-digit",month:"short",year:"numeric"
+    }).format(now);
+  }
+  updateIndiaClock();
+  window.setInterval(updateIndiaClock, 1000);
   refreshGovernmentTicker();
   window.setInterval(refreshGovernmentTicker, 5 * 60 * 1000);
 
