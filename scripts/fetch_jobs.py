@@ -98,7 +98,36 @@ DATE_TOKEN = (
 )
 
 def clean(value):
-    return re.sub(r"\s+", " ", value or "").strip()
+    return re.sub(r"\\s+", " ", value or "").strip()
+
+
+def valid_extracted_field(value, kind):
+    """Reject noisy PDF extraction fragments instead of saving misleading facts."""
+    value = clean(value)
+    if not value:
+        return None
+    lowered = value.lower()
+    bad_markers = ("�", "Ã", "Â", "â€", "page ", "for the post",
+                   "contents", "table of contents", "advertisement no.")
+    if any(marker in lowered for marker in bad_markers):
+        return None
+    if kind == "qualification":
+        if len(value) < 18 or len(value) > 220:
+            return None
+        if re.search(r"\\b(page|chapter|annexure|serial no)\\b", lowered):
+            return None
+        if re.match(r"^(for the post|those who possess|as on)\\b", lowered):
+            return None
+    elif kind == "fees":
+        if len(value) < 5 or len(value) > 100 or re.match(r"^(पद\\s*सं|post\\s*no)\\b", lowered):
+            return None
+    elif kind == "age":
+        if len(value) < 8 or len(value) > 90 or re.match(r"^\\(?as on\\b", lowered):
+            return None
+    elif kind == "selection":
+        if len(value) < 8 or len(value) > 120 or re.match(r"^(पद\\s*सं|post\\s*no)\\b", lowered):
+            return None
+    return value
 
 def host(url):
     return (urlparse(url).hostname or "").lower().rstrip(".")
@@ -251,10 +280,10 @@ def extract_fields(text):
         "vacancies": vacancy,
         "last_date": last_date,
         "notification_date": notification_date,
-        "qualification": clean(qualification.group(1))[:240] if qualification else None,
-        "fees": clean(fee.group(1))[:120] if fee else None,
-        "age_limit": clean(age.group(1))[:100] if age else None,
-        "selection_process": clean(selection.group(1))[:140] if selection else None,
+        "qualification": valid_extracted_field(qualification.group(1), "qualification") if qualification else None,
+        "fees": valid_extracted_field(fee.group(1), "fees") if fee else None,
+        "age_limit": valid_extracted_field(age.group(1), "age") if age else None,
+        "selection_process": valid_extracted_field(selection.group(1), "selection") if selection else None,
     }
 
 def discover_links(html, page_url):
