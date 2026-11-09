@@ -120,7 +120,8 @@ def main():
   for title,link in links(b,final):
    if link.rstrip('/') not in urls and link not in seen:seen.add(link);candidates.append((name,title,link))
   time.sleep(.3)
- pub=drafts=dupes=errors=0\n today=datetime.now(ZoneInfo('Asia/Kolkata')).date().isoformat()
+ pub=drafts=dupes=errors=0
+ today=datetime.now(ZoneInfo('Asia/Kolkata')).date().isoformat()
  for source,title,link in candidates:
   try:
    if any(x in title.lower() for x in BAD) or not any(x in title.lower() for x in HINT):continue
