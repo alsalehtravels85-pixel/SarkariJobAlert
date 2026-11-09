@@ -491,7 +491,7 @@ def main():
             print("SOURCE PARSE ERROR", source_name, str(exc)[:200])
         time.sleep(0.2)
 
-    saved = published = drafts = skipped = duplicates = process_errors = 0
+    saved = drafts = skipped = duplicates = process_errors = 0
     for source_name, candidate_title, link in candidates:
         try:
             if any(word in candidate_title.lower() for word in EXCLUDE_HINTS):
@@ -531,7 +531,6 @@ def main():
                 continue
 
             fields = extract_fields(notice_text)
-            pdf_fields = extract_fields(pdf_text)
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
