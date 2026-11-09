@@ -435,8 +435,14 @@ def main():
                 missing.append("application deadline already passed")
             if len(clean(candidate_title)) < 12:
                 missing.append("clear recruitment title")
+            # Minimum confirmed details are mandatory even for Drafts.
+            # Do not clutter the admin panel with vague/partial recruitment links.
+            if not fields["vacancies"]:
+                missing.append("confirmed vacancy count")
+            if not fields["qualification"]:
+                missing.append("confirmed qualification")
             if missing:
-                print("SKIP - essential verification missing:", ", ".join(missing), "|", candidate_title[:180])
+                print("SKIP - details not sufficiently confirmed:", ", ".join(dict.fromkeys(missing)), "|", candidate_title[:180])
                 skipped += 1
                 continue
 
@@ -451,6 +457,8 @@ def main():
                 and any(word in pdf_recruitment_text for word in RECRUITMENT_HINTS)
                 and pdf_fields["last_date"]
                 and pdf_fields["last_date"] >= TODAY.isoformat()
+                and pdf_fields["vacancies"]
+                and pdf_fields["qualification"]
                 and not any(word in pdf_text.lower() for word in EXCLUDE_HINTS)
             )
             notification_url = pdf_url or detail_url
@@ -484,8 +492,8 @@ def main():
                         "Official PDF and its recruitment details/deadline passed the scanner checks. "
                         "Admin should still review the notice and application instructions."
                         if pdf_is_publishable else
-                        "Saved as Draft because an official, readable PDF with a verified future deadline "
-                        "was not available. Admin verification is required before publishing."
+                        "Saved as Draft because the official PDF did not independently confirm all "
+                        "minimum details or a readable PDF was unavailable. Admin verification is required."
                     )
                 ),
                 "status": "published" if pdf_is_publishable else "draft",
@@ -512,6 +520,7 @@ def main():
                 ("AUTO-PUBLISHED:" if pdf_is_publishable else "DRAFT SAVED:"),
                 title,
                 "| PDF verified:", "yes" if pdf_is_publishable else "no",
+                "| minimum details confirmed: vacancy + qualification + future deadline",
                 "| optional fields not extracted:", ", ".join(optional_missing) or "none"
             )
         except Exception as exc:
