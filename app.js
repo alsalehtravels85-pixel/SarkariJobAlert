@@ -132,13 +132,12 @@
   ];
 
 
-  // Homepage live ticker: only published SarkariJobAlert jobs, newest five.
-  const TICKER_CACHE_KEY = "sja_latest_govt_updates_v2";
+  // Homepage live ticker: latest published jobs + School & Exam Guide articles.
+  const TICKER_CACHE_KEY = "sja_latest_govt_updates_v3";
   const tickerTrack = document.getElementById("sjaBreakingTrack");
-  const indiaClock = document.getElementById("sjaIndiaClock");
-  const indiaDate = document.getElementById("sjaIndiaDate");
 
   function tickerCategoryHindi(value) {
+    if (value === "study_guide") return "एग्जाम गाइड";
     const c = displayCategory(value);
     if (c === "Admit Card") return "एडमिट कार्ड";
     if (c === "Result") return "रिजल्ट";
@@ -155,9 +154,13 @@
     if (!tickerTrack) return;
     const valid = (Array.isArray(items) ? items : [items]).filter(item => item?.title);
     if (!valid.length) return;
-    const makeLinks = () => valid.map(item =>
-      `<a href="?job=${encodeURIComponent(item.id)}" aria-label="Open ${escapeTicker(item.title)}">${escapeTicker(tickerCategoryHindi(item.category))}: ${escapeTicker(item.title)}</a>`
-    ).join("");
+    const makeLinks = () => valid.map(item => {
+      const isGuide = item.ticker_type === "study_guide";
+      const href = isGuide
+        ? `education.html#article-${encodeURIComponent(item.id)}`
+        : `?job=${encodeURIComponent(item.id)}`;
+      return `<a href="${href}" aria-label="Open ${escapeTicker(item.title)}">${escapeTicker(tickerCategoryHindi(isGuide ? "study_guide" : item.category))}: ${escapeTicker(item.title)}</a>`;
+    }).join("");
     tickerTrack.innerHTML = makeLinks() + makeLinks();
   }
 
@@ -173,13 +176,32 @@
     if (cached?.length) paintTicker(cached);
     if (!supabase) return;
     try {
-      const { data, error } = await supabase.from("jobs")
-        .select("id,title,category,created_at")
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      const latest = (data || []).filter(item => item?.title);
+      const [jobsResult, guidesResult] = await Promise.all([
+        supabase.from("jobs")
+          .select("id,title,category,created_at")
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase.from("school_articles")
+          .select("id,title,article_type,published_at")
+          .eq("status", "published")
+          .eq("article_type", "study_guide")
+          .order("published_at", { ascending: false })
+          .limit(5)
+      ]);
+
+      if (jobsResult.error) throw jobsResult.error;
+      // School & Exam Guide is a separate table; if its table/policy is unavailable,
+      // keep the job ticker working rather than hiding all updates.
+      const jobs = (jobsResult.data || []).filter(item => item?.title)
+        .map(item => ({ ...item, ticker_type: "job" }));
+      const guides = guidesResult.error ? [] : (guidesResult.data || [])
+        .filter(item => item?.title)
+        .map(item => ({ ...item, category: "study_guide", ticker_type: "study_guide" }));
+      const latest = [...jobs, ...guides]
+        .sort((a, b) => new Date(b.published_at || b.created_at || 0) - new Date(a.published_at || a.created_at || 0))
+        .slice(0, 5);
+
       if (latest.length) {
         try { localStorage.setItem(TICKER_CACHE_KEY, JSON.stringify(latest)); } catch (_) {}
         paintTicker(latest);
@@ -189,17 +211,6 @@
     }
   }
 
-  function updateIndiaClock() {
-    const now = new Date();
-    if (indiaClock) indiaClock.textContent = new Intl.DateTimeFormat("en-IN", {
-      timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true
-    }).format(now);
-    if (indiaDate) indiaDate.textContent = new Intl.DateTimeFormat("en-IN", {
-      timeZone:"Asia/Kolkata",day:"2-digit",month:"short",year:"numeric"
-    }).format(now);
-  }
-  updateIndiaClock();
-  window.setInterval(updateIndiaClock, 1000);
   refreshGovernmentTicker();
   window.setInterval(refreshGovernmentTicker, 5 * 60 * 1000);
 
