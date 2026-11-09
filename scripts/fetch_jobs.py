@@ -2,6 +2,7 @@
 """Conservative official-source recruitment scanner for SarkariJobAlert."""
 import os, re, io, sys, time
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import urljoin, urlparse, urldefrag
 import requests
 from bs4 import BeautifulSoup
@@ -10,7 +11,7 @@ from pypdf import PdfReader
 DB=os.getenv('SUPABASE_URL','').strip().rstrip('/')
 KEY=os.getenv('SUPABASE_SERVICE_ROLE_KEY','').strip()
 HEAD={'User-Agent':'SarkariJobAlertOfficialScanner/2.0 (+https://github.com/alsalehtravels85-pixel/SarkariJobAlert)','Accept':'text/html,application/pdf,*/*'}
-TIMEOUT=(12,25)
+TIMEOUT=(20,45)
 EXACT={'upsc.gov.in','upsconline.nic.in','ssc.gov.in','upsssc.gov.in','uppsc.up.nic.in','ibps.in','sbi.co.in','indiapost.gov.in','opportunities.rbi.org.in','drdo.gov.in','isro.gov.in','indianrailways.gov.in','rrbapply.gov.in','uppbpb.gov.in','nabard.org','sebi.gov.in','tnpsc.gov.in','keralapsc.gov.in','rpsc.rajasthan.gov.in','bpsc.bihar.gov.in','mppsc.mp.gov.in','ncs.gov.in','employmentnews.gov.in'}
 SOURCES=[
 ('NCS Government Recruitment Directory','https://www.ncs.gov.in/pages/govt-job-vacancies.aspx'),
@@ -25,7 +26,7 @@ SOURCES=[
 ('TNPSC','https://www.tnpsc.gov.in/'),('Kerala PSC','https://www.keralapsc.gov.in/'),
 ('RPSC','https://rpsc.rajasthan.gov.in/'),('BPSC','https://bpsc.bihar.gov.in/'),('MPPSC','https://mppsc.mp.gov.in/')]
 HINT=('recruitment','vacancy','vacancies','applications invited','engagement','advertisement no','advt no','direct recruitment','posts of','post of','apprentice','probationary officer','junior associate','constable','group c','group d','staff nurse','assistant professor','non faculty','technical assistant','officer','clerk','driver')
-BAD=('result','answer key','admit card','call letter','interview schedule','shortlisted candidates','selected candidates','marks','score card','corrigendum','extension of last date','syllabus','exam calendar','tender','deputation','transfer','revised')
+BAD=('result','answer key','admit card','call letter','interview schedule','interview notice','interview','shortlisted candidates','shortlist','selected candidates','selection panel','selection list','date of conducting','skill test date','marks','score card','corrigendum','extension of last date','extension of time','citizen engagement','syllabus','exam calendar','tender','deputation','transfer','revised')
 
 def txt(x): return re.sub(r'\s+',' ',x or '').strip()
 def host(u): return (urlparse(u).hostname or '').lower().rstrip('.')
@@ -119,7 +120,7 @@ def main():
   for title,link in links(b,final):
    if link.rstrip('/') not in urls and link not in seen:seen.add(link);candidates.append((name,title,link))
   time.sleep(.3)
- pub=drafts=dupes=errors=0
+ pub=drafts=dupes=errors=0\n today=datetime.now(ZoneInfo('Asia/Kolkata')).date().isoformat()
  for source,title,link in candidates:
   try:
    if any(x in title.lower() for x in BAD) or not any(x in title.lower() for x in HINT):continue
@@ -135,22 +136,22 @@ def main():
      if len(t)>len(pdftxt):pdftxt,pdfurl=t,fu
    if not pdfurl or len(pdftxt)<300:continue
    f=fields(pdftxt);apply=apply_link(s,html,detail,pdftxt)
-   status='published' if all((f['vacancies'],f['last_date'],f['qualification'],apply)) else 'draft'
+   \n   # Publish when the official notice is verified and its application deadline is still valid.\n   # Vacancy count, qualification, fee, age, selection details and a separate apply URL are optional.\n   status='published' if (pdfurl and f['last_date'] and f['last_date']>=today and len(txt(title))>=12) else 'draft'\n   missing=[]\n   if not f['vacancies']: missing.append('vacancy count')\n   if not f['last_date']: missing.append('last date')\n   if not f['qualification']: missing.append('qualification')\n   if not apply: missing.append('separate apply URL')
    dept=source
    if ' | ' in title:dept=txt(title.split(' | ')[0])[:120] or source
    record={'title':txt(title)[:180],'department':dept,'category':'Latest Jobs','vacancies':f['vacancies'] or '',
     'notification_date':f['notification_date'],'last_date':f['last_date'],'qualification':f['qualification'] or '',
     'fees':f['fees'] or '', 'age_limit':f['age_limit'] or '', 'selection_process':f['selection_process'] or '',
     'notification_url':pdfurl,'apply_url':apply or '', 'source_url':detail+'#sja-auto-scanner-managed',
-    'description':'Official recruitment notice automatically detected. Please read the linked official notification for complete terms, category-wise vacancies, age relaxation and instructions.','status':status}
+    'description':'Official recruitment notice automatically detected. Some details may not be available in the extracted fields. Please read the linked official notification for complete terms, category-wise vacancies, age relaxation and application instructions.','status':status}
    tk=(norm(record['title']),norm(record['department']))
    if pdfurl.rstrip('/') in urls or detail.rstrip('/') in urls or tk in titles:dupes+=1;continue
    chk=s.get(DB+'/rest/v1/jobs',headers=dbheaders(),params={'select':'id','notification_url':'eq.'+pdfurl,'limit':1},timeout=25);chk.raise_for_status()
    if chk.json():dupes+=1;continue
    r=s.post(DB+'/rest/v1/jobs',headers=dbheaders(),json=record,timeout=30);r.raise_for_status()
    urls.update((pdfurl.rstrip('/'),detail.rstrip('/')));titles.add(tk)
-   if status=='published':pub+=1;print('AUTO-PUBLISHED',record['title'])
-   else:drafts+=1;print('DRAFT - insufficient extracted fields',record['title'])
+   if status=='published':pub+=1;print('AUTO-PUBLISHED',record['title'],'| optional details missing:',', '.join(missing) if missing else 'none')
+   else:drafts+=1;print('DRAFT - deadline missing/expired or official PDF not verified',record['title'],'| missing:',', '.join(missing) if missing else 'deadline/PDF verification')
   except Exception as e:errors+=1;print('PROCESS ERROR',title,e)
   time.sleep(.25)
  print('\nSCAN REPORT | official source pages:',len(SOURCES),'| candidate links:',len(candidates),'| published:',pub,'| drafts:',drafts,'| duplicates:',dupes,'| errors:',errors)
