@@ -137,14 +137,18 @@ def main():
    if not pdfurl or len(pdftxt)<300:continue
    f=fields(pdftxt);apply=apply_link(s,html,detail,pdftxt)
    
-   # Publish when the official notice is verified and its application deadline is still valid.
-   # Vacancy count, qualification, fee, age, selection details and a separate apply URL are optional.
-   status='published' if (pdfurl and f['last_date'] and f['last_date']>=today and len(txt(title))>=12) else 'draft'
+   # Publish only when essential proof and a valid future deadline are present.
+   # Missing optional details must never create Draft clutter in the admin panel.
    missing=[]
-   if not f['vacancies']: missing.append('vacancy count')
+   if not pdfurl: missing.append('official notification PDF')
    if not f['last_date']: missing.append('last date')
-   if not f['qualification']: missing.append('qualification')
-   if not apply: missing.append('separate apply URL')
+   elif f['last_date']<today: missing.append('deadline expired')
+   if len(txt(title))<12: missing.append('clear job title')
+   if missing:
+    print('SKIP - essential detail missing:', ', '.join(missing), '|', title)
+    continue
+   # Optional fields: vacancy count, qualification, fees, age, selection process, separate apply URL.
+   status='published'
    dept=source
    if ' | ' in title:dept=txt(title.split(' | ')[0])[:120] or source
    record={'title':txt(title)[:180],'department':dept,'category':'Latest Jobs','vacancies':f['vacancies'] or '',
