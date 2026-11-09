@@ -505,6 +505,16 @@ def build_vacancy_description(title, department, vacancies, qualification, last_
 
 
 
+def seo_vacancy_title(title):
+    """Keep official recruitment titles readable, concise and free of CTA clutter."""
+    title = clean(title).strip(" |•:-")
+    title = re.sub(r"\\s+", " ", title)
+    title = re.sub(r"^(click here|download|view details)[: -]*", "", title, flags=re.I)
+    if len(title) < 12 or title.lower() in {"recruitment notification", "latest vacancy", "click here"}:
+        return ""
+    return title[:180]
+
+
 def seo_update_title(title, category):
     """Make titles clear and search-friendly without keyword stuffing."""
     title = clean(title).strip(" |•:-")
@@ -673,15 +683,19 @@ def main():
 
             # Strict vacancy auto-publish gate: the readable PDF must be hosted
             # on the same official host and confirm all three core facts.
+            title = seo_vacancy_title(candidate_title)
+            if not title or has_corrupt_text(title):
+                print("SKIP - unclear or corrupted recruitment title:", candidate_title[:160])
+                skipped += 1
+                continue
             pdf_is_publishable = bool(
                 pdf_url and official(pdf_url) and host(pdf_url) == host(detail_url)
                 and len(pdf_text) >= 300 and not has_corrupt_text(pdf_text)
                 and fields["last_date"] and fields["last_date"] >= TODAY.isoformat()
                 and fields["vacancies"] and fields["qualification"] and core_facts == 3
-                and not has_corrupt_text(candidate_title)
+                and not has_corrupt_text(title)
             )
             notification_url = pdf_url or detail_url
-            title = clean(candidate_title)[:180]
             department = source_name
             if " | " in title:
                 department = clean(title.split(" | ", 1)[0])[:120] or source_name
