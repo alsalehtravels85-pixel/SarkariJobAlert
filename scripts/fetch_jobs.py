@@ -230,10 +230,13 @@ def extract_pdf_text(session, url):
 def parse_date(value):
     value = clean(value).replace(",", " ")
     value = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", value, flags=re.I)
+    value = re.sub(r"\\s+", " ", value)
     formats = (
         "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y",
         "%d/%m/%y", "%d-%m-%y", "%d.%m.%y",
+        "%Y-%m-%d", "%Y/%m/%d",
         "%d %B %Y", "%d %b %Y", "%B %d %Y", "%b %d %Y",
+        "%d-%B-%Y", "%d-%b-%Y",
     )
     for fmt in formats:
         try:
@@ -362,7 +365,8 @@ def discover_up_updates(html, page_url):
             continue
         seen.add(key)
         generic_label = label.lower() in {"click here", "click to view", "click to download", "view", "download", "here", "result", "admit card"}
-        title = context if generic_label or len(label) < 12 else label
+        # Keep row/list context even when the action anchor itself is generic.
+        title = context if generic_label or len(label) < 12 or len(context) > len(label) + 18 else label
         title = clean(title)[:220]
         if len(title) >= 5:
             found.append((category, title, url))
@@ -382,7 +386,23 @@ def find_notice_pdf(session, html, page_url):
             if normalized_url(url) not in [normalized_url(x) for x in pdf_urls]:
                 pdf_urls.append(url)
     best_text, best_url = "", None
-    for url in pdf_urls[:6]:
+    # Prefer likely current recruitment notices, but inspect more than the
+    # first few PDFs because portals often list circulars before advertisements.
+    def pdf_priority(url):
+        path = urlparse(url).path.lower()
+        label = next((clean(a.get_text(" ", strip=True)).lower()
+                      for a in soup.select("a[href]")
+                      if normalized_url(safe_url(a.get("href"), page_url) or "") == normalized_url(url)), "")
+        text = label + " " + path
+        score = sum(term in text for term in (
+            "recruit", "advert", "notification", "vacanc", "detailed", "advt", "2026", "2025"
+        ))
+        score -= sum(term in text for term in (
+            "result", "answer", "syllabus", "tender", "annual-report", "old"
+        ))
+        return score
+    pdf_urls.sort(key=pdf_priority, reverse=True)
+    for url in pdf_urls[:12]:
         text, final_url = extract_pdf_text(session, url)
         if len(text) > len(best_text):
             best_text, best_url = text, final_url
@@ -540,8 +560,15 @@ def official_action_link(html, page_url, category):
              else ("result", "merit list", "scorecard", "score card", "परिणाम", "रिजल्ट"))
     for anchor in soup.select("a[href]"):
         label = clean(anchor.get_text(" ", strip=True)).lower()
+        parent = anchor.find_parent(["tr", "li", "article", "div"])
+        context = clean(parent.get_text(" ", strip=True)).lower() if parent else label
+        searchable = label + " " + context
         href = safe_url(anchor.get("href"), page_url)
-        if href and up_official(href) and any(term in label for term in terms):
+        # The surrounding row can identify the action when the button only says
+        # "Download" or "Click here"; the destination must still be on an UP host.
+        has_category = any(term in searchable for term in terms)
+        has_action = any(term in label for term in ("download", "view", "check", "result", "admit", "hall ticket", "प्रवेश"))
+        if href and up_official(href) and has_category and has_action:
             return href
     return None
 
@@ -801,7 +828,13 @@ def main():
                 action_url = official_action_link(data, detail_url, category)
             lowered = (candidate_title + " " + detail_text).lower()
             hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
+            release_hints = (
+                "available", "released", "download", "declared", "published",
+                "now live", "check result", "view result", "प्रवेश पत्र डाउनलोड",
+                "परिणाम जारी", "जारी किया", "उपलब्ध",
+            )
             if (not any(term in lowered for term in hints) or len(detail_text) < 100
+                    or not any(term in lowered for term in release_hints)
                     or has_corrupt_text(detail_text) or not action_url or not up_official(action_url)):
                 up_updates_skipped += 1
                 print("UP UPDATE SKIP - official category/action link not sufficiently verified:", candidate_title[:160])
