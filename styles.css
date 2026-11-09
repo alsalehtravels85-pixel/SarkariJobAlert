@@ -479,3 +479,34 @@ button.share-btn:hover,
   .sja-news-window{padding:0 8px}
   .sja-news-track a,.sja-news-track span{font-size:10px;padding-right:32px}
 }
+
+/* Ticker refinement: slimmer height, framed border and slower crawl */
+.sja-live-ticker{
+  margin:8px 10px;
+  border:1px solid #9bbce8;
+  border-radius:10px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 3px 12px rgba(15,67,135,.09),inset 0 0 0 1px rgba(255,255,255,.8);
+}
+.sja-live-heading{min-height:24px;padding:2px 10px}
+.sja-live-brand{font-size:10px;gap:6px}
+.sja-live-brand b{font-size:7px;padding:2px 6px}
+.sja-live-emblem{font-size:12px}
+.sja-live-news{height:26px}
+.sja-live-badge{padding:0 9px;font-size:8px}
+.sja-live-badge i{width:5px;height:5px}
+.sja-news-window{padding:0 9px}
+.sja-news-track{animation-duration:58s}
+.sja-news-track a,.sja-news-track span{font-size:10px;padding-right:42px}
+@media(max-width:600px){
+  .sja-live-ticker{margin:6px 7px;border-radius:8px}
+  .sja-live-heading{min-height:22px;padding:2px 7px}
+  .sja-live-brand{font-size:9px;gap:5px}
+  .sja-live-brand b{font-size:6px;padding:2px 5px}
+  .sja-live-emblem{font-size:11px}
+  .sja-live-news{height:24px}
+  .sja-live-badge{padding:0 7px;font-size:7px}
+  .sja-news-window{padding:0 7px}
+  .sja-news-track a,.sja-news-track span{font-size:9px;padding-right:30px}
+}
