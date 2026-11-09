@@ -11,10 +11,9 @@ WHAT IT DOES
 - Extracts vacancy count, qualification, dates, fees, age limit and selection process when readable.
 - Requires a clear recruitment notice and an explicitly labelled future last date.
 - If essential information is missing, the candidate is skipped rather than cluttering Admin Drafts.
-- Automatically publishes only when an official PDF is readable, contains clear recruitment details and has its own explicit future last date.
+- Automatically collected vacancy, Admit Card and Result entries are saved as Drafts first. An admin must review the official source and publish manually.
 - Minimum confirmed details are mandatory for every entry: clear recruitment title, future last date, vacancy count and qualification. If any is missing or unclear, the notice is SKIPPED (not Draft).
-- If these minimum details are confirmed from the official page but no readable official PDF independently confirms them, the entry is saved as DRAFT.
-- Vacancy automatic publishing additionally requires the official PDF itself to confirm the future last date, vacancy count and qualification.
+- Scanner-created entries remain Draft until a human admin reviews and publishes them. This editorial review is important for accuracy and AdSense content quality.
 - UP Admit Card/Result automatic publishing follows separate official-UP-source verification and does not require a PDF or vacancy fields.
 - Existing jobs are checked by URL and normalized title/department before insertion.
 - Inserts new rows only; it does not update existing records.
@@ -47,8 +46,7 @@ SAFETY
 - Only official government domains/approved official portals are accepted, including after redirects.
 - Expired or unverified deadlines are skipped.
 - For the vacancy scanner, results, admit cards, interview notices, corrigenda, tenders and similar non-vacancy notices are filtered out. UP Admit Cards and Results are handled by a separate UP-only scanner.
-- An official PDF is mandatory for automatic publishing.
-- PDF-less notices with all minimum details confirmed from the official page are Draft only.
+- An official PDF is preferred for vacancy verification, but all scanner-created entries remain Draft pending human review.
 - If vacancy count, qualification or future last date is missing/unclear on the official notice, skip the notice completely.
 - A PDF that is unreadable or lacks its own clear recruitment details and future last date cannot be auto-published; it may be Draft only if the official page confirms all minimum details.
 - A future last date must be present in the PDF itself for automatic publishing.
@@ -62,8 +60,8 @@ AUTOMATIC EXPIRY + DELETION (SCANNER-MANAGED LATEST JOBS ONLY)
 - A vacancy with a verified official PDF may be auto-published by the scanner; PDF-less or uncertain notices remain Draft.
 - Once Published, it remains visible for at least 30 full calendar days after its last_date.
 - After the full 30-day grace period, the daily cleanup can permanently delete that scanner-managed row.
-- Cleanup is restricted to category=Latest Jobs, status=published, source_url containing #sja-auto-scanner-managed, and last_date older than the 30-day cutoff.
-- It does not delete manually created jobs, Admit Cards, Results, Education Guides, Drafts, or rows without last_date.
+- Cleanup is restricted to category=Latest Jobs and last_date at least 30 days past. It applies to manual and scanner-created vacancies, regardless of Draft/Published status.
+- It does not delete Admit Cards, Results, Education Guides, or rows without last_date.
 - This is permanent deletion, not archive. Keep regular Supabase backups if recovery is required.
 
 FILES USED
@@ -81,3 +79,17 @@ POST DESCRIPTION REQUIREMENT (MANUAL + AUTOMATIC)
 - Apply this requirement to both manually entered and scanner-created posts.
 - Never invent missing dates, fees, eligibility, vacancy counts, cut-offs or links. Leave unavailable details blank or clearly state that the official notice should be checked.
 - Preserve the existing website design and admin/database structure unless a separate approved change is requested.
+
+
+ADSENSE READINESS CHANGES (9 NOVEMBER 2026)
+- Public policy pages were expanded: About, Contact, Privacy Policy and Disclaimer.
+- Privacy Policy now explains the site's advertising cookies/identifiers, third-party services, push notification token use, browser local storage and visitor choices. Review this policy whenever providers/features change.
+- ads.txt was added for the publisher ID already present in the site's AdSense loader.
+- AdSense verification loader is present on public site pages.
+- Old Workers-domain canonical URLs were corrected on education pages.
+- Sitemap now lists only canonical public pages; dynamic ?job=... URLs were removed from the sitemap.
+- Demo sample job cards were removed from the database-error fallback; no fake vacancy/result/admit-card posts should appear when Supabase is unavailable.
+- Admin Complete Details is required and must contain at least 80 characters.
+- Scanner-created posts now remain Draft until an admin manually verifies and publishes them. This is intended to add human review/curation before public display.
+- Scanner descriptions are generated from extracted official vacancy fields or the official UP page context; missing details are not guessed.
+- AdSense approval is not guaranteed. Before applying, verify the live site, ads.txt availability, privacy disclosures, actual post quality and Google policy compliance. If serving ads to users in the EEA, UK or Switzerland, configure an appropriate Google-certified consent solution where required.
