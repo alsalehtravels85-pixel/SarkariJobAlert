@@ -71,7 +71,7 @@ EXACT_HOSTS = {
     "upsc.gov.in", "upsconline.nic.in", "ssc.gov.in", "ibps.in",
     "sbi.co.in", "indiapost.gov.in", "opportunities.rbi.org.in",
     "drdo.gov.in", "isro.gov.in", "indianrailways.gov.in", "rrbapply.gov.in",
-    "nabard.org", "sebi.gov.in", "tnpsc.gov.in", "keralapsc.gov.in",
+    "nabard.org", "sebi.gov.in", "tnpsc.gov.in", "keralapsc.gov.in", "sbi.bank.in",
     "rpsc.rajasthan.gov.in", "bpsc.bihar.gov.in", "mppsc.mp.gov.in",
     "ncs.gov.in", "employmentnews.gov.in",
 }
@@ -535,38 +535,28 @@ def main():
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
-            if not fields["last_date"]:
-                missing.append("explicit last date")
-            elif fields["last_date"] < TODAY.isoformat():
+            if fields["last_date"] and fields["last_date"] < TODAY.isoformat():
                 missing.append("application deadline already passed")
             if len(clean(candidate_title)) < 12:
                 missing.append("clear recruitment title")
-            # Minimum confirmed details are mandatory even for Drafts.
-            # Do not clutter the admin panel with vague/partial recruitment links.
-            if not fields["vacancies"]:
-                missing.append("confirmed vacancy count")
-            if not fields["qualification"]:
-                missing.append("confirmed qualification")
+
+            # Draft capture requires two independent facts from the official notice.
+            # Missing facts stay blank for admin review; the scanner never guesses.
+            core_facts = sum((
+                bool(fields["last_date"] and fields["last_date"] >= TODAY.isoformat()),
+                bool(fields["vacancies"]),
+                bool(fields["qualification"]),
+            ))
+            if core_facts < 2:
+                missing.append("at least two confirmed facts: future deadline, vacancy count, qualification")
             if missing:
-                print("SKIP - details not sufficiently confirmed:", ", ".join(dict.fromkeys(missing)), "|", candidate_title[:180])
+                print("SKIP - insufficient verified recruitment evidence:", ", ".join(dict.fromkeys(missing)), "|", candidate_title[:180])
                 skipped += 1
                 continue
 
-            # Strict auto-publish gate: a real official PDF must be fetched,
-            # parsed into substantial text, identify recruitment, and contain
-            # its own explicit future application deadline. Otherwise save draft.
-            pdf_recruitment_text = (candidate_title + " " + pdf_text).lower()
-            pdf_is_publishable = bool(
-                pdf_url
-                and official(pdf_url)
-                and len(pdf_text) >= 300
-                and any(word in pdf_recruitment_text for word in RECRUITMENT_HINTS)
-                and pdf_fields["last_date"]
-                and pdf_fields["last_date"] >= TODAY.isoformat()
-                and pdf_fields["vacancies"]
-                and pdf_fields["qualification"]
-                and not any(word in pdf_text.lower() for word in EXCLUDE_HINTS)
-            )
+            # All automatic vacancies stay Draft. A linked official PDF is evidence,
+            # not permission to publish without human review.
+            pdf_is_publishable = False
             notification_url = pdf_url or detail_url
             title = clean(candidate_title)[:180]
             department = source_name
@@ -615,19 +605,16 @@ def main():
             known_urls.update((normalized_url(notification_url), normalized_url(detail_url)))
             known_titles.add(title_key)
             saved += 1
-            if pdf_is_publishable:
-                published += 1
-            else:
-                drafts += 1
+            drafts += 1
             optional_missing = [
                 key for key in ("vacancies", "qualification", "fees", "age_limit", "selection_process")
                 if not fields.get(key)
             ]
             print(
-                ("AUTO-PUBLISHED:" if pdf_is_publishable else "DRAFT SAVED:"),
+                "DRAFT SAVED:",
                 title,
-                "| PDF verified:", "yes" if pdf_is_publishable else "no",
-                "| minimum details confirmed: vacancy + qualification + future deadline",
+                "| PDF linked:", "yes" if bool(pdf_url) else "no",
+                "| confirmed core facts:", core_facts, "/3",
                 "| optional fields not extracted:", ", ".join(optional_missing) or "none"
             )
         except Exception as exc:
@@ -638,7 +625,7 @@ def main():
 
     # UP Admit Card + Result updates: official UP portal verification only.
     # No PDF, vacancy-count, qualification, or application-deadline requirement.
-    up_updates_published = up_updates_duplicates = up_updates_skipped = 0
+    up_updates_saved = up_updates_duplicates = up_updates_skipped = 0
     for source_name, category, candidate_title, link in up_update_candidates:
         try:
             data, detail_url, content_type = fetch(session, link)
@@ -685,8 +672,8 @@ def main():
             response.raise_for_status()
             known_urls.add(normalized_url(detail_url))
             known_titles.add(title_key)
-            up_updates_published += 1
-            print("UP UPDATE AUTO-PUBLISHED:", category, title, "| official source:", source_name)
+            up_updates_saved += 1
+            print("UP UPDATE DRAFT SAVED:", category, title, "| official source:", source_name)
         except Exception as exc:
             process_errors += 1
             print("UP UPDATE PROCESS ERROR:", candidate_title[:160], str(exc)[:260])
@@ -702,11 +689,11 @@ def main():
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| vacancy auto-published:", published,
+        "| vacancy auto-published: 0 (manual admin review required)",
         "| UP admit/result candidates:", len(up_update_candidates),
-        "| UP admit/result published:", up_updates_published,
+        "| UP admit/result drafts saved:", up_updates_saved,
         "| UP admit/result skipped (not verified/duplicate/fetch issue):", up_updates_skipped + up_updates_duplicates,
-        "| vacancy publishing requires verified official PDF; UP admit/result uses official-source verification",
+        "| all scanner entries remain Draft until manual admin approval",
     )
     return 1 if process_errors else 0
 
