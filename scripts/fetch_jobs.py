@@ -475,6 +475,62 @@ def db_headers():
         "Prefer": "return=representation",
     }
 
+def clean_public_sarkaritoday_text(value):
+    """Remove third-party publisher branding/attribution from public-facing text."""
+    text = str(value or "")
+    kept = []
+    for line in text.splitlines():
+        low = line.lower()
+        if "sarkaritoday" in low or "sarkaritoday.com" in low:
+            continue
+        kept.append(line)
+    text = "\\n".join(kept)
+    text = re.sub(r"(?i)\\s*[-|–—:]?\\s*sarkaritoday\\s*$", "", text)
+    return clean(text)
+
+
+def cleanup_existing_sarkaritoday_rows(session):
+    """Sanitize already-saved rows; preserve internal source_url for deduplication."""
+    offset = 0
+    scanned = changed = 0
+    while True:
+        response = session.get(
+            DB + "/rest/v1/jobs",
+            headers=db_headers(),
+            params={"select": "id,title,description,notification_url,source_url", "limit": 500, "offset": offset},
+            timeout=30,
+        )
+        response.raise_for_status()
+        rows = response.json()
+        for row in rows:
+            scanned += 1
+            patch = {}
+            title = clean_public_sarkaritoday_text(row.get('title'))
+            description = clean_public_sarkaritoday_text(row.get('description'))
+            notification_url = row.get('notification_url') or ''
+            if title != (row.get('title') or ''):
+                patch['title'] = title
+            if description != (row.get('description') or ''):
+                patch['description'] = description
+            if host(notification_url) in SARKARITODAY_HOSTS:
+                patch['notification_url'] = ''
+            # Keep source_url as an internal dedupe marker; it is never rendered publicly.
+            if patch:
+                update = session.patch(
+                    DB + "/rest/v1/jobs",
+                    headers={**db_headers(), "Prefer": "return=minimal"},
+                    params={"id": "eq." + str(row["id"])},
+                    json=patch,
+                    timeout=30,
+                )
+                update.raise_for_status()
+                changed += 1
+        if len(rows) < 500:
+            break
+        offset += 500
+    print("EXISTING THIRD-PARTY BRAND CLEANUP | scanned:", scanned, "| updated:", changed)
+    return changed
+
 def load_existing(session):
     known_urls, known_titles = set(), set()
     offset = 0
@@ -849,6 +905,7 @@ def main():
 
     session = make_session()
     try:
+        cleanup_existing_sarkaritoday_rows(session)
         known_urls, known_titles = load_existing(session)
     except Exception as exc:
         print("SUPABASE READ ERROR:", str(exc)[:300])
@@ -1084,8 +1141,8 @@ def main():
             article_text = clean(article_soup.get_text(" ", strip=True))
             if not fields.get("apply_url"):
                 fields["apply_url"] = find_apply_url(session, data, detail_url, article_text)
-            title = fields.get("title") or seo_vacancy_title(candidate_title)
-            if not title or has_corrupt_text(title):
+            title = clean_public_sarkaritoday_text(fields.get("title") or seo_vacancy_title(candidate_title))
+            if not title or has_corrupt_text(title) or "sarkaritoday" in title.lower():
                 sarkaritoday_skipped += 1
                 continue
             last_date = fields.get("last_date")
@@ -1098,7 +1155,8 @@ def main():
                 sarkaritoday_skipped += 1
                 continue
             # Never expose the discovery article as an official notification link.
-            notification_url = fields.get("official_url") if fields.get("official_url") and official(fields["official_url"]) else ""
+            # Only show the official PDF after it is readable and its facts match.
+            notification_url = ""
             department = fields.get("department") or "विभागीय पुष्टि बाकी"
             pdf_text, verified_pdf_url = ("", None)
             pdf_verified = False
