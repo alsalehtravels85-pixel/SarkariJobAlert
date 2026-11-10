@@ -149,14 +149,27 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertIn("भर्ती की जानकारी", description)
         self.assertIn("अंतिम तिथि", description)
 
-    def test_sarkaritoday_draft_description_has_no_discovery_brand_or_link(self):
+    def test_sarkaritoday_draft_description_has_site_branding_and_useful_details(self):
         description = fetch_jobs.build_sarkaritoday_draft_description(
             "Test Recruitment 2026",
-            {"vacancies": "120", "qualification": "Graduate", "last_date": "2026-11-18"},
+            {
+                "department": "Test Department",
+                "vacancies": "120",
+                "qualification": "Graduate",
+                "last_date": "2026-11-18",
+                "fees": "₹100",
+                "apply_url": "https://test.gov.in/apply",
+                "official_url": "https://test.gov.in/notice.pdf",
+            },
             "https://sarkaritoday.com/test-recruitment/",
         )
         self.assertNotIn("SarkariToday", description)
         self.assertNotIn("sarkaritoday.com", description)
+        self.assertIn("Test Department", description)
+        self.assertIn("₹100", description)
+        self.assertIn("आवेदन कैसे करें", description)
+        self.assertIn("SarkariJobAlert", description)
+        self.assertIn("https://sarkari-jobalert.com", description)
 
     def test_sarkaritoday_official_pdf_must_match_vacancy_deadline_and_qualification(self):
         article = {
