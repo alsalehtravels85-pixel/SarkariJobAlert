@@ -86,6 +86,38 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertEqual(result["official_url"], "https://example.gov.in/notice.pdf")
         self.assertEqual(result["apply_url"], "https://example.gov.in/apply")
 
+    def test_article_fields_and_only_official_pdf_apply_links_map_to_admin_fields(self):
+        html = """
+        <html><body><h1>RRC NWR Apprentice Recruitment 2026</h1>
+        <table>
+          <tr><td>Department</td><td>Railway Recruitment Cell NWR</td></tr>
+          <tr><td>Total Vacancies</td><td>1800</td></tr>
+          <tr><td>Notification Date</td><td>10 November 2026</td></tr>
+          <tr><td>Last Date</td><td>22 November 2026</td></tr>
+          <tr><td>Qualification</td><td>10th pass with ITI certificate from NCVT or SCVT</td></tr>
+          <tr><td>Age Limit</td><td>15 to 24 years</td></tr>
+          <tr><td>Application Fee</td><td>100 rupees</td></tr>
+          <tr><td>Selection Process</td><td>Merit based on marks</td></tr>
+        </table>
+        <a href="https://rrcjaipur.in/notice/rrc-nwr-apprentice-2026.pdf">Notification PDF</a>
+        <a href="https://rrcjaipur.in/apply">Apply Online</a>
+        <a href="https://evil.example/fake.pdf">Other PDF</a>
+        </body></html>
+        """
+        result = fetch_jobs.extract_sarkaritoday_article(
+            html, "https://sarkaritoday.com/rrc-nwr-apprentice-2026/"
+        )
+        self.assertEqual(result["department"], "Railway Recruitment Cell NWR")
+        self.assertEqual(result["vacancies"], "1800")
+        self.assertEqual(result["notification_date"], "2026-11-10")
+        self.assertEqual(result["last_date"], "2026-11-22")
+        self.assertEqual(result["qualification"], "10th pass with ITI certificate from NCVT or SCVT")
+        self.assertEqual(result["age_limit"], "15 to 24 years")
+        self.assertEqual(result["fees"], "100 rupees")
+        self.assertEqual(result["selection_process"], "Merit based on marks")
+        self.assertEqual(result["official_url"], "https://rrcjaipur.in/notice/rrc-nwr-apprentice-2026.pdf")
+        self.assertEqual(result["apply_url"], "https://rrcjaipur.in/apply")
+
     def test_sarkaritoday_never_uses_article_or_non_pdf_as_official_notice(self):
         html = """
         <html><body><h1>Test Recruitment 2026</h1>
