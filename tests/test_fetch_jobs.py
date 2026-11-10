@@ -9,6 +9,22 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertTrue(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Sep-2016"))
         self.assertFalse(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Oct-2026"))
 
+    def test_stale_archive_row_with_old_and_new_dates_is_filtered(self):
+        self.assertTrue(fetch_jobs.has_stale_notice_date(
+            "Recruitment notice dated 24-Sep-2016 updated 24-Oct-2026"
+        ))
+
+    def test_leading_employment_news_date_is_notification_date_not_deadline(self):
+        self.assertEqual(
+            fetch_jobs.listing_notification_date(
+                "19 Dec 2026 NOTICE REGARDING ADVT. NO. D-6/E-1/2025"
+            ),
+            "2026-12-19",
+        )
+        self.assertIsNone(fetch_jobs.listing_notification_date(
+            "NOTICE REGARDING ADVT. NO. D-6/E-1/2025 dated 19 Dec 2026"
+        ))
+
     def test_discover_links_ignores_old_archive_entries(self):
         html = """
         <html><body><ul>
@@ -31,6 +47,10 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertEqual(fields["vacancies"], "125")
         self.assertEqual(fields["last_date"], "2026-11-30")
         self.assertIsNotNone(fields["qualification"])
+
+    def test_extended_last_date_labels_are_supported(self):
+        text = "Closing date for online application: 30 November 2026"
+        self.assertEqual(fetch_jobs.extract_fields(text)["last_date"], "2026-11-30")
 
     def test_year_first_date_is_supported(self):
         self.assertEqual(fetch_jobs.parse_date("2026-11-30"), "2026-11-30")
