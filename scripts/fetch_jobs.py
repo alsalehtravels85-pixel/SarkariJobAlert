@@ -655,6 +655,153 @@ def build_up_update_description(title, department, category, action_url, exam_da
     parts.append(f"Official {('admit card download' if category == 'Admit Card' else 'result check')} link: {action_url}")
     return "\n\n".join(parts)
 
+SARKARITODAY_LISTING = "https://sarkaritoday.com/latest-job/"
+SARKARITODAY_HOSTS = {"sarkaritoday.com", "www.sarkaritoday.com"}
+
+def fetch_sarkaritoday(session, url, limit=MAX_HTML):
+    """Fetch discovery-only pages; never treat this publisher as official."""
+    try:
+        response = session.get(url, timeout=TIMEOUT, allow_redirects=True, stream=True)
+        final_url = response.url
+        if response.status_code >= 400 or host(final_url) not in SARKARITODAY_HOSTS:
+            print("SARKARITODAY HTTP/REDIRECT SKIP", response.status_code, url, "=>", final_url)
+            response.close()
+            return None, None, None
+        chunks = bytearray()
+        for chunk in response.iter_content(65536):
+            if chunk:
+                chunks.extend(chunk)
+                if len(chunks) > limit:
+                    response.close()
+                    return None, None, None
+        content_type = (response.headers.get("Content-Type") or "").lower()
+        response.close()
+        return bytes(chunks), final_url, content_type
+    except requests.RequestException as exc:
+        print("SARKARITODAY FETCH ERROR", url, str(exc)[:240])
+        return None, None, None
+
+
+def discover_sarkaritoday_articles(html, page_url):
+    if host(page_url) not in SARKARITODAY_HOSTS:
+        return []
+    soup = BeautifulSoup(html, "html.parser")
+    found, seen = [], set()
+    for anchor in soup.select("a[href]"):
+        url = urldefrag(urljoin(page_url, anchor.get("href", "")))[0]
+        if urlparse(url).scheme not in ("http", "https") or host(url) not in SARKARITODAY_HOSTS:
+            continue
+        path = urlparse(url).path.lower().rstrip("/")
+        if not path or path in ("/", "/latest-job", "/latestjob") or any(
+            part in path for part in ("/category/", "/tag/", "/page/", "/wp-content/", "/author/")
+        ):
+            continue
+        title = clean(anchor.get_text(" ", strip=True))
+        if len(title) < 12 or len(title) > 220:
+            continue
+        searchable = title.lower()
+        if any(term in searchable for term in EXCLUDE_HINTS):
+            continue
+        if not any(term in searchable for term in RECRUITMENT_HINTS + ("bharti", "भर्ती", "job")):
+            continue
+        key = normalized_url(url)
+        if key not in seen:
+            seen.add(key)
+            found.append((title[:180], url))
+    return found[:80]
+
+
+def extract_sarkaritoday_article(html, article_url):
+    """Extract labelled table facts. Third-party content remains draft-only."""
+    soup = BeautifulSoup(html, "html.parser")
+    heading = soup.find(["h1", "h2"])
+    title = clean(heading.get_text(" ", strip=True)) if heading else ""
+    if len(title) < 10:
+        title = clean(soup.title.get_text(" ", strip=True)) if soup.title else ""
+        title = re.sub(r"\\s*[-|].*$", "", title).strip()
+
+    rows = {}
+    for table in soup.find_all("table"):
+        for tr in table.find_all("tr"):
+            cells = [clean(cell.get_text(" ", strip=True)) for cell in tr.find_all(["th", "td"])]
+            cells = [cell for cell in cells if cell]
+            if len(cells) >= 2:
+                label = re.sub(r"[^a-z0-9\\u0900-\\u097f]+", " ", cells[0].lower()).strip()
+                value = clean(" ".join(cells[1:]))
+                if label and value:
+                    rows[label] = value
+
+    def pick(*labels):
+        for label, value in rows.items():
+            if any(token in label for token in labels):
+                return value
+        return None
+
+    vacancy_raw = pick("total vacancy", "total post", "number of vacancy", "no of vacancy", "vacancies", "total seats", "रिक्त पद", "कुल पद")
+    vacancy_match = re.search(r"\\b(\\d[\\d,]*)\\b", vacancy_raw or "")
+    vacancies = vacancy_match.group(1).replace(",", "") if vacancy_match else None
+
+    def table_date(raw):
+        if not raw:
+            return None
+        match = re.search(DATE_TOKEN, raw, re.I)
+        return parse_date(match.group(1)) if match else parse_date(raw)
+
+    last_date = table_date(pick("last date", "closing date", "apply last", "application end", "अंतिम तिथि", "आवेदन की अंतिम"))
+    notification_date = table_date(pick("notification date", "published date", "start date", "application start", "आवेदन शुरू", "प्रकाशित"))
+    qualification = pick("qualification", "educational qualification", "eligibility", "शैक्षणिक योग्यता", "योग्यता")
+    age_limit = pick("age limit", "age criteria", "आयु सीमा")
+    fees = pick("application fee", "exam fee", "registration fee", "आवेदन शुल्क", "परीक्षा शुल्क")
+    selection = pick("selection process", "mode of selection", "चयन प्रक्रिया")
+
+    apply_url = None
+    official_urls = []
+    for a in soup.select("a[href]"):
+        raw = urljoin(article_url, a.get("href", ""))
+        if official(raw):
+            label = clean(a.get_text(" ", strip=True)).lower()
+            official_urls.append(raw)
+            if any(term in label for term in ("apply online", "online application", "registration", "apply now")):
+                apply_url = raw
+    notification_url = next((u for u in official_urls if ".pdf" in urlparse(u).path.lower()), None)
+    if not notification_url and official_urls:
+        notification_url = official_urls[0]
+    return {
+        "title": seo_vacancy_title(title),
+        "vacancies": vacancies,
+        "last_date": last_date,
+        "notification_date": notification_date,
+        "qualification": clean(qualification) if qualification else None,
+        "age_limit": clean(age_limit) if age_limit else None,
+        "fees": clean(fees) if fees else None,
+        "selection_process": clean(selection) if selection else None,
+        "apply_url": apply_url,
+        "official_url": notification_url,
+    }
+
+
+def build_sarkaritoday_draft_description(title, fields, source_url):
+    parts = [
+        f"{title} भर्ती की जानकारी उपलब्ध हुई है। नीचे दिए गए विवरण SarkariToday पर प्रकाशित जानकारी से संकलित किए गए हैं।",
+        "महत्वपूर्ण: यह अभी जाँच के लिए ड्राफ्ट है। आवेदन करने से पहले संबंधित विभाग की आधिकारिक अधिसूचना से सभी विवरण अवश्य मिलाएँ।",
+    ]
+    labels = (
+        ("vacancies", "कुल पद"),
+        ("qualification", "शैक्षणिक योग्यता"),
+        ("age_limit", "आयु सीमा"),
+        ("fees", "आवेदन शुल्क"),
+        ("selection_process", "चयन प्रक्रिया"),
+        ("notification_date", "सूचना/आवेदन प्रारंभ तिथि"),
+        ("last_date", "आवेदन की अंतिम तिथि"),
+    )
+    for key, label in labels:
+        if fields.get(key):
+            parts.append(f"{label}: {fields[key]}")
+    parts.append("अंतिम तिथि, आयु में छूट, पद-वार योग्यता और शुल्क की पुष्टि आधिकारिक नोटिफिकेशन से करें।")
+    parts.append(f"जानकारी का स्रोत: {source_url}")
+    return "\\n\\n".join(parts)
+
+
 def main():
     if not DB.startswith("https://") or not KEY:
         print("CONFIG ERROR: GitHub secrets SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.")
@@ -669,11 +816,13 @@ def main():
 
     candidates = []
     up_update_candidates = []
+    sarkaritoday_candidates = []
     seen_up_updates = set()
     seen_links = set()
+    seen_sarkaritoday = set()
     source_errors = 0
     print("SCAN DATE (Asia/Kolkata):", TODAY.isoformat())
-    print("SOURCE ORDER: Uttar Pradesh first, then central/national portals.")
+    print("SOURCE ORDER: Uttar Pradesh first, then central/national portals; SarkariToday is discovery-only.")
     for source_name, source_url in SOURCES:
         print("CHECK", source_name, source_url)
         data, final_url, content_type = fetch(session, source_url)
@@ -696,6 +845,22 @@ def main():
             source_errors += 1
             print("SOURCE PARSE ERROR", source_name, str(exc)[:200])
         time.sleep(0.2)
+
+    # SarkariToday is discovery-only and is never added to official().
+    print("CHECK SarkariToday discovery", SARKARITODAY_LISTING)
+    listing_data, listing_url, _ = fetch_sarkaritoday(session, SARKARITODAY_LISTING)
+    if listing_data:
+        try:
+            for candidate_title, article_url in discover_sarkaritoday_articles(listing_data, listing_url):
+                key = normalized_url(article_url)
+                if key not in known_urls and key not in seen_sarkaritoday:
+                    seen_sarkaritoday.add(key)
+                    sarkaritoday_candidates.append((candidate_title, article_url))
+        except Exception as exc:
+            source_errors += 1
+            print("SARKARITODAY LIST PARSE ERROR", str(exc)[:220])
+    else:
+        source_errors += 1
 
     saved = drafts = published = skipped = duplicates = process_errors = 0
     for source_name, candidate_title, link in candidates:
@@ -866,6 +1031,68 @@ def main():
         time.sleep(0.2)
 
 
+    # Third-party article facts are inserted as Draft only; never auto-publish.
+    sarkaritoday_saved = sarkaritoday_skipped = sarkaritoday_duplicates = 0
+    for candidate_title, article_url in sarkaritoday_candidates:
+        try:
+            data, detail_url, _ = fetch_sarkaritoday(session, article_url)
+            if not data or not detail_url:
+                sarkaritoday_skipped += 1
+                continue
+            fields = extract_sarkaritoday_article(data, detail_url)
+            title = fields.get("title") or seo_vacancy_title(candidate_title)
+            if not title or has_corrupt_text(title):
+                sarkaritoday_skipped += 1
+                continue
+            last_date = fields.get("last_date")
+            if not last_date or last_date < TODAY.isoformat():
+                print("SARKARITODAY SKIP - missing/expired last date:", title)
+                sarkaritoday_skipped += 1
+                continue
+            if not (fields.get("vacancies") or fields.get("qualification")):
+                print("SARKARITODAY SKIP - no vacancy/qualification detail:", title)
+                sarkaritoday_skipped += 1
+                continue
+            notification_url = fields.get("official_url") or detail_url
+            department = "विभागीय पुष्टि बाकी"
+            title_key = (normalize_text(title), normalize_text(department))
+            if (normalized_url(detail_url) in known_urls
+                    or normalized_url(notification_url) in known_urls
+                    or title_key in known_titles):
+                sarkaritoday_duplicates += 1
+                continue
+            record = {
+                "title": title,
+                "department": department,
+                "category": "Latest Jobs",
+                "vacancies": fields.get("vacancies") or "",
+                "notification_date": fields.get("notification_date"),
+                "last_date": last_date,
+                "qualification": fields.get("qualification") or "",
+                "fees": fields.get("fees") or "",
+                "age_limit": fields.get("age_limit") or "",
+                "selection_process": fields.get("selection_process") or "",
+                "notification_url": notification_url,
+                "apply_url": fields.get("apply_url") or "",
+                "source_url": detail_url + MARKER,
+                "description": build_sarkaritoday_draft_description(title, fields, detail_url),
+                "status": "draft",
+            }
+            response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
+            response.raise_for_status()
+            known_urls.update((normalized_url(detail_url), normalized_url(notification_url)))
+            known_titles.add(title_key)
+            sarkaritoday_saved += 1
+            drafts += 1
+            saved += 1
+            print("SARKARITODAY DRAFT SAVED:", title, "| deadline:", last_date,
+                  "| vacancies:", fields.get("vacancies") or "not found",
+                  "| official link found:", "yes" if fields.get("official_url") else "no")
+        except Exception as exc:
+            process_errors += 1
+            print("SARKARITODAY ARTICLE PROCESS ERROR:", candidate_title[:140], str(exc)[:240])
+        time.sleep(0.2)
+
     # UP Admit Card + Result updates: official UP portal verification only.
     # No PDF, vacancy-count, qualification, or application-deadline requirement.
     up_updates_saved = up_updates_duplicates = up_updates_skipped = 0
@@ -957,6 +1184,10 @@ def main():
         "| official source pages:", len(SOURCES),
         "| source fetch/parse issues:", source_errors,
         "| candidate links:", len(candidates),
+        "| SarkariToday discovery candidates:", len(sarkaritoday_candidates),
+        "| SarkariToday drafts saved:", sarkaritoday_saved,
+        "| SarkariToday skipped:", sarkaritoday_skipped,
+        "| SarkariToday duplicates:", sarkaritoday_duplicates,
         "| rows saved:", saved,
         "| drafts saved:", drafts,
         "| skipped:", skipped,
