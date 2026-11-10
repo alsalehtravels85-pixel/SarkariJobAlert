@@ -434,7 +434,7 @@
       dates: "आवेदन करने से पहले तारीखों और लिंक की पुष्टि आधिकारिक वेबसाइट पर करें।"
     } : {
       total: "Total Vacancies", qualification: "Qualification", noticeDate: "Notification Date",
-      lastDate: "Last Date to Apply", dob: "DOB Eligibility", fees: "Application Fees",
+      lastDate: "Last Date to Apply", fees: "Application Fees",
       age: "Age Limit", selection: "Selection Process", notification: "Official Notification",
       apply: "Apply Online", examDate: "Exam Date", admitDate: "Admit Card Release Date",
       downloadAdmit: "Download Admit Card", resultDate: "Result Date", resultStatus: "Result Status",
