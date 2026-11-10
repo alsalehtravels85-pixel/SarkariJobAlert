@@ -1,4 +1,4 @@
-const ORIGIN="https://sarkari-jobalert.com",MODEL="@cf/meta/llama-3.1-8b-instruct";
+const ORIGIN="https://sarkari-jobalert.com",MODEL="@cf/meta/llama-3.1-8b-instruct-fast";
 const allowed=o=>{try{const u=new URL(o);return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com"||u.hostname.endsWith(".pages.dev"))?u.origin:null}catch{return null}};
 const headers=o=>({"Access-Control-Allow-Origin":allowed(o)||ORIGIN,"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Vary":"Origin"});
 const reply=(d,s,o)=>new Response(JSON.stringify(d),{status:s||200,headers:{...headers(o),"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
