@@ -55,6 +55,48 @@ class ScannerRegressionTests(unittest.TestCase):
     def test_year_first_date_is_supported(self):
         self.assertEqual(fetch_jobs.parse_date("2026-11-30"), "2026-11-30")
 
+    def test_sarkaritoday_is_not_an_official_host(self):
+        self.assertFalse(fetch_jobs.official("https://sarkaritoday.com/latest-job/"))
+        self.assertEqual(fetch_jobs.host("https://sarkaritoday.com/latest-job/"), "sarkaritoday.com")
+
+    def test_sarkaritoday_article_table_fields_are_extracted(self):
+        html = """
+        <html><head><title>Test Recruitment - SarkariToday</title></head>
+        <body><h1>Test Department Recruitment 2026</h1>
+        <table>
+          <tr><td>Total Vacancies</td><td>120</td></tr>
+          <tr><td>Last Date</td><td>18 November 2026</td></tr>
+          <tr><td>Qualification</td><td>MBBS degree from a recognized university</td></tr>
+          <tr><td>Age Limit</td><td>18 to 35 years</td></tr>
+          <tr><td>Application Fee</td><td>₹200 for all candidates</td></tr>
+          <tr><td>Selection Process</td><td>Interview and document verification</td></tr>
+        </table>
+        <a href="https://example.gov.in/notice.pdf">Official Notification PDF</a>
+        <a href="https://example.gov.in/apply">Apply Online</a>
+        </body></html>
+        """
+        result = fetch_jobs.extract_sarkaritoday_article(html, "https://sarkaritoday.com/test-recruitment/")
+        self.assertEqual(result["title"], "Test Department Recruitment 2026")
+        self.assertEqual(result["vacancies"], "120")
+        self.assertEqual(result["last_date"], "2026-11-18")
+        self.assertEqual(result["qualification"], "MBBS degree from a recognized university")
+        self.assertEqual(result["age_limit"], "18 to 35 years")
+        self.assertEqual(result["fees"], "₹200 for all candidates")
+        self.assertEqual(result["selection_process"], "Interview and document verification")
+        self.assertEqual(result["official_url"], "https://example.gov.in/notice.pdf")
+        self.assertEqual(result["apply_url"], "https://example.gov.in/apply")
+
+    def test_sarkaritoday_article_discovery_rejects_external_hosts(self):
+        html = """
+        <html><body>
+        <a href="/job-1/">Latest Recruitment Vacancy 2026</a>
+        <a href="https://evil.example/job/">Latest Recruitment Vacancy 2026</a>
+        </body></html>
+        """
+        found = fetch_jobs.discover_sarkaritoday_articles(html, "https://sarkaritoday.com/latest-job/")
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0][1], "https://sarkaritoday.com/job-1/")
+
     def test_officially_linked_up_police_result_host_is_allowed(self):
         url = "https://upcons2025.com/finalResultsupConstable/homepage_new.aspx"
         self.assertTrue(fetch_jobs.official(url))
