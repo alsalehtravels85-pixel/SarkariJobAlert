@@ -658,3 +658,31 @@ button.share-btn:hover,
 @media(prefers-reduced-motion:reduce){
   .detail-dialog .detail-info-list td a{transition:none}
 }
+
+
+/* Fast, readable admin job table */
+.admin-table-wrap{width:100%;overflow-x:auto;margin-top:14px;border:1px solid #dbe6f5;border-radius:15px;background:#fff;box-shadow:0 7px 22px #183c7209;-webkit-overflow-scrolling:touch}
+.admin-table{width:100%;border-collapse:separate;border-spacing:0;min-width:690px;text-align:left}
+.admin-table thead th{position:sticky;top:0;background:#eaf2ff;color:#183967;padding:13px 14px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #d5e2f5;white-space:nowrap}
+.admin-table tbody tr{background:#fff;transition:background .15s}
+.admin-table tbody tr:nth-child(even){background:#f7faff}
+.admin-table tbody tr:hover{background:#eaf5ff}
+.admin-table td{padding:12px 14px;border-bottom:1px solid #e9eff8;font-size:12px;vertical-align:middle}
+.admin-table tbody tr:last-child td{border-bottom:0}
+.admin-post-cell{min-width:250px;max-width:390px}
+.admin-post-cell strong{display:block;color:#102e5c;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.admin-post-cell small{display:block;color:#72819a;margin-top:4px;font-size:11px}
+.admin-category{display:inline-flex;padding:5px 9px;border-radius:8px;background:#e8f1ff;color:#1554a2;font-weight:800;font-size:10px;white-space:nowrap}
+.admin-status{display:inline-flex;align-items:center;padding:6px 9px;border-radius:999px;font-size:10px;font-weight:900;white-space:nowrap}
+.admin-status.is-published{background:#dcfce9;color:#08743b}
+.admin-status.is-draft{background:#fff2d7;color:#9a5a00}
+.admin-item-actions{display:flex;gap:6px;flex-wrap:nowrap}
+.admin-item-actions .small-btn{padding:7px 9px;min-height:32px;font-size:10px;white-space:nowrap}
+.admin-item-actions .danger-btn{background:#fff0f0;color:#b42332;border:1px solid #ffd4d8}
+.admin-empty{text-align:center;color:#72819a;padding:28px!important}
+.admin-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 2px;color:#63738d;font-size:11px}
+.admin-pagination>div{display:flex;align-items:center;gap:10px}
+.admin-pagination b{color:#173967;white-space:nowrap}
+.admin-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.admin-row[hidden]{display:none!important}
+@media(max-width:600px){.admin-pagination{align-items:flex-start;flex-direction:column}.admin-pagination>div{width:100%;justify-content:space-between}.admin-table td{padding:10px}}
