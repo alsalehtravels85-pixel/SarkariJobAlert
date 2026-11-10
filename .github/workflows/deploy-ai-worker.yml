@@ -18,40 +18,41 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Install Wrangler
         run: npm install --global wrangler@4
-
       - name: Validate Worker syntax
         run: node --check ai-worker/index.js
-
-      - name: Upload Supabase URL as Worker secret
+      - name: Upload Gemini API key
+        working-directory: ai-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          test -n "$GEMINI_API_KEY"
+          printf '%s' "$GEMINI_API_KEY" | wrangler secret put GEMINI_API_KEY
+      - name: Upload Supabase URL
         working-directory: ai-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          test -n "$CLOUDFLARE_API_TOKEN"
-          test -n "$CLOUDFLARE_ACCOUNT_ID"
           test -n "$SUPABASE_URL"
           printf '%s' "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
-
-      - name: Upload Supabase anon key as Worker secret
+      - name: Upload Supabase service role key
         working-directory: ai-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          test -n "$SUPABASE_ANON_KEY"
-          printf '%s' "$SUPABASE_ANON_KEY" | wrangler secret put SUPABASE_ANON_KEY
-
+          test -n "$SUPABASE_SERVICE_ROLE_KEY"
+          printf '%s' "$SUPABASE_SERVICE_ROLE_KEY" | wrangler secret put SUPABASE_SERVICE_ROLE_KEY
       - name: Deploy AI Worker
         working-directory: ai-worker
         env:
