@@ -4,6 +4,22 @@ from scripts import fetch_jobs
 
 
 class ScannerRegressionTests(unittest.TestCase):
+
+    def test_stale_dated_archive_notice_is_filtered(self):
+        self.assertTrue(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Sep-2016"))
+        self.assertFalse(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Oct-2026"))
+
+    def test_discover_links_ignores_old_archive_entries(self):
+        html = """
+        <html><body><ul>
+        <li><a href="/old.pdf">Recruitment of Officer Grade A dated 21-Aug-2015</a></li>
+        <li><a href="/new.pdf">Recruitment of Assistant dated 24-Oct-2026</a></li>
+        </ul></body></html>
+        """
+        found = fetch_jobs.discover_links(html, "https://sebi.gov.in/vacancies")
+        self.assertEqual(len(found), 1)
+        self.assertIn("new.pdf", found[0][1])
+
     def test_vacancy_and_deadline_regexes_extract_real_values(self):
         text = (
             "Total Number of Vacancies: 125 "
