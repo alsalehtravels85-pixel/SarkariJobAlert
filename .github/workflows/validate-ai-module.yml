@@ -1,0 +1,53 @@
+name: Validate SarkariJobAlert AI Module
+
+on:
+  pull_request:
+    paths:
+      - "ai-worker/**"
+      - "ai-assistant.js"
+      - "ai-assistant.css"
+      - "index.html"
+      - "config.js"
+      - ".github/workflows/validate-ai-module.yml"
+  push:
+    branches:
+      - "feature/ai-career-assistant-v1"
+    paths:
+      - "ai-worker/**"
+      - "ai-assistant.js"
+      - "ai-assistant.css"
+      - "index.html"
+      - "config.js"
+      - ".github/workflows/validate-ai-module.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax-and-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate JavaScript syntax
+        run: |
+          node --check ai-worker/index.js
+          node --check ai-assistant.js
+      - name: Verify safe integration points
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          html = Path("index.html").read_text(encoding="utf-8")
+          config = Path("config.js").read_text(encoding="utf-8")
+          worker = Path("ai-worker/index.js").read_text(encoding="utf-8")
+          assert 'ai-assistant.js' in html, "AI assistant script is not included in the page"
+          assert 'PUSH_WORKER_URL' in config, "Existing push worker config must remain"
+          assert 'AI_WORKER_URL' in config, "AI worker config key is missing"
+          assert 'status=eq.published' in worker, "AI must read published jobs only"
+          assert 'SUPABASE_SERVICE_ROLE_KEY' not in worker, "AI worker must not use service-role credentials"
+          print("AI integration safety checks passed.")
+          PY
