@@ -99,8 +99,8 @@ class ScannerRegressionTests(unittest.TestCase):
           <tr><td>Application Fee</td><td>100 rupees</td></tr>
           <tr><td>Selection Process</td><td>Merit based on marks</td></tr>
         </table>
-        <a href="https://rrcjaipur.in/notice/rrc-nwr-apprentice-2026.pdf">Notification PDF</a>
-        <a href="https://rrcjaipur.in/apply">Apply Online</a>
+        <a href="https://ssc.gov.in/notice/rrc-nwr-apprentice-2026.pdf">Notification PDF</a>
+        <a href="https://ssc.gov.in/apply">Apply Online</a>
         <a href="https://evil.example/fake.pdf">Other PDF</a>
         </body></html>
         """
@@ -115,8 +115,8 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertEqual(result["age_limit"], "15 to 24 years")
         self.assertEqual(result["fees"], "100 rupees")
         self.assertEqual(result["selection_process"], "Merit based on marks")
-        self.assertEqual(result["official_url"], "https://rrcjaipur.in/notice/rrc-nwr-apprentice-2026.pdf")
-        self.assertEqual(result["apply_url"], "https://rrcjaipur.in/apply")
+        self.assertEqual(result["official_url"], "https://ssc.gov.in/notice/rrc-nwr-apprentice-2026.pdf")
+        self.assertEqual(result["apply_url"], "https://ssc.gov.in/apply")
 
     def test_sarkaritoday_never_uses_article_or_non_pdf_as_official_notice(self):
         html = """
