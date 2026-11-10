@@ -103,6 +103,20 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertIsNone(result["official_url"])
         self.assertIsNone(result["apply_url"])
 
+    def test_existing_public_text_cleanup_removes_discovery_brand_but_keeps_title(self):
+        self.assertEqual(
+            fetch_jobs.clean_public_sarkaritoday_title(
+                "RRC NWR Apprentice 2026 - SarkariToday"
+            ),
+            "RRC NWR Apprentice 2026",
+        )
+        description = fetch_jobs.clean_public_sarkaritoday_text(
+            "भर्ती की जानकारी नीचे है।\\nजानकारी का स्रोत: https://sarkaritoday.com/job/\\nअंतिम तिथि: 22 November 2026"
+        )
+        self.assertNotIn("sarkaritoday", description.lower())
+        self.assertIn("भर्ती की जानकारी", description)
+        self.assertIn("अंतिम तिथि", description)
+
     def test_sarkaritoday_draft_description_has_no_discovery_brand_or_link(self):
         description = fetch_jobs.build_sarkaritoday_draft_description(
             "Test Recruitment 2026",
