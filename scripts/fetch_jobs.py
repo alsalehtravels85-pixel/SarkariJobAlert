@@ -484,11 +484,14 @@ def clean_public_sarkaritoday_text(value):
         if "sarkaritoday" in low or "sarkaritoday.com" in low:
             continue
         kept.append(line)
-    text = "\\n".join(kept)
-    text = re.sub(r"(?i)\\s*[-|–—:]?\\s*sarkaritoday\\s*$", "", text)
+    text = "\n".join(kept)
+    text = re.sub(r"(?i)\s*[-|–—:]?\s*sarkaritoday\s*$", "", text)
     return clean(text)
 
 
+def clean_public_sarkaritoday_title(value):
+    title = re.sub(r"(?i)sarkaritoday(?:\\.com)?", "", str(value or ""))
+    return clean(re.sub(r"\\s*[-|–—:]\\s*", " ", title)).strip(" -|–—:")
 def cleanup_existing_sarkaritoday_rows(session):
     """Sanitize already-saved rows; preserve internal source_url for deduplication."""
     offset = 0
@@ -505,7 +508,7 @@ def cleanup_existing_sarkaritoday_rows(session):
         for row in rows:
             scanned += 1
             patch = {}
-            title = clean_public_sarkaritoday_text(row.get('title'))
+            title = clean_public_sarkaritoday_title(row.get('title'))
             description = clean_public_sarkaritoday_text(row.get('description'))
             notification_url = row.get('notification_url') or ''
             if title != (row.get('title') or ''):
@@ -1141,7 +1144,7 @@ def main():
             article_text = clean(article_soup.get_text(" ", strip=True))
             if not fields.get("apply_url"):
                 fields["apply_url"] = find_apply_url(session, data, detail_url, article_text)
-            title = clean_public_sarkaritoday_text(fields.get("title") or seo_vacancy_title(candidate_title))
+            title = clean_public_sarkaritoday_title(fields.get("title") or seo_vacancy_title(candidate_title))
             if not title or has_corrupt_text(title) or "sarkaritoday" in title.lower():
                 sarkaritoday_skipped += 1
                 continue
