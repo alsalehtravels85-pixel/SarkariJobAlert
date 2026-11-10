@@ -750,7 +750,11 @@ def main():
             # each listing with its publication date. Preserve it as a
             # notification date for an admin-review draft, never as a deadline.
             if not fields["notification_date"]:
-                fields["notification_date"] = listing_notification_date(candidate_title)
+                listing_date = listing_notification_date(candidate_title)
+                # A future date in a listing title may be an application/event
+                # date rather than its publication date; do not mislabel it.
+                if listing_date and listing_date <= TODAY.isoformat():
+                    fields["notification_date"] = listing_date
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
@@ -768,8 +772,11 @@ def main():
                 bool(fields["vacancies"]),
                 bool(fields["qualification"]),
             ))
-            if core_facts < 1:
-                missing.append("no confirmed core fact: future deadline, vacancy count, qualification")
+            dated_official_bulletin = bool(
+                fields["notification_date"] and fields["notification_date"] <= TODAY.isoformat()
+            )
+            if core_facts < 1 and not dated_official_bulletin:
+                missing.append("no confirmed core fact or dated official bulletin: future deadline, vacancy count, qualification")
             if missing:
                 print("SKIP - insufficient verified recruitment evidence:", ", ".join(dict.fromkeys(missing)), "|", candidate_title[:180])
                 skipped += 1
