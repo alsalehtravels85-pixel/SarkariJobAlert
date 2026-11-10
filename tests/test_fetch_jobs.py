@@ -86,6 +86,38 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertEqual(result["official_url"], "https://example.gov.in/notice.pdf")
         self.assertEqual(result["apply_url"], "https://example.gov.in/apply")
 
+    def test_sarkaritoday_official_pdf_must_match_vacancy_deadline_and_qualification(self):
+        article = {
+            "vacancies": "120",
+            "last_date": "2026-11-18",
+            "qualification": "MBBS degree from a recognized university",
+        }
+        pdf = (
+            "Total Number of Vacancies: 120 "
+            "Last Date to Apply: 18 November 2026 "
+            "Educational Qualification: MBBS degree from a recognized university "
+        ) * 5
+        verified, _ = fetch_jobs.verify_sarkaritoday_official_pdf(
+            article, pdf, "https://example.gov.in/notice.pdf"
+        )
+        self.assertTrue(verified)
+
+    def test_sarkaritoday_pdf_mismatch_stays_unverified(self):
+        article = {
+            "vacancies": "120",
+            "last_date": "2026-11-18",
+            "qualification": "MBBS degree from a recognized university",
+        }
+        pdf = (
+            "Total Number of Vacancies: 80 "
+            "Last Date to Apply: 18 November 2026 "
+            "Educational Qualification: MBBS degree from a recognized university "
+        ) * 5
+        verified, _ = fetch_jobs.verify_sarkaritoday_official_pdf(
+            article, pdf, "https://example.gov.in/notice.pdf"
+        )
+        self.assertFalse(verified)
+
     def test_sarkaritoday_article_discovery_rejects_external_hosts(self):
         html = """
         <html><body>
