@@ -753,6 +753,7 @@ def extract_sarkaritoday_article(html, article_url):
     age_limit = pick("age limit", "age criteria", "आयु सीमा")
     fees = pick("application fee", "exam fee", "registration fee", "आवेदन शुल्क", "परीक्षा शुल्क")
     selection = pick("selection process", "mode of selection", "चयन प्रक्रिया")
+    department = pick("department", "organization", "organisation", "board", "authority", "विभाग", "संस्था", "बोर्ड")
 
     apply_url = None
     official_urls = []
@@ -768,6 +769,7 @@ def extract_sarkaritoday_article(html, article_url):
         notification_url = official_urls[0]
     return {
         "title": seo_vacancy_title(title),
+        "department": clean(department) if department else None,
         "vacancies": vacancies,
         "last_date": last_date,
         "notification_date": notification_date,
@@ -778,6 +780,35 @@ def extract_sarkaritoday_article(html, article_url):
         "apply_url": apply_url,
         "official_url": notification_url,
     }
+
+
+def verify_sarkaritoday_official_pdf(article_fields, pdf_text, pdf_url):
+    """Verify third-party-discovered facts against a readable official PDF."""
+    if not pdf_url or not official(pdf_url) or len(clean(pdf_text)) < 300 or has_corrupt_text(pdf_text):
+        return False, {}
+    official_fields = extract_fields(clean(pdf_text))
+    if not (
+        article_fields.get("vacancies")
+        and official_fields.get("vacancies") == article_fields.get("vacancies")
+        and article_fields.get("last_date")
+        and official_fields.get("last_date") == article_fields.get("last_date")
+        and article_fields.get("qualification")
+        and official_fields.get("qualification")
+    ):
+        return False, official_fields
+
+    def tokens(value):
+        return {
+            token for token in re.findall(r"[a-z0-9\u0900-\u097f]+", normalize_text(value))
+            if len(token) > 1
+        }
+
+    article_tokens = tokens(article_fields["qualification"])
+    official_tokens = tokens(official_fields["qualification"])
+    if not article_tokens or not official_tokens:
+        return False, official_fields
+    overlap = len(article_tokens & official_tokens) / len(article_tokens | official_tokens)
+    return overlap >= 0.45, official_fields
 
 
 def build_sarkaritoday_draft_description(title, fields, source_url):
