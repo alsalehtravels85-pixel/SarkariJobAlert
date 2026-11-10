@@ -819,8 +819,8 @@ def extract_sarkaritoday_article(html, article_url):
     apply_url = None
     notification_url = None
     for a in soup.select("a[href]"):
-        raw = urljoin(article_url, a.get("href", ""))
-        if not official(raw):
+        raw = safe_url(a.get("href", ""), article_url)
+        if not raw:
             continue
         label = clean(a.get_text(" ", strip=True)).lower()
         path = urlparse(raw).path.lower()
@@ -829,9 +829,9 @@ def extract_sarkaritoday_article(html, article_url):
             "apply online", "online application", "registration", "apply now",
             "application portal", "click here to apply", "आवेदन करें", "ऑनलाइन आवेदन",
         )) or any(term in raw.lower() for term in ("apply", "registration", "recruitmentportal"))
-        if is_pdf and not notification_url:
+        if is_pdf and official(raw) and not notification_url:
             notification_url = raw
-        if is_apply and not apply_url:
+        if is_apply and official(raw) and not apply_url:
             apply_url = raw
     return {
         "title": seo_vacancy_title(title),
@@ -1133,7 +1133,8 @@ def main():
         time.sleep(0.2)
 
 
-    # Third-party discoveries auto-publish only after official PDF facts and required links are cross-checked.
+    # Article table data is mapped to admin fields; official PDF/apply links are kept.
+    # All discovered records remain drafts for manual admin review before publishing.
     sarkaritoday_saved = sarkaritoday_skipped = sarkaritoday_duplicates = 0
     for candidate_title, article_url in sarkaritoday_candidates:
         try:
@@ -1159,33 +1160,12 @@ def main():
                 print("SARKARITODAY SKIP - no vacancy/qualification detail:", title)
                 sarkaritoday_skipped += 1
                 continue
-            # Never expose the discovery article as an official notification link.
-            # Only show the official PDF after it is readable and its facts match.
-            notification_url = ""
             department = fields.get("department") or "विभागीय पुष्टि बाकी"
-            pdf_text, verified_pdf_url = ("", None)
-            pdf_verified = False
-            if fields.get("official_url") and official(fields["official_url"]):
-                pdf_text, verified_pdf_url = extract_pdf_text(session, fields["official_url"])
-                pdf_verified, pdf_fields = verify_sarkaritoday_official_pdf(fields, pdf_text, verified_pdf_url)
-                if pdf_verified:
-                    for key in ("vacancies", "last_date", "qualification", "fees", "age_limit", "selection_process", "notification_date"):
-                        if pdf_fields.get(key):
-                            fields[key] = pdf_fields[key]
-                    notification_url = verified_pdf_url
-            complete_record = bool(
-                pdf_verified
-                and fields.get("department")
-                and fields.get("vacancies")
-                and fields.get("last_date") and fields["last_date"] >= TODAY.isoformat()
-                and fields.get("qualification")
-                and fields.get("apply_url") and official(fields["apply_url"])
-            )
-            if complete_record:
-                department = fields["department"]
+            notification_url = fields.get("official_url") or ""
+            apply_url = fields.get("apply_url") or ""
             title_key = (normalize_text(title), normalize_text(department))
             if (normalized_url(detail_url) in known_urls
-                    or normalized_url(notification_url) in known_urls
+                    or (notification_url and normalized_url(notification_url) in known_urls)
                     or title_key in known_titles):
                 sarkaritoday_duplicates += 1
                 continue
@@ -1201,39 +1181,27 @@ def main():
                 "age_limit": fields.get("age_limit") or "",
                 "selection_process": fields.get("selection_process") or "",
                 "notification_url": notification_url,
-                "apply_url": fields.get("apply_url") or "",
+                "apply_url": apply_url,
                 "source_url": detail_url + MARKER,
-                "description": (
-                    build_vacancy_description(
-                        title=title,
-                        department=department,
-                        vacancies=fields.get("vacancies"),
-                        qualification=fields.get("qualification"),
-                        last_date=fields.get("last_date"),
-                        fees=fields.get("fees"),
-                        age_limit=fields.get("age_limit"),
-                        selection_process=fields.get("selection_process"),
-                        pdf_verified=True,
-                        source_notice_text=pdf_text,
-                    )
-                    if complete_record else build_sarkaritoday_draft_description(title, fields, detail_url)
-                ),
-                "status": "published" if complete_record else "draft",
+                "description": build_sarkaritoday_draft_description(title, fields),
+                "status": "draft",
             }
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
-            known_urls.update((normalized_url(detail_url), normalized_url(notification_url)))
+            known_urls.add(normalized_url(detail_url))
+            if notification_url:
+                known_urls.add(normalized_url(notification_url))
             known_titles.add(title_key)
             sarkaritoday_saved += 1
-            if complete_record:
-                published += 1
-            else:
-                drafts += 1
+            drafts += 1
             saved += 1
-            print("SARKARITODAY AUTO-PUBLISHED:" if complete_record else "SARKARITODAY DRAFT SAVED:",
-                  title, "| official PDF verified:", "yes" if pdf_verified else "no",
-                  "| department/apply link complete:", "yes" if complete_record else "no",
-                  "| deadline:", last_date)
+            print(
+                "SARKARITODAY DRAFT SAVED:", title,
+                "| article fields mapped to admin columns",
+                "| PDF link:", "yes" if notification_url else "missing",
+                "| apply link:", "yes" if apply_url else "missing",
+                "| deadline:", last_date,
+            )
         except Exception as exc:
             process_errors += 1
             print("SARKARITODAY ARTICLE PROCESS ERROR:", candidate_title[:140], str(exc)[:240])
