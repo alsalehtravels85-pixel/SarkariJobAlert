@@ -803,6 +803,11 @@ def verify_sarkaritoday_official_pdf(article_fields, pdf_text, pdf_url):
             if len(token) > 1
         }
 
+    department_tokens = tokens(article_fields.get("department") or "")
+    pdf_tokens = tokens(pdf_text)
+    if not department_tokens or len(department_tokens & pdf_tokens) / len(department_tokens) < 0.5:
+        return False, official_fields
+
     article_tokens = tokens(article_fields["qualification"])
     official_tokens = tokens(official_fields["qualification"])
     if not article_tokens or not official_tokens:
@@ -1062,7 +1067,7 @@ def main():
         time.sleep(0.2)
 
 
-    # Third-party article facts are inserted as Draft only; never auto-publish.
+    # Third-party discoveries auto-publish only after official PDF facts and required links are cross-checked.
     sarkaritoday_saved = sarkaritoday_skipped = sarkaritoday_duplicates = 0
     for candidate_title, article_url in sarkaritoday_candidates:
         try:
