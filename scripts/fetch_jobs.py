@@ -335,6 +335,8 @@ def discover_links(html, page_url):
 
 UP_OFFICIAL_HOSTS = {
     "upsssc.gov.in", "uppsc.up.nic.in", "uppbpb.gov.in", "upnrhm.gov.in",
+    # Dedicated UP Police result portal linked from the official UPPRPB website.
+    "upcons2025.com",
 }
 UP_RESULT_HINTS = (
     "result", "merit list", "merit-list", "score card", "scorecard",
