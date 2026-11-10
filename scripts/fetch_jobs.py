@@ -1185,7 +1185,6 @@ def main():
             verified_pdf_url = None
             if notification_url:
                 pdf_text, verified_pdf_url = extract_pdf_text(session, notification_url)
-            pdf_verified, official_fields = verify_sarkaritoday_official_pdf(fields, pdf_text, verified_pdf_url) if pdf_text and verified_pdf_url else (False, {})
 
             # Department may be named in the official PDF even when the article omits it.
             department = fields.get("department")
@@ -1216,6 +1215,8 @@ def main():
                 print("SARKARITODAY SKIP - official/article last date missing or expired:", title)
                 sarkaritoday_skipped += 1
                 continue
+            fields["department"] = department
+            pdf_verified, official_fields = verify_sarkaritoday_official_pdf(fields, pdf_text, verified_pdf_url) if pdf_text and verified_pdf_url else (False, {})
             if not department:
                 print("SARKARITODAY SKIP - department could not be identified:", title)
                 sarkaritoday_skipped += 1
