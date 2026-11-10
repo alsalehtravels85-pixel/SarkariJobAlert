@@ -1085,7 +1085,27 @@ def main():
                 sarkaritoday_skipped += 1
                 continue
             notification_url = fields.get("official_url") or detail_url
-            department = "विभागीय पुष्टि बाकी"
+            department = fields.get("department") or "विभागीय पुष्टि बाकी"
+            pdf_text, verified_pdf_url = ("", None)
+            pdf_verified = False
+            if fields.get("official_url") and official(fields["official_url"]):
+                pdf_text, verified_pdf_url = extract_pdf_text(session, fields["official_url"])
+                pdf_verified, pdf_fields = verify_sarkaritoday_official_pdf(fields, pdf_text, verified_pdf_url)
+                if pdf_verified:
+                    for key in ("vacancies", "last_date", "qualification", "fees", "age_limit", "selection_process", "notification_date"):
+                        if pdf_fields.get(key):
+                            fields[key] = pdf_fields[key]
+                    notification_url = verified_pdf_url
+            complete_record = bool(
+                pdf_verified
+                and fields.get("department")
+                and fields.get("vacancies")
+                and fields.get("last_date") and fields["last_date"] >= TODAY.isoformat()
+                and fields.get("qualification")
+                and fields.get("apply_url") and official(fields["apply_url"])
+            )
+            if complete_record:
+                department = fields["department"]
             title_key = (normalize_text(title), normalize_text(department))
             if (normalized_url(detail_url) in known_urls
                     or normalized_url(notification_url) in known_urls
@@ -1106,19 +1126,37 @@ def main():
                 "notification_url": notification_url,
                 "apply_url": fields.get("apply_url") or "",
                 "source_url": detail_url + MARKER,
-                "description": build_sarkaritoday_draft_description(title, fields, detail_url),
-                "status": "draft",
+                "description": (
+                    build_vacancy_description(
+                        title=title,
+                        department=department,
+                        vacancies=fields.get("vacancies"),
+                        qualification=fields.get("qualification"),
+                        last_date=fields.get("last_date"),
+                        fees=fields.get("fees"),
+                        age_limit=fields.get("age_limit"),
+                        selection_process=fields.get("selection_process"),
+                        pdf_verified=True,
+                        source_notice_text=pdf_text,
+                    )
+                    if complete_record else build_sarkaritoday_draft_description(title, fields, detail_url)
+                ),
+                "status": "published" if complete_record else "draft",
             }
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
             known_urls.update((normalized_url(detail_url), normalized_url(notification_url)))
             known_titles.add(title_key)
             sarkaritoday_saved += 1
-            drafts += 1
+            if complete_record:
+                published += 1
+            else:
+                drafts += 1
             saved += 1
-            print("SARKARITODAY DRAFT SAVED:", title, "| deadline:", last_date,
-                  "| vacancies:", fields.get("vacancies") or "not found",
-                  "| official link found:", "yes" if fields.get("official_url") else "no")
+            print("SARKARITODAY AUTO-PUBLISHED:" if complete_record else "SARKARITODAY DRAFT SAVED:",
+                  title, "| official PDF verified:", "yes" if pdf_verified else "no",
+                  "| department/apply link complete:", "yes" if complete_record else "no",
+                  "| deadline:", last_date)
         except Exception as exc:
             process_errors += 1
             print("SARKARITODAY ARTICLE PROCESS ERROR:", candidate_title[:140], str(exc)[:240])
