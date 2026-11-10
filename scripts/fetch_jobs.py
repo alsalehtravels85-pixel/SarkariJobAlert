@@ -490,8 +490,10 @@ def clean_public_sarkaritoday_text(value):
 
 
 def clean_public_sarkaritoday_title(value):
-    title = re.sub(r"(?i)sarkaritoday(?:\\.com)?", "", str(value or ""))
-    return clean(re.sub(r"\\s*[-|–—:]\\s*", " ", title)).strip(" -|–—:")
+    title = re.sub(r"(?i)sarkaritoday(?:\.com)?", "", str(value or ""))
+    return clean(re.sub(r"\s*[-|–—:]\s*", " ", title)).strip(" -|–—:")
+
+
 def cleanup_existing_sarkaritoday_rows(session):
     """Sanitize already-saved rows; preserve internal source_url for deduplication."""
     offset = 0
