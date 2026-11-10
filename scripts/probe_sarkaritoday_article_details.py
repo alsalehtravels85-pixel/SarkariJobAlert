@@ -19,7 +19,7 @@ UA="SarkariJobAlertReadOnlyProbe/1.0 (+https://github.com/alsalehtravels85-pixel
 def official(url):
  h=(urlparse(url).hostname or "").lower().rstrip(".")
  return h.endswith((".gov.in",".nic.in",".gov")) or h in {"upsc.gov.in","ssc.gov.in","ibps.in","indiapost.gov.in","drdo.gov.in","isro.gov.in","sci.gov.in","rrbapply.gov.in"}
-def tidy(s): return re.sub(r"\\s+"," ",s or "").strip()
+def tidy(s): return re.sub(r"\s+"," ",s or "").strip()
 def pick(text, patterns, limit=300):
  for p in patterns:
   m=re.search(p,text,re.I)
@@ -52,13 +52,13 @@ for url in ARTICLES:
   item["table_rows"]=rows[:60]
   # Extract only explicit labelled statements; do not infer values from nearby numbers.
   item["candidate_fields"]={
-   "vacancies":pick(text,[r"(?:total\\s+)?vacanc(?:y|ies|y\s+of\s+posts)\\s*[:：-]\\s*([^.;]{1,80})",r"(?:total\\s+)?posts?\\s*[:：-]\\s*([0-9,]+)"]),
-   "last_date":pick(text,[r"(?:last date(?: to apply)?|closing date|application last date)\\s*[:：-]\\s*([^.;]{3,80})"]),
-   "notification_date":pick(text,[r"(?:notification date|date of notification|published on)\\s*[:：-]\\s*([^.;]{3,80})"]),
-   "qualification":pick(text,[r"(?:qualification|educational qualification|eligibility)\\s*[:：-]\\s*(.{12,260}?)(?=\\s+(?:age limit|application fee|selection process|important dates)\\b|$)",r"(?:education qualification)\\s*[:：-]\\s*(.{12,260})"]),
-   "age_limit":pick(text,[r"(?:age limit|age criteria)\\s*[:：-]\\s*([^.;]{3,120})"]),
-   "fees":pick(text,[r"(?:application fee|exam fee|registration fee)\\s*[:：-]\\s*([^.;]{3,120})"]),
-   "selection_process":pick(text,[r"(?:selection process|mode of selection)\\s*[:：-]\\s*([^.;]{3,160})"]),
+   "vacancies":pick(text,[r"(?:total\s+)?vacanc(?:y|ies|y\s+of\s+posts)\s*[:：-]\s*([^.;]{1,80})",r"(?:total\s+)?posts?\s*[:：-]\s*([0-9,]+)"]),
+   "last_date":pick(text,[r"(?:last date(?: to apply)?|closing date|application last date)\s*[:：-]\s*([^.;]{3,80})"]),
+   "notification_date":pick(text,[r"(?:notification date|date of notification|published on)\s*[:：-]\s*([^.;]{3,80})"]),
+   "qualification":pick(text,[r"(?:qualification|educational qualification|eligibility)\s*[:：-]\s*(.{12,260}?)(?=\s+(?:age limit|application fee|selection process|important dates)\b|$)",r"(?:education qualification)\s*[:：-]\s*(.{12,260})"]),
+   "age_limit":pick(text,[r"(?:age limit|age criteria)\s*[:：-]\s*([^.;]{3,120})"]),
+   "fees":pick(text,[r"(?:application fee|exam fee|registration fee)\s*[:：-]\s*([^.;]{3,120})"]),
+   "selection_process":pick(text,[r"(?:selection process|mode of selection)\s*[:：-]\s*([^.;]{3,160})"]),
   }
   links=[]; seen=set()
   for a in root.select("a[href]"):
