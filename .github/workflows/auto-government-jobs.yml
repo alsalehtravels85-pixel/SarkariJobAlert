@@ -2,6 +2,12 @@ name: SarkariJobAlert - Automatic Government Job Scanner
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch_jobs.py"
+      - "tests/test_fetch_jobs.py"
+      - ".github/workflows/auto-government-jobs.yml"
   schedule:
     - cron: "17 */6 * * *"
     - cron: "35 19 * * *" # 01:05 IST daily cleanup
@@ -31,7 +37,7 @@ jobs:
       - name: Run scanner regression tests
         run: python -m unittest discover -s tests -v
       - name: Scan vacancies plus UP Admit Cards/Results; auto-publish only strictly verified records
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 */6 * * *'
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.schedule == '17 */6 * * *'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
