@@ -75,7 +75,7 @@ EXACT_HOSTS = {
     "drdo.gov.in", "isro.gov.in", "indianrailways.gov.in", "rrbapply.gov.in",
     "nabard.org", "sebi.gov.in", "tnpsc.gov.in", "keralapsc.gov.in", "sbi.bank.in",
     "rpsc.rajasthan.gov.in", "bpsc.bihar.gov.in", "mppsc.mp.gov.in",
-    "ncs.gov.in", "employmentnews.gov.in",
+    "ncs.gov.in", "employmentnews.gov.in", "upcons2025.com",
 }
 RECRUITMENT_HINTS = (
     "recruitment", "vacancy", "vacancies", "applications invited",
@@ -258,11 +258,11 @@ def labelled_date(text, labels):
 def extract_fields(text):
     vacancy = None
     patterns = (
-        r"(?:total\\s+(?:number\\s+of\\s+)?vacanc(?:y|ies)|total\\s+posts?|"
-        r"number\\s+of\\s+vacanc(?:y|ies)|no\\.?\\s*of\\s*(?:vacanc(?:y|ies)|posts?)|"
-        r"number\\s+of\\s+posts?|posts?\\s+available)"
-        r"\\s*[:\\-]?\\s*(\\d[\\d,]*)",
-        r"(\\d[\\d,]*)\\s+(?:vacancies|vacant posts|posts)\\b",
+        r"(?:total\s+(?:number\s+of\s+)?vacanc(?:y|ies)|total\s+posts?|"
+        r"number\s+of\s+vacanc(?:y|ies)|no\.?\s*of\s*(?:vacanc(?:y|ies)|posts?)|"
+        r"number\s+of\s+posts?|posts?\s+available)"
+        r"\s*[:\-]?\s*(\d[\d,]*)",
+        r"(\d[\d,]*)\s+(?:vacancies|vacant posts|posts)\b",
     )
     for pattern in patterns:
         match = re.search(pattern, text, re.I)
@@ -273,16 +273,16 @@ def extract_fields(text):
                 break
 
     last_date = labelled_date(text, (
-        r"last\\s+date(?:\\s+for|\\s+of)?\\s+(?:submission|receipt|apply|application)?",
-        r"closing\\s+date",
-        r"apply\\s+online\\s+up\\s+to",
-        r"applications?\\s+may\\s+be\\s+submitted\\s+up\\s+to",
-        r"last\\s+date\\s+to\\s+apply",
-        r"online\\s+application\\s+ends?",
-        r"application\\s+(?:closing|submission)\\s+date",
-        r"applications?\\s+close(?:s)?\\s+on",
-        r"apply\\s+before",
-        r"due\\s+date",
+        r"last\s+date(?:\s+for|\s+of)?\s+(?:submission|receipt|apply|application)?",
+        r"closing\s+date",
+        r"apply\s+online\s+up\s+to",
+        r"applications?\s+may\s+be\s+submitted\s+up\s+to",
+        r"last\s+date\s+to\s+apply",
+        r"online\s+application\s+ends?",
+        r"application\s+(?:closing|submission)\s+date",
+        r"applications?\s+close(?:s)?\s+on",
+        r"apply\s+before",
+        r"due\s+date",
     ))
     notification_date = labelled_date(text, (
         r"date\s+of\s+notification", r"notification\s+date",
@@ -290,11 +290,11 @@ def extract_fields(text):
         r"published\s+on",
     ))
     qualification = re.search(
-        r"(?:educational|essential|minimum|prescribed|eligibility)\\s+"
+        r"(?:educational|essential|minimum|prescribed|eligibility)\s+"
         r"(?:qualification|criteria|requirements?)(?:s)?"
-        r"\\s*[:\\-]?\\s*(.{20,320}?)(?:\\b(?:age limit|pay scale|salary|"
+        r"\s*[:\-]?\s*(.{20,320}?)(?:\b(?:age limit|pay scale|salary|"
         r"application fee|selection process|how to apply|important dates|"
-        r"number of vacancies|total posts?)\\b)",
+        r"number of vacancies|total posts?)\b)",
         text, re.I,
     )
     fee = re.search(r"(?:application fee|examination fee|exam fee|registration fee)\s*[:\-]?\s*([^\n.]{3,120})", text, re.I)
@@ -839,10 +839,19 @@ def main():
                 detail_text = clean(html_soup.get_text(" ", strip=True))
                 action_url = official_action_link(data, detail_url, category)
             lowered = (candidate_title + " " + detail_text).lower()
+            # UPPRPB's official notice board links the 2025 constable result to
+            # this dedicated result portal. Its landing page itself is the
+            # verified result action page; the individual list links are generic.
+            if (not action_url and category == "Result"
+                    and host(detail_url) == "upcons2025.com"
+                    and any(term in detail_text.lower() for term in ("final result", "परिणाम"))
+                    and any(term in detail_text.lower() for term in ("click here", "view list", "merit"))):
+                action_url = detail_url
             hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
             release_hints = (
                 "available", "released", "download", "declared", "published",
-                "now live", "check result", "view result", "प्रवेश पत्र डाउनलोड",
+                "now live", "check result", "view result", "final result",
+                "final selection result", "प्रवेश पत्र डाउनलोड",
                 "परिणाम जारी", "जारी किया", "उपलब्ध",
             )
             if (not any(term in lowered for term in hints) or len(detail_text) < 100
