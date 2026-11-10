@@ -773,8 +773,10 @@ def discover_sarkaritoday_articles(html, page_url):
 
 
 def extract_sarkaritoday_article(html, article_url):
-    """Extract labelled table facts. Third-party content remains draft-only."""
+    """Read the complete article: tables, headings, paragraphs and official links."""
     soup = BeautifulSoup(html, "html.parser")
+    for node in soup.select("script,style,noscript,header,footer,nav"):
+        node.decompose()
     heading = soup.find(["h1", "h2"])
     title = clean(heading.get_text(" ", strip=True)) if heading else ""
     if len(title) < 10:
@@ -792,6 +794,18 @@ def extract_sarkaritoday_article(html, article_url):
                 if label and value:
                     rows[label] = value
 
+    # Include article paragraphs and headings as labelled facts, not only table cells.
+    for node in soup.select("p, li, h2, h3, h4, strong, b"):
+        line = clean(node.get_text(" ", strip=True))
+        if len(line) < 4 or len(line) > 700:
+            continue
+        match = re.match(r"^([^:：|]{2,65})\s*[:：|]\s*(.{2,})$", line)
+        if match:
+            label = re.sub(r"[^a-z0-9\u0900-\u097f]+", " ", match.group(1).lower()).strip()
+            rows.setdefault(label, clean(match.group(2)))
+
+    full_text = clean(soup.get_text(" ", strip=True))
+
     def pick(*labels):
         for label, value in rows.items():
             if any(token in label for token in labels):
@@ -808,12 +822,13 @@ def extract_sarkaritoday_article(html, article_url):
         match = re.search(DATE_TOKEN, raw, re.I)
         return parse_date(match.group(1)) if match else parse_date(raw)
 
-    last_date = table_date(pick("last date", "closing date", "apply last", "application end", "अंतिम तिथि", "आवेदन की अंतिम"))
-    notification_date = table_date(pick("notification date", "published date", "start date", "application start", "आवेदन शुरू", "प्रकाशित"))
-    qualification = pick("qualification", "educational qualification", "eligibility", "शैक्षणिक योग्यता", "योग्यता")
-    age_limit = pick("age limit", "age criteria", "आयु सीमा")
-    fees = pick("application fee", "exam fee", "registration fee", "आवेदन शुल्क", "परीक्षा शुल्क")
-    selection = pick("selection process", "mode of selection", "चयन प्रक्रिया")
+    fallback = extract_fields(full_text)
+    last_date = table_date(pick("last date", "closing date", "apply last", "application end", "अंतिम तिथि", "आवेदन की अंतिम")) or fallback.get("last_date")
+    notification_date = table_date(pick("notification date", "published date", "start date", "application start", "आवेदन शुरू", "प्रकाशित")) or fallback.get("notification_date")
+    qualification = pick("qualification", "educational qualification", "eligibility", "शैक्षणिक योग्यता", "योग्यता") or fallback.get("qualification")
+    age_limit = pick("age limit", "age criteria", "आयु सीमा") or fallback.get("age_limit")
+    fees = pick("application fee", "exam fee", "registration fee", "आवेदन शुल्क", "परीक्षा शुल्क") or fallback.get("fees")
+    selection = pick("selection process", "mode of selection", "चयन प्रक्रिया") or fallback.get("selection_process")
     department = pick("department", "organization", "organisation", "board", "authority", "विभाग", "संस्था", "बोर्ड")
 
     apply_url = None
@@ -833,10 +848,11 @@ def extract_sarkaritoday_article(html, article_url):
             notification_url = raw
         if is_apply and official(raw) and not apply_url:
             apply_url = raw
+
     return {
         "title": seo_vacancy_title(title),
         "department": clean(department) if department else None,
-        "vacancies": vacancies,
+        "vacancies": vacancies or fallback.get("vacancies"),
         "last_date": last_date,
         "notification_date": notification_date,
         "qualification": clean(qualification) if qualification else None,
@@ -845,6 +861,7 @@ def extract_sarkaritoday_article(html, article_url):
         "selection_process": clean(selection) if selection else None,
         "apply_url": apply_url,
         "official_url": notification_url,
+        "article_text": full_text,
     }
 
 
@@ -1133,8 +1150,8 @@ def main():
         time.sleep(0.2)
 
 
-    # Article table data is mapped to admin fields; official PDF/apply links are kept.
-    # All discovered records remain drafts for manual admin review before publishing.
+    # Read the full discovery article, enrich missing department from the official notice,
+    # and apply the user's explicit skip/draft/publish rules.
     sarkaritoday_saved = sarkaritoday_skipped = sarkaritoday_duplicates = 0
     for candidate_title, article_url in sarkaritoday_candidates:
         try:
@@ -1143,32 +1160,85 @@ def main():
                 sarkaritoday_skipped += 1
                 continue
             fields = extract_sarkaritoday_article(data, detail_url)
-            article_soup = BeautifulSoup(data, "html.parser")
-            article_text = clean(article_soup.get_text(" ", strip=True))
-            if not fields.get("apply_url"):
-                fields["apply_url"] = find_apply_url(session, data, detail_url, article_text)
             title = clean_public_sarkaritoday_title(fields.get("title") or seo_vacancy_title(candidate_title))
             if not title or has_corrupt_text(title) or "sarkaritoday" in title.lower():
                 sarkaritoday_skipped += 1
                 continue
+
+            notification_url = fields.get("official_url") or ""
+            apply_url = fields.get("apply_url") or ""
+            # Search the complete article for an official application link if button labels vary.
+            if not apply_url:
+                apply_url = find_apply_url(session, data, detail_url, fields.get("article_text") or "")
+            if not notification_url and not apply_url:
+                print("SARKARITODAY SKIP - no official PDF or apply link:", title)
+                sarkaritoday_skipped += 1
+                continue
+
             last_date = fields.get("last_date")
             if not last_date or last_date < TODAY.isoformat():
                 print("SARKARITODAY SKIP - missing/expired last date:", title)
                 sarkaritoday_skipped += 1
                 continue
-            if not (fields.get("vacancies") or fields.get("qualification")):
-                print("SARKARITODAY SKIP - no vacancy/qualification detail:", title)
+
+            pdf_text = ""
+            verified_pdf_url = None
+            if notification_url:
+                pdf_text, verified_pdf_url = extract_pdf_text(session, notification_url)
+            pdf_verified, official_fields = verify_sarkaritoday_official_pdf(fields, pdf_text, verified_pdf_url) if pdf_text and verified_pdf_url else (False, {})
+
+            # Department may be named in the official PDF even when the article omits it.
+            department = fields.get("department")
+            if not department and pdf_text:
+                candidates_dept = []
+                for line in pdf_text.splitlines():
+                    line = clean(line)
+                    if (8 <= len(line) <= 150 and
+                            (re.search(r"\b(ministry|department|board|commission|railway|university|corporation|authority|विभाग|आयोग|बोर्ड|विश्वविद्यालय)\b", line, re.I)
+                             or (line.isupper() and len(line.split()) >= 2))):
+                        candidates_dept.append(line)
+                if candidates_dept:
+                    department = candidates_dept[0]
+            if not department:
+                # Use a named recruiting organisation from the article title only when explicit.
+                m = re.match(r"^(.{3,80}?)\s+(?:recruitment|vacancy|bharti|apprentice)", title, re.I)
+                if m:
+                    department = clean(m.group(1))
+
+            # Fill missing article values from readable official PDF text.
+            if pdf_text:
+                pdf_fields = extract_fields(pdf_text)
+                for key in ("vacancies", "last_date", "notification_date", "qualification", "age_limit", "fees", "selection_process"):
+                    if not fields.get(key) and pdf_fields.get(key):
+                        fields[key] = pdf_fields[key]
+            last_date = fields.get("last_date")
+            if not last_date or last_date < TODAY.isoformat():
+                print("SARKARITODAY SKIP - official/article last date missing or expired:", title)
                 sarkaritoday_skipped += 1
                 continue
-            department = fields.get("department") or "विभागीय पुष्टि बाकी"
-            notification_url = fields.get("official_url") or ""
-            apply_url = fields.get("apply_url") or ""
+            if not department:
+                print("SARKARITODAY SKIP - department could not be identified:", title)
+                sarkaritoday_skipped += 1
+                continue
+            if not fields.get("vacancies") or not fields.get("qualification"):
+                print("SARKARITODAY SKIP - core admin details incomplete:", title)
+                sarkaritoday_skipped += 1
+                continue
+
             title_key = (normalize_text(title), normalize_text(department))
             if (normalized_url(detail_url) in known_urls
-                    or (notification_url and normalized_url(notification_url) in known_urls)
+                    or (verified_pdf_url and normalized_url(verified_pdf_url) in known_urls)
                     or title_key in known_titles):
                 sarkaritoday_duplicates += 1
                 continue
+
+            # Publish only if the official PDF is readable and verifies the key facts.
+            # An official apply URL alone is enough for a draft, never automatic publishing.
+            status = "published" if pdf_verified and notification_url else "draft"
+            fields["last_date"] = last_date
+            fields["department"] = department
+            fields["official_url"] = verified_pdf_url or ""
+            fields["apply_url"] = apply_url
             record = {
                 "title": title,
                 "department": department,
@@ -1180,26 +1250,29 @@ def main():
                 "fees": fields.get("fees") or "",
                 "age_limit": fields.get("age_limit") or "",
                 "selection_process": fields.get("selection_process") or "",
-                "notification_url": notification_url,
+                "notification_url": verified_pdf_url or "",
                 "apply_url": apply_url,
                 "source_url": detail_url + MARKER,
                 "description": build_sarkaritoday_draft_description(title, fields),
-                "status": "draft",
+                "status": status,
             }
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
             known_urls.add(normalized_url(detail_url))
-            if notification_url:
-                known_urls.add(normalized_url(notification_url))
+            if verified_pdf_url:
+                known_urls.add(normalized_url(verified_pdf_url))
             known_titles.add(title_key)
             sarkaritoday_saved += 1
-            drafts += 1
+            if status == "published":
+                published += 1
+            else:
+                drafts += 1
             saved += 1
             print(
-                "SARKARITODAY DRAFT SAVED:", title,
-                "| article fields mapped to admin columns",
-                "| PDF link:", "yes" if notification_url else "missing",
-                "| apply link:", "yes" if apply_url else "missing",
+                "SARKARITODAY", status.upper(), "SAVED:", title,
+                "| department:", department,
+                "| PDF verified:", "yes" if pdf_verified else "no",
+                "| apply link:", "yes" if apply_url else "no",
                 "| deadline:", last_date,
             )
         except Exception as exc:
