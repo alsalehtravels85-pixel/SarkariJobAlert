@@ -16,7 +16,7 @@
 </head><body>
 <header class="edu-hero"><div class="edu-wrap"><a class="back-home" href="./">← Sarkari Job Alert Home</a><p class="eyebrow">STUDENTS CORNER</p><h1>📚 School & Exam Guide</h1><p>UP Board Class 9–12 ke liye study tips, revision plans, subject-wise practice aur exam preparation. Official dates/results ko yahan automatically claim nahi kiya jayega.</p></div></header>
 <main class="edu-wrap"><div class="section-heading"><div><p class="eyebrow">LATEST LEARNING ARTICLES</p><h2>Study Guide</h2></div><span id="eduCount" class="result-count">Loading…</span></div><div id="eduGrid" class="edu-grid"><div class="edu-empty">Articles load ho rahe hain…</div></div></main>
-<footer class="footer"><div class="footer-left"><div class="footer-brand">Sarkari<span>JobAlert</span></div><p>Vacancy • Result • Admit Card</p></div><div class="footer-center"><small>Educational guidance only. Apne school/board ke latest syllabus ko bhi check karein.</small></div><nav><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a></nav></footer>
+<footer class="footer"><div class="footer-left"><div class="footer-brand">Sarkari<span>JobAlert</span></div><p>Vacancy • Result • Admit Card</p></div><div class="footer-center"><small>Educational guidance only. Apne school/board ke latest syllabus ko bhi check karein.</small></div><nav><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="disclaimer.html">Disclaimer</a></nav></footer>
 <script>
 (async()=>{
  const grid=document.getElementById('eduGrid'),count=document.getElementById('eduCount');
@@ -25,9 +25,9 @@
  if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){grid.innerHTML='<div class="edu-empty">Supabase configuration set karne ke baad articles yahan dikhenge.</div>';count.textContent='0 articles';return;}
  const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
  const {data,error}=await sb.from('school_articles').select('id,title,slug,excerpt,content,grade,subject,published_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false}).limit(60);
- if(error){grid.innerHTML='<div class="edu-empty">Articles abhi load nahi hue. Supabase mein SCHOOL_EXAM_SETUP.sql run hua hai ya nahi, check karein.</div>';count.textContent='Unavailable';return;}
+ if(error){grid.innerHTML='<div class="edu-empty">Articles abhi load nahi hue. Supabase mein SCHOOL_EXAM_SETUP.sql run hua hai ya nahi, check karein.</div>';count.textContent='Unavailable';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
  count.textContent=(data||[]).length+' articles';
- if(!data?.length){grid.innerHTML='<div class="edu-empty">Pehla educational article automatic workflow ke agle run par publish hoga.</div>';return;}
+ if(!data?.length){grid.innerHTML='<div class="edu-empty">Pehla educational article automatic workflow ke agle run par publish hoga.</div>';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
  grid.innerHTML=data.map(a=>`<article class="edu-card" id="article-${esc(a.id)}"><span class="edu-tag">${esc(a.grade)} • ${esc(a.subject)}</span><h2>${esc(a.title)}</h2><div class="edu-meta">${a.published_at?new Date(a.published_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Study Guide'}</div><p>${esc(a.excerpt)}</p><details class="edu-article-body"><summary>पूरा लेख पढ़ें / Full article</summary><div class="edu-full-content">${esc(a.content).replace(/\n/g,'<br>')}</div></details></article>`).join('');
  const target=decodeURIComponent(location.hash.slice(1)); if(target.startsWith('article-')){const card=document.getElementById(target);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.querySelector('details')?.setAttribute('open','');}}
 })();
