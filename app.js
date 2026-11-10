@@ -727,11 +727,19 @@ document.addEventListener("click", event => {
     await renderAdmin();
   });
 
-  async function renderAdmin() {
-    const { data, error } = await supabase
-      .from("jobs")
-      .select("*")
-      .order("created_at", { ascending: false });
+  async function renderAdmin(page = 0) {
+    const pageSize = 30;
+    const from = page * pageSize;
+    const [listResult, totalResult, publishedResult, draftResult] = await Promise.all([
+      supabase.from("jobs")
+        .select("id,title,category,status,department,created_at", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1),
+      supabase.from("jobs").select("id", { count: "exact", head: true }),
+      supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "published"),
+      supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "draft")
+    ]);
+    const { data, error } = listResult;
 
     if (error) {
       $("#adminRoot").innerHTML = `
@@ -742,6 +750,8 @@ document.addEventListener("click", event => {
     }
 
     const jobs = data || [];
+    const totalJobs = totalResult.count ?? listResult.count ?? jobs.length;
+    const totalPages = Math.max(1, Math.ceil(totalJobs / pageSize));
 
     $("#adminRoot").innerHTML = `
       <div class="admin-panel-head">
@@ -761,14 +771,14 @@ document.addEventListener("click", event => {
 
       <div class="admin-stats">
         <div class="stat">
-          <strong>${jobs.length}</strong><span>Total posts</span>
+          <strong>${totalResult.count ?? totalJobs}</strong><span>Total posts</span>
         </div>
         <div class="stat">
-          <strong>${jobs.filter(j => j.status === "published").length}</strong>
+          <strong>${publishedResult.count ?? 0}</strong>
           <span>Published</span>
         </div>
         <div class="stat">
-          <strong>${jobs.filter(j => j.status === "draft").length}</strong>
+          <strong>${draftResult.count ?? 0}</strong>
           <span>Drafts</span>
         </div>
       </div>
@@ -917,39 +927,29 @@ document.addEventListener("click", event => {
         </select>
       </div>
 
-      <div class="admin-list" id="adminList">
-        ${
-          jobs.length
-            ? jobs.map(j => `
-              <div class="admin-item">
-                <div>
-                  <h4>${escapeHtml(j.title)}</h4>
-                  <p>
-                    ${escapeHtml(displayCategory(j.category))} •
-                    ${escapeHtml(j.status)} •
-                    ${escapeHtml(j.department || "No department")}
-                  </p>
-                </div>
-
-                <div class="admin-item-actions">
-                  <button class="small-btn" data-edit="${escapeHtml(j.id)}">
-                    Edit
-                  </button>
-
-                  <button class="small-btn"
-                          data-toggle="${escapeHtml(j.id)}"
-                          data-status="${escapeHtml(j.status)}">
-                    ${j.status === "published" ? "Unpublish" : "Publish"}
-                  </button>
-
-                  <button class="small-btn" data-delete="${escapeHtml(j.id)}">
-                    Delete
-                  </button>
-                </div>
-              </div>
-            `).join("")
-            : '<div class="empty-state">Abhi posts nahi hain.</div>'
-        }
+      <div class="admin-table-wrap">
+        <table class="admin-table" id="adminList">
+          <thead><tr><th>Post / Department</th><th>Category</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+          ${jobs.length ? jobs.map(j => `
+            <tr class="admin-row" data-search="${escapeHtml((j.title + " " + (j.department || "")).toLowerCase())}" data-status="${escapeHtml(j.status)}">
+              <td class="admin-post-cell"><strong>${escapeHtml(j.title)}</strong><small>${escapeHtml(j.department || "Department not added")}</small></td>
+              <td><span class="admin-category">${escapeHtml(displayCategory(j.category))}</span></td>
+              <td><span class="admin-status ${j.status === "published" ? "is-published" : "is-draft"}">${j.status === "published" ? "● Published" : "● Draft"}</span></td>
+              <td><div class="admin-item-actions">
+                <button class="small-btn" data-edit="${escapeHtml(j.id)}">Edit</button>
+                <button class="small-btn" data-toggle="${escapeHtml(j.id)}" data-status="${escapeHtml(j.status)}">${j.status === "published" ? "Unpublish" : "Publish"}</button>
+                <button class="small-btn danger-btn" data-delete="${escapeHtml(j.id)}">Delete</button>
+              </div></td>
+            </tr>`).join("") : '<tr><td colspan="4" class="admin-empty">Is page par koi post nahi hai.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+      <div class="admin-pagination">
+        <span>Showing ${jobs.length ? from + 1 : 0}–${from + jobs.length} of ${totalJobs} posts</span>
+        <div><button class="small-btn" id="adminPrev" ${page <= 0 ? "disabled" : ""}>← Previous</button>
+        <b>Page ${page + 1} / ${totalPages}</b>
+        <button class="small-btn" id="adminNext" ${page + 1 >= totalPages ? "disabled" : ""}>Next →</button></div>
       </div>
     `;
 
@@ -971,10 +971,15 @@ document.addEventListener("click", event => {
     $("#jobCategory").addEventListener("change", updateCategoryFields);
 
     $("#adminRoot").querySelectorAll("[data-edit]").forEach(button => {
-      button.onclick = () => {
-        openEditor(
-          jobs.find(j => String(j.id) === button.dataset.edit)
-        );
+      button.onclick = async () => {
+        button.disabled = true;
+        button.textContent = "Loading…";
+        const { data: fullJob, error: editError } = await supabase
+          .from("jobs").select("*").eq("id", button.dataset.edit).single();
+        button.disabled = false;
+        button.textContent = "Edit";
+        if (editError || !fullJob) { toast("Post load nahi hui: " + (editError?.message || "Not found")); return; }
+        openEditor(fullJob);
       };
     });
 
@@ -995,19 +1000,16 @@ document.addEventListener("click", event => {
       const term = ($("#adminSearch").value || "").trim().toLowerCase();
       const state = $("#adminFilter").value || "all";
 
-      $("#adminList").querySelectorAll(".admin-item").forEach(item => {
-        const text = item.textContent.toLowerCase();
-
-        item.style.display =
-          (!term || text.includes(term)) &&
-          (state === "all" || text.includes("• " + state + " •"))
-            ? ""
-            : "none";
+      $("#adminList").querySelectorAll(".admin-row").forEach(item => {
+        item.hidden = !((!term || item.dataset.search.includes(term)) &&
+          (state === "all" || item.dataset.status === state));
       });
     };
 
     $("#adminSearch").addEventListener("input", filter);
     $("#adminFilter").addEventListener("change", filter);
+    $("#adminPrev").onclick = () => renderAdmin(page - 1);
+    $("#adminNext").onclick = () => renderAdmin(page + 1);
   }
 
   function updateCategoryFields() {
