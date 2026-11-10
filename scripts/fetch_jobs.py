@@ -17,7 +17,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse, urldefrag
 from zoneinfo import ZoneInfo
 
@@ -310,6 +310,14 @@ def extract_fields(text):
         "selection_process": valid_extracted_field(selection.group(1), "selection") if selection else None,
     }
 
+def has_stale_notice_date(value, max_age_days=540):
+    """Reject archive links whose visible notice date is clearly over 18 months old."""
+    matches = re.findall(DATE_TOKEN, clean(value), flags=re.I)
+    parsed = [parse_date(item) for item in matches]
+    dates = [datetime.strptime(item, "%Y-%m-%d").date() for item in parsed if item]
+    return bool(dates and max(dates) < TODAY - timedelta(days=max_age_days))
+
+
 def discover_links(html, page_url):
     soup = BeautifulSoup(html, "html.parser")
     found = []
@@ -321,6 +329,9 @@ def discover_links(html, page_url):
         title = context if len(context) > len(label) + 8 else label
         searchable = (title + " " + label).lower()
         if len(title) < 12 or len(title) > 420:
+            continue
+        # Ignore archive links with an explicitly old notice date.
+        if has_stale_notice_date(title):
             continue
         if any(term in searchable for term in EXCLUDE_HINTS):
             continue
@@ -364,7 +375,7 @@ def discover_up_updates(html, page_url):
             category = "Admit Card"
         elif any(term in searchable for term in UP_RESULT_HINTS):
             category = "Result"
-        if not category:
+        if not category or has_stale_notice_date(context + " " + label):
             continue
         url = safe_url(anchor.get("href"), page_url)
         if not url or not up_official(url):
@@ -382,40 +393,46 @@ def discover_up_updates(html, page_url):
     return found
 
 def find_notice_pdf(session, html, page_url):
+    """Choose the most relevant current recruitment PDF, not simply the longest PDF."""
     soup = BeautifulSoup(html, "html.parser")
-    pdf_urls = []
+    candidates, seen = [], set()
     for anchor in soup.select("a[href]"):
         label = clean(anchor.get_text(" ", strip=True)).lower()
         url = safe_url(anchor.get("href"), page_url)
-        if not url:
+        if not url or host(url) != host(page_url):
             continue
         is_pdf = ".pdf" in urlparse(url).path.lower()
         notice_link = any(word in label for word in ("notification", "advertisement", "detailed notice", "download notice"))
-        if is_pdf or notice_link:
-            if normalized_url(url) not in [normalized_url(x) for x in pdf_urls]:
-                pdf_urls.append(url)
-    best_text, best_url = "", None
-    # Prefer likely current recruitment notices, but inspect more than the
-    # first few PDFs because portals often list circulars before advertisements.
-    def pdf_priority(url):
-        path = urlparse(url).path.lower()
-        label = next((clean(a.get_text(" ", strip=True)).lower()
-                      for a in soup.select("a[href]")
-                      if normalized_url(safe_url(a.get("href"), page_url) or "") == normalized_url(url)), "")
-        text = label + " " + path
-        score = sum(term in text for term in (
-            "recruit", "advert", "notification", "vacanc", "detailed", "advt", "2026", "2025"
-        ))
-        score -= sum(term in text for term in (
-            "result", "answer", "syllabus", "tender", "annual-report", "old"
-        ))
-        return score
-    pdf_urls.sort(key=pdf_priority, reverse=True)
-    for url in pdf_urls[:12]:
+        if not (is_pdf or notice_link):
+            continue
+        key = normalized_url(url)
+        if key in seen or any(word in (label + " " + url.lower()) for word in ("result", "answer key", "syllabus", "tender", "annual-report", "old")):
+            continue
+        seen.add(key)
+        candidates.append((label, url))
+
+    best = None
+    for label, url in candidates[:16]:
         text, final_url = extract_pdf_text(session, url)
-        if len(text) > len(best_text):
-            best_text, best_url = text, final_url
-    return best_text, best_url
+        if not text or not final_url or host(final_url) != host(page_url):
+            continue
+        fields = extract_fields(text)
+        core = sum((
+            bool(fields["last_date"] and fields["last_date"] >= TODAY.isoformat()),
+            bool(fields["vacancies"]),
+            bool(fields["qualification"]),
+        ))
+        lowered = (label + " " + text[:12000]).lower()
+        relevance = sum(term in lowered for term in (
+            "recruitment", "vacancy", "advertisement", "notification",
+            "applications are invited", "apply online", "पदों पर भर्ती", "सीधी भर्ती",
+        ))
+        score = core * 100 + relevance * 8 + min(len(text), 12000) / 12000
+        if best is None or score > best[0]:
+            best = (score, text, final_url)
+        if core == 3 and relevance >= 1:
+            break
+    return (best[1], best[2]) if best else ("", None)
 
 def find_apply_url(session, html, page_url, notice_text):
     candidates = []
