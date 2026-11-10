@@ -88,15 +88,17 @@ class ScannerRegressionTests(unittest.TestCase):
 
     def test_sarkaritoday_official_pdf_must_match_vacancy_deadline_and_qualification(self):
         article = {
+            "department": "Health Department",
             "vacancies": "120",
             "last_date": "2026-11-18",
             "qualification": "MBBS degree from a recognized university",
         }
         pdf = (
-            "Total Number of Vacancies: 120 "
+            "Health Department Recruitment Notice. Total Number of Vacancies: 120 "
             "Last Date to Apply: 18 November 2026 "
-            "Educational Qualification: MBBS degree from a recognized university "
-        ) * 5
+            "Educational Qualification: MBBS degree from a recognized university. "
+            "Age Limit: 18 to 35 years. Read all instructions before applying. "
+        ) * 4
         verified, _ = fetch_jobs.verify_sarkaritoday_official_pdf(
             article, pdf, "https://example.gov.in/notice.pdf"
         )
@@ -104,15 +106,17 @@ class ScannerRegressionTests(unittest.TestCase):
 
     def test_sarkaritoday_pdf_mismatch_stays_unverified(self):
         article = {
+            "department": "Health Department",
             "vacancies": "120",
             "last_date": "2026-11-18",
             "qualification": "MBBS degree from a recognized university",
         }
         pdf = (
-            "Total Number of Vacancies: 80 "
+            "Health Department Recruitment Notice. Total Number of Vacancies: 80 "
             "Last Date to Apply: 18 November 2026 "
-            "Educational Qualification: MBBS degree from a recognized university "
-        ) * 5
+            "Educational Qualification: MBBS degree from a recognized university. "
+            "Age Limit: 18 to 35 years. Read all instructions before applying. "
+        ) * 4
         verified, _ = fetch_jobs.verify_sarkaritoday_official_pdf(
             article, pdf, "https://example.gov.in/notice.pdf"
         )
