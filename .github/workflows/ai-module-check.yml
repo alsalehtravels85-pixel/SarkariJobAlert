@@ -1,0 +1,34 @@
+name: SarkariJobAlert AI module checks
+
+on:
+  push:
+    branches: ["feature/ai-career-assistant-v1"]
+    paths:
+      - "ai-worker/**"
+      - "ai-assistant.js"
+      - "ai-assistant.css"
+      - "index.html"
+      - "config.js"
+      - ".github/workflows/ai-module-check.yml"
+  pull_request:
+    paths:
+      - "ai-worker/**"
+      - "ai-assistant.js"
+      - "ai-assistant.css"
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check AI Worker module syntax
+        run: node --input-type=module --check < ai-worker/index.js
+      - name: Check website assistant JavaScript syntax
+        run: node --check ai-assistant.js
+      - name: Confirm existing homepage loads assistant
+        run: grep -q 'ai-assistant.js' index.html
+      - name: Confirm AI URL config exists
+        run: grep -q 'AI_WORKER_URL' config.js
