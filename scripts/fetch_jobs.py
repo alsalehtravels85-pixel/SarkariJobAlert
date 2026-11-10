@@ -758,15 +758,16 @@ def main():
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
-            if fields["last_date"] and fields["last_date"] < TODAY.isoformat():
+            if not fields["last_date"]:
+                missing.append("application last date not found")
+            elif fields["last_date"] < TODAY.isoformat():
                 missing.append("application deadline already passed")
             if len(clean(candidate_title)) < 12:
                 missing.append("clear recruitment title")
 
-            # Capture a reviewable DRAFT when at least one core fact is readable.
-            # Publication remains separately gated by all three facts plus a
-            # readable same-host official PDF. This avoids silently losing
-            # potentially useful dated bulletin notices while keeping them unpublished.
+            # A recruitment is never saved, even as Draft, unless its application
+            # last date is explicitly extracted and still valid. Other facts may
+            # remain incomplete for admin review, but deadline is mandatory.
             core_facts = sum((
                 bool(fields["last_date"] and fields["last_date"] >= TODAY.isoformat()),
                 bool(fields["vacancies"]),
