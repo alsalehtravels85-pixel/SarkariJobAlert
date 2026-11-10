@@ -143,7 +143,7 @@ class ScannerRegressionTests(unittest.TestCase):
             "RRC NWR Apprentice 2026",
         )
         description = fetch_jobs.clean_public_sarkaritoday_text(
-            "भर्ती की जानकारी नीचे है।\\nजानकारी का स्रोत: https://sarkaritoday.com/job/\\nअंतिम तिथि: 22 November 2026"
+            "भर्ती की जानकारी नीचे है।\nजानकारी का स्रोत: https://sarkaritoday.com/job/\nअंतिम तिथि: 22 November 2026"
         )
         self.assertNotIn("sarkaritoday", description.lower())
         self.assertIn("भर्ती की जानकारी", description)
