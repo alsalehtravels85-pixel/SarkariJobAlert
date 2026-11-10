@@ -260,7 +260,8 @@ def extract_fields(text):
     patterns = (
         r"(?:total\s+(?:number\s+of\s+)?vacanc(?:y|ies)|total\s+posts?|"
         r"number\s+of\s+vacanc(?:y|ies)|no\.?\s*of\s*(?:vacanc(?:y|ies)|posts?)|"
-        r"number\s+of\s+posts?|posts?\s+available)"
+        r"number\s+of\s+posts?|posts?\s+available|"
+        r"vacant\s+posts?|total\s+vacant\s+posts?)"
         r"\s*[:\-]?\s*(\d[\d,]*)",
         r"(\d[\d,]*)\s+(?:vacancies|vacant posts|posts)\b",
     )
@@ -273,16 +274,17 @@ def extract_fields(text):
                 break
 
     last_date = labelled_date(text, (
-        r"last\s+date(?:\s+for|\s+of)?\s+(?:submission|receipt|apply|application)?",
-        r"closing\s+date",
+        r"last\s+date(?:\s+for|\s+of)?\s+(?:(?:submission|receipt|apply|application)(?:\s+of)?\s*)?",
+        r"closing\s+date(?:\s+for\s+(?:online\s+)?application)?",
         r"apply\s+online\s+up\s+to",
         r"applications?\s+may\s+be\s+submitted\s+up\s+to",
         r"last\s+date\s+to\s+apply",
-        r"online\s+application\s+ends?",
+        r"online\s+application\s+(?:ends?|closes?)",
         r"application\s+(?:closing|submission)\s+date",
         r"applications?\s+close(?:s)?\s+on",
         r"apply\s+before",
         r"due\s+date",
+        r"closing\s+date\s+of\s+online\s+submission",
     ))
     notification_date = labelled_date(text, (
         r"date\s+of\s+notification", r"notification\s+date",
@@ -311,11 +313,20 @@ def extract_fields(text):
     }
 
 def has_stale_notice_date(value, max_age_days=540):
-    """Reject archive links whose visible notice date is clearly over 18 months old."""
+    """Reject archive links when the oldest explicit notice date is clearly stale."""
     matches = re.findall(DATE_TOKEN, clean(value), flags=re.I)
     parsed = [parse_date(item) for item in matches]
     dates = [datetime.strptime(item, "%Y-%m-%d").date() for item in parsed if item]
-    return bool(dates and max(dates) < TODAY - timedelta(days=max_age_days))
+    # Archive rows often contain both an old advertisement date and a later
+    # result/update date. Using max() allowed those old notices through.
+    return bool(dates and min(dates) < TODAY - timedelta(days=max_age_days))
+
+
+def listing_notification_date(title):
+    """Read a leading publication date from dated recruitment-list entries."""
+    title = clean(title)
+    match = re.match(rf"^\s*{DATE_TOKEN}", title, flags=re.I)
+    return parse_date(match.group(1)) if match else None
 
 
 def discover_links(html, page_url):
@@ -735,6 +746,11 @@ def main():
                 continue
 
             fields = extract_fields(notice_text)
+            # Employment News and other official bulletin pages often prefix
+            # each listing with its publication date. Preserve it as a
+            # notification date for an admin-review draft, never as a deadline.
+            if not fields["notification_date"]:
+                fields["notification_date"] = listing_notification_date(candidate_title)
             missing = []
             if not official(detail_url):
                 missing.append("official notice URL")
@@ -743,15 +759,17 @@ def main():
             if len(clean(candidate_title)) < 12:
                 missing.append("clear recruitment title")
 
-            # Draft capture requires two independent facts from the official notice.
-            # Missing facts stay blank for admin review; the scanner never guesses.
+            # Capture a reviewable DRAFT when at least one core fact is readable.
+            # Publication remains separately gated by all three facts plus a
+            # readable same-host official PDF. This avoids silently losing
+            # potentially useful dated bulletin notices while keeping them unpublished.
             core_facts = sum((
                 bool(fields["last_date"] and fields["last_date"] >= TODAY.isoformat()),
                 bool(fields["vacancies"]),
                 bool(fields["qualification"]),
             ))
-            if core_facts < 2:
-                missing.append("at least two confirmed facts: future deadline, vacancy count, qualification")
+            if core_facts < 1:
+                missing.append("no confirmed core fact: future deadline, vacancy count, qualification")
             if missing:
                 print("SKIP - insufficient verified recruitment evidence:", ", ".join(dict.fromkeys(missing)), "|", candidate_title[:180])
                 skipped += 1
