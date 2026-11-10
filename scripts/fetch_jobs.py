@@ -585,6 +585,17 @@ def official_action_link(html, page_url, category):
     return None
 
 
+
+def verified_up_action_link(html, page_url, category, detail_text):
+    """Return a verified action URL, including the board-linked UP Police result landing page."""
+    action_url = official_action_link(html, page_url, category)
+    if (not action_url and category == "Result"
+            and host(page_url) == "upcons2025.com"
+            and any(term in (detail_text or "").lower() for term in ("final result", "परिणाम"))
+            and any(term in (detail_text or "").lower() for term in ("click here", "view list", "merit"))):
+        return page_url
+    return action_url
+
 def build_up_update_description(title, department, category, action_url, exam_date=None, release_date=None, result_date=None, merit_url=None, source_text=""):
     """Write a clean, useful article in the language of the official source."""
     hindi = contains_devanagari(title + " " + source_text)
@@ -837,16 +848,8 @@ def main():
             else:
                 html_soup = BeautifulSoup(data, "html.parser")
                 detail_text = clean(html_soup.get_text(" ", strip=True))
-                action_url = official_action_link(data, detail_url, category)
+                action_url = verified_up_action_link(data, detail_url, category, detail_text)
             lowered = (candidate_title + " " + detail_text).lower()
-            # UPPRPB's official notice board links the 2025 constable result to
-            # this dedicated result portal. Its landing page itself is the
-            # verified result action page; the individual list links are generic.
-            if (not action_url and category == "Result"
-                    and host(detail_url) == "upcons2025.com"
-                    and any(term in detail_text.lower() for term in ("final result", "परिणाम"))
-                    and any(term in detail_text.lower() for term in ("click here", "view list", "merit"))):
-                action_url = detail_url
             hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
             release_hints = (
                 "available", "released", "download", "declared", "published",
