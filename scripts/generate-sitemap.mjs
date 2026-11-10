@@ -48,7 +48,7 @@ function xmlEscape(value) {
 
 const staticPaths = [
   '/', '/about.html', '/contact.html', '/privacy.html',
-  '/disclaimer.html', '/education.html', '/education-news.html'
+  '/disclaimer.html', '/education.html'
 ];
 const staticEntries = staticPaths.map(path => ({ loc: `${SITE}${path}` }));
 const jobs = await fetchPublishedJobs();
