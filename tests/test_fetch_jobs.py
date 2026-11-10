@@ -86,6 +86,32 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertEqual(result["official_url"], "https://example.gov.in/notice.pdf")
         self.assertEqual(result["apply_url"], "https://example.gov.in/apply")
 
+    def test_sarkaritoday_never_uses_article_or_non_pdf_as_official_notice(self):
+        html = """
+        <html><body><h1>Test Recruitment 2026</h1>
+        <table>
+          <tr><td>Total Vacancies</td><td>120</td></tr>
+          <tr><td>Last Date</td><td>18 November 2026</td></tr>
+          <tr><td>Qualification</td><td>Graduate</td></tr>
+        </table>
+        <a href="https://example.gov.in/recruitment">Department Website</a>
+        </body></html>
+        """
+        result = fetch_jobs.extract_sarkaritoday_article(
+            html, "https://sarkaritoday.com/test-recruitment/"
+        )
+        self.assertIsNone(result["official_url"])
+        self.assertIsNone(result["apply_url"])
+
+    def test_sarkaritoday_draft_description_has_no_discovery_brand_or_link(self):
+        description = fetch_jobs.build_sarkaritoday_draft_description(
+            "Test Recruitment 2026",
+            {"vacancies": "120", "qualification": "Graduate", "last_date": "2026-11-18"},
+            "https://sarkaritoday.com/test-recruitment/",
+        )
+        self.assertNotIn("SarkariToday", description)
+        self.assertNotIn("sarkaritoday.com", description)
+
     def test_sarkaritoday_official_pdf_must_match_vacancy_deadline_and_qualification(self):
         article = {
             "department": "Health Department",
