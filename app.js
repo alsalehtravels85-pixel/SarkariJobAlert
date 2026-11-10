@@ -563,11 +563,11 @@
   }
 
   function resetHomeSeo() {
-    document.title = "Sarkari Job Alert — Latest Updates, Admit Card, Results";
+    document.title = "Sarkari Job Alert — Latest Govt Jobs, Admit Card & Results";
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.href = "https://sarkari-jobalert.com/";
     const description = document.querySelector('meta[name="description"]');
-    if (description) description.content = "Latest Sarkari Naukri, government job notifications, admit cards, results and answer keys. Check official notification and apply links.";
+    if (description) description.content = "Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates paayen.";
     const url = new URL(window.location.href);
     url.searchParams.delete("job");
     window.history.replaceState({}, "", url.pathname + url.search + url.hash);
