@@ -900,24 +900,43 @@ def verify_sarkaritoday_official_pdf(article_fields, pdf_text, pdf_url):
 
 
 def build_sarkaritoday_draft_description(title, fields, source_url=None):
+    """Build a clean, useful Hindi job article using only extracted/verified facts."""
     parts = [
-        f"{title} भर्ती के लिए आवेदन प्रक्रिया और जरूरी विवरण नीचे दिए गए हैं।",
-        "आवेदन करने से पहले विभाग की आधिकारिक अधिसूचना में सभी जानकारी, पात्रता और तारीखें अवश्य जाँचें।",
+        f"{title}",
+        f"{title} भर्ती से जुड़ी महत्वपूर्ण जानकारी नीचे दी गई है। आवेदन करने से पहले उम्मीदवार आधिकारिक अधिसूचना ध्यान से पढ़ें और अपनी पात्रता की पुष्टि करें।",
     ]
+
+    details = []
     labels = (
+        ("department", "भर्ती विभाग"),
         ("vacancies", "कुल पद"),
         ("qualification", "शैक्षणिक योग्यता"),
         ("age_limit", "आयु सीमा"),
         ("fees", "आवेदन शुल्क"),
         ("selection_process", "चयन प्रक्रिया"),
-        ("notification_date", "सूचना/आवेदन प्रारंभ तिथि"),
+        ("notification_date", "नोटिफिकेशन / आवेदन प्रारंभ तिथि"),
         ("last_date", "आवेदन की अंतिम तिथि"),
     )
     for key, label in labels:
-        if fields.get(key):
-            parts.append(f"{label}: {fields[key]}")
-    parts.append("अंतिम तिथि, आयु में छूट, पद-वार योग्यता और शुल्क की पुष्टि आधिकारिक नोटिफिकेशन से करें।")
-    return "\n\n".join(parts)
+        value = clean(fields.get(key) or "")
+        if value:
+            details.append(f"{label}: {value}")
+    if details:
+        parts.extend(["महत्वपूर्ण भर्ती विवरण", *details])
+
+    if fields.get("apply_url"):
+        parts.extend([
+            "आवेदन कैसे करें",
+            "आवेदन करने के लिए ऊपर दिए गए आधिकारिक Apply Online लिंक का उपयोग करें। फॉर्म भरने से पहले सभी निर्देश पढ़ें, सही जानकारी दर्ज करें और सबमिट करने से पहले विवरण जाँच लें।",
+        ])
+    else:
+        parts.append("आवेदन प्रक्रिया और उपलब्ध विकल्पों की जानकारी के लिए आधिकारिक अधिसूचना देखें।")
+
+    if fields.get("official_url"):
+        parts.append("उम्मीदवार आवेदन से पहले ऊपर दिए गए आधिकारिक नोटिफिकेशन PDF को जरूर पढ़ें।")
+    parts.append("ध्यान दें: आयु में छूट, पद-वार योग्यता, शुल्क और अन्य शर्तें संबंधित विभाग की आधिकारिक अधिसूचना के अनुसार लागू होंगी।")
+    parts.append("सरकारी नौकरी की ताज़ा और उपयोगी जानकारी के लिए SarkariJobAlert पर विज़िट करें: https://sarkari-jobalert.com")
+    return "\\n\\n".join(parts)
 
 
 def main():
