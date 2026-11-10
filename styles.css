@@ -709,3 +709,86 @@ button.share-btn:hover,
 .job-card{padding:13px!important}
 }
 @media(prefers-reduced-motion:reduce){.job-card{animation:none!important;transition:none!important}}
+
+/* Compact admin job editor: more fields visible with less scrolling */
+#adminRoot .editor-form{
+  gap:9px;
+  padding:13px;
+  margin:12px 0;
+  border-radius:15px;
+}
+#adminRoot .editor-form:before{
+  padding-bottom:7px;
+  font-size:10px;
+}
+#adminRoot .editor-form label{
+  gap:4px;
+  font-size:11px;
+}
+#adminRoot .editor-form input,
+#adminRoot .editor-form select{
+  min-height:36px;
+  height:36px;
+  padding:7px 9px;
+  border-radius:8px;
+  font-size:13px;
+}
+#adminRoot .editor-form input[type=date]{min-height:36px;height:36px}
+#adminRoot .editor-form textarea{
+  min-height:105px;
+  padding:9px 10px;
+  font-size:13px;
+  line-height:1.45;
+}
+#adminRoot .category-fields{
+  padding:10px;
+  margin:0;
+  border-radius:11px;
+}
+#adminRoot .category-fields-title{
+  margin-bottom:7px;
+  font-size:11px;
+}
+#adminRoot .category-fields-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+#adminRoot .category-fields-grid .full{grid-column:1/-1}
+#adminRoot .editor-form .full{grid-column:1/-1}
+#adminRoot .editor-actions{gap:8px}
+#adminRoot .editor-actions .small-btn{
+  min-height:36px;
+  padding:8px 13px;
+  font-size:12px;
+}
+@media(max-width:700px){
+  #adminRoot .editor-form{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:8px;
+    padding:10px;
+    margin:9px 0;
+  }
+  #adminRoot .editor-form:before,
+  #adminRoot .editor-form .full{grid-column:1/-1}
+  #adminRoot .editor-form label{font-size:10px;gap:3px}
+  #adminRoot .editor-form input,
+  #adminRoot .editor-form select{
+    min-height:35px;
+    height:35px;
+    padding:6px 7px;
+    font-size:12px;
+  }
+  #adminRoot .editor-form input[type=date]{min-height:35px;height:35px}
+  #adminRoot .category-fields{padding:8px}
+  #adminRoot .category-fields-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px;
+  }
+  #adminRoot .category-fields-grid .full{grid-column:1/-1}
+  #adminRoot .editor-form textarea{min-height:95px;font-size:12px}
+  #adminRoot .editor-form label:has(#jobDescription){padding:9px}
+  #adminRoot .editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  #adminRoot .editor-actions .small-btn{min-height:36px;padding:7px;font-size:12px}
+}
+
