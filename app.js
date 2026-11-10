@@ -484,7 +484,6 @@
       addRow(L.qualification, job.qualification);
       addRow(L.noticeDate, formatDate(job.notification_date));
       addRow(L.lastDate, formatDate(job.last_date));
-      if (job.dob_from || job.dob_to) addRow(L.dob, `${job.dob_from ? formatDate(job.dob_from) : "—"} से ${job.dob_to ? formatDate(job.dob_to) : "—"}`);
       addRow(L.fees, job.fees);
       addRow(L.age, job.age_limit);
       addRow(L.selection, job.selection_process);
@@ -846,14 +845,6 @@ document.addEventListener("click", event => {
               <input id="jobLastDate" type="date">
             </label>
 
-            <label>DOB Eligibility — From
-              <input id="jobDobFrom" type="date">
-            </label>
-
-            <label>DOB Eligibility — To
-              <input id="jobDobTo" type="date">
-            </label>
-
             <label>Qualification
               <input id="jobQualification" maxlength="180">
             </label>
@@ -1090,8 +1081,6 @@ document.addEventListener("click", event => {
       jobVacancies: job?.vacancies || "",
       jobNotificationDate: job?.notification_date || "",
       jobLastDate: job?.last_date || "",
-      jobDobFrom: job?.dob_from || "",
-      jobDobTo: job?.dob_to || "",
       jobQualification: job?.qualification || "",
       jobFees: job?.fees || "",
       jobAge: job?.age_limit || "",
@@ -1210,16 +1199,6 @@ document.addEventListener("click", event => {
       last_date:
         category === "Vacancy"
           ? ($("#jobLastDate").value || null)
-          : null,
-
-      dob_from:
-        category === "Vacancy"
-          ? ($("#jobDobFrom").value || null)
-          : null,
-
-      dob_to:
-        category === "Vacancy"
-          ? ($("#jobDobTo").value || null)
           : null,
 
       fees:
