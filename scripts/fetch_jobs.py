@@ -718,7 +718,7 @@ def extract_sarkaritoday_article(html, article_url):
     title = clean(heading.get_text(" ", strip=True)) if heading else ""
     if len(title) < 10:
         title = clean(soup.title.get_text(" ", strip=True)) if soup.title else ""
-        title = re.sub(r"\\s*[-|].*$", "", title).strip()
+        title = re.sub(r"\s*[-|].*$", "", title).strip()
 
     rows = {}
     for table in soup.find_all("table"):
@@ -726,7 +726,7 @@ def extract_sarkaritoday_article(html, article_url):
             cells = [clean(cell.get_text(" ", strip=True)) for cell in tr.find_all(["th", "td"])]
             cells = [cell for cell in cells if cell]
             if len(cells) >= 2:
-                label = re.sub(r"[^a-z0-9\\u0900-\\u097f]+", " ", cells[0].lower()).strip()
+                label = re.sub(r"[^a-z0-9\u0900-\u097f]+", " ", cells[0].lower()).strip()
                 value = clean(" ".join(cells[1:]))
                 if label and value:
                     rows[label] = value
@@ -738,7 +738,7 @@ def extract_sarkaritoday_article(html, article_url):
         return None
 
     vacancy_raw = pick("total vacancy", "total post", "number of vacancy", "no of vacancy", "vacancies", "total seats", "रिक्त पद", "कुल पद")
-    vacancy_match = re.search(r"\\b(\\d[\\d,]*)\\b", vacancy_raw or "")
+    vacancy_match = re.search(r"\b(\d[\d,]*)\b", vacancy_raw or "")
     vacancies = vacancy_match.group(1).replace(",", "") if vacancy_match else None
 
     def table_date(raw):
@@ -799,7 +799,7 @@ def build_sarkaritoday_draft_description(title, fields, source_url):
             parts.append(f"{label}: {fields[key]}")
     parts.append("अंतिम तिथि, आयु में छूट, पद-वार योग्यता और शुल्क की पुष्टि आधिकारिक नोटिफिकेशन से करें।")
     parts.append(f"जानकारी का स्रोत: {source_url}")
-    return "\\n\\n".join(parts)
+    return "\n\n".join(parts)
 
 
 def main():
