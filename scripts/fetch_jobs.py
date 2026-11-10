@@ -799,7 +799,7 @@ def verify_sarkaritoday_official_pdf(article_fields, pdf_text, pdf_url):
 
     def tokens(value):
         return {
-            token for token in re.findall(r"[a-z0-9\u0900-\u097f]+", normalize_text(value))
+            token for token in re.findall(r"[a-z0-9\u0900-\u097f]+", clean(value).lower())
             if len(token) > 1
         }
 
