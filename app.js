@@ -553,6 +553,22 @@
     }
     canonical.href = url.toString();
 
+    const setMeta = (selector, value) => {
+      let tag = document.querySelector(selector);
+      if (!tag) {
+        tag = document.createElement("meta");
+        const match = selector.match(/\[(name|property)="([^"]+)"\]/);
+        if (match) tag.setAttribute(match[1], match[2]);
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute("content", value);
+    };
+    setMeta('meta[property="og:title"]', title);
+    setMeta('meta[property="og:description"]', description);
+    setMeta('meta[property="og:url"]', url.toString());
+    setMeta('meta[name="twitter:title"]', title);
+    setMeta('meta[name="twitter:description"]', description);
+
     let robots = document.querySelector('meta[name="robots"]');
     if (!robots) {
       robots = document.createElement("meta");
@@ -568,6 +584,18 @@
     if (canonical) canonical.href = "https://sarkari-jobalert.com/";
     const description = document.querySelector('meta[name="description"]');
     if (description) description.content = "Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates paayen.";
+    const homeTitle = "Sarkari Job Alert — Latest Govt Jobs, Admit Card & Results";
+    const homeDescription = "Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates paayen.";
+    const ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.content = homeTitle;
+    const ogDescription = document.querySelector('meta[property="og:description"]');
+    if (ogDescription) ogDescription.content = homeDescription;
+    const ogUrl = document.querySelector('meta[property="og:url"]');
+    if (ogUrl) ogUrl.content = "https://sarkari-jobalert.com/";
+    const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+    if (twitterTitle) twitterTitle.content = homeTitle;
+    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    if (twitterDescription) twitterDescription.content = homeDescription;
     const url = new URL(window.location.href);
     url.searchParams.delete("job");
     window.history.replaceState({}, "", url.pathname + url.search + url.hash);
