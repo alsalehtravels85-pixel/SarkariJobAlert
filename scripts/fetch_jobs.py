@@ -574,7 +574,10 @@ def official_action_link(html, page_url, category):
         # The surrounding row can identify the action when the button only says
         # "Download" or "Click here"; the destination must still be on an UP host.
         has_category = any(term in searchable for term in terms)
-        has_action = any(term in label for term in ("download", "view", "check", "result", "admit", "hall ticket", "प्रवेश"))
+        has_action = any(term in searchable for term in (
+            "download", "view", "check", "result", "admit", "hall ticket",
+            "प्रवेश", "परिणाम", "रिजल्ट", "प्रकाशन", "जारी",
+        ))
         if href and up_official(href) and has_category and has_action:
             return href
     return None
