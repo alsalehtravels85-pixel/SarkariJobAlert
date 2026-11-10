@@ -421,7 +421,7 @@
     const hindi = /[\u0900-\u097F]/.test(sourceText);
     const L = hindi ? {
       total: "कुल पद", qualification: "योग्यता", noticeDate: "अधिसूचना की तारीख",
-      lastDate: "आवेदन की अंतिम तारीख", dob: "जन्मतिथि पात्रता",
+      lastDate: "आवेदन की अंतिम तारीख",
       fees: "आवेदन शुल्क", age: "आयु सीमा", selection: "चयन प्रक्रिया",
       notification: "आधिकारिक अधिसूचना", apply: "ऑनलाइन आवेदन",
       examDate: "परीक्षा की तारीख", admitDate: "प्रवेश पत्र जारी होने की तारीख",
