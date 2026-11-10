@@ -28,6 +28,8 @@ jobs:
           python -c "import certifi; print('TLS CA bundle:', certifi.where())"
       - name: Validate Python scanner and cleanup syntax
         run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py
+      - name: Run scanner regression tests
+        run: python -m unittest discover -s tests -v
       - name: Scan vacancies plus UP Admit Cards/Results; auto-publish only strictly verified records
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '17 */6 * * *'
         env:
