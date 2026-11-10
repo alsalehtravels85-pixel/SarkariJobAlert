@@ -756,17 +756,22 @@ def extract_sarkaritoday_article(html, article_url):
     department = pick("department", "organization", "organisation", "board", "authority", "विभाग", "संस्था", "बोर्ड")
 
     apply_url = None
-    official_urls = []
+    notification_url = None
     for a in soup.select("a[href]"):
         raw = urljoin(article_url, a.get("href", ""))
-        if official(raw):
-            label = clean(a.get_text(" ", strip=True)).lower()
-            official_urls.append(raw)
-            if any(term in label for term in ("apply online", "online application", "registration", "apply now")):
-                apply_url = raw
-    notification_url = next((u for u in official_urls if ".pdf" in urlparse(u).path.lower()), None)
-    if not notification_url and official_urls:
-        notification_url = official_urls[0]
+        if not official(raw):
+            continue
+        label = clean(a.get_text(" ", strip=True)).lower()
+        path = urlparse(raw).path.lower()
+        is_pdf = path.endswith(".pdf") or ".pdf/" in path or "pdf" in label
+        is_apply = any(term in label for term in (
+            "apply online", "online application", "registration", "apply now",
+            "application portal", "click here to apply", "आवेदन करें", "ऑनलाइन आवेदन",
+        )) or any(term in raw.lower() for term in ("apply", "registration", "recruitmentportal"))
+        if is_pdf and not notification_url:
+            notification_url = raw
+        if is_apply and not apply_url:
+            apply_url = raw
     return {
         "title": seo_vacancy_title(title),
         "department": clean(department) if department else None,
@@ -816,10 +821,10 @@ def verify_sarkaritoday_official_pdf(article_fields, pdf_text, pdf_url):
     return overlap >= 0.45, official_fields
 
 
-def build_sarkaritoday_draft_description(title, fields, source_url):
+def build_sarkaritoday_draft_description(title, fields, source_url=None):
     parts = [
-        f"{title} भर्ती की जानकारी उपलब्ध हुई है। नीचे दिए गए विवरण SarkariToday पर प्रकाशित जानकारी से संकलित किए गए हैं।",
-        "महत्वपूर्ण: यह अभी जाँच के लिए ड्राफ्ट है। आवेदन करने से पहले संबंधित विभाग की आधिकारिक अधिसूचना से सभी विवरण अवश्य मिलाएँ।",
+        f"{title} भर्ती के लिए आवेदन प्रक्रिया और जरूरी विवरण नीचे दिए गए हैं।",
+        "आवेदन करने से पहले विभाग की आधिकारिक अधिसूचना में सभी जानकारी, पात्रता और तारीखें अवश्य जाँचें।",
     ]
     labels = (
         ("vacancies", "कुल पद"),
@@ -834,7 +839,6 @@ def build_sarkaritoday_draft_description(title, fields, source_url):
         if fields.get(key):
             parts.append(f"{label}: {fields[key]}")
     parts.append("अंतिम तिथि, आयु में छूट, पद-वार योग्यता और शुल्क की पुष्टि आधिकारिक नोटिफिकेशन से करें।")
-    parts.append(f"जानकारी का स्रोत: {source_url}")
     return "\n\n".join(parts)
 
 
@@ -1076,6 +1080,10 @@ def main():
                 sarkaritoday_skipped += 1
                 continue
             fields = extract_sarkaritoday_article(data, detail_url)
+            article_soup = BeautifulSoup(data, "html.parser")
+            article_text = clean(article_soup.get_text(" ", strip=True))
+            if not fields.get("apply_url"):
+                fields["apply_url"] = find_apply_url(session, data, detail_url, article_text)
             title = fields.get("title") or seo_vacancy_title(candidate_title)
             if not title or has_corrupt_text(title):
                 sarkaritoday_skipped += 1
@@ -1089,7 +1097,8 @@ def main():
                 print("SARKARITODAY SKIP - no vacancy/qualification detail:", title)
                 sarkaritoday_skipped += 1
                 continue
-            notification_url = fields.get("official_url") or detail_url
+            # Never expose the discovery article as an official notification link.
+            notification_url = fields.get("official_url") if fields.get("official_url") and official(fields["official_url"]) else ""
             department = fields.get("department") or "विभागीय पुष्टि बाकी"
             pdf_text, verified_pdf_url = ("", None)
             pdf_verified = False
