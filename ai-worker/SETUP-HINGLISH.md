@@ -21,4 +21,4 @@ Root config.js mein AI_WORKER_URL ko actual Worker URL se set karein. Commit ke 
 - Worker unconfigured ho to AI feature error show karega; normal website chalti rahegi.
 
 Endpoints: GET /health, POST /chat, POST /match.
-Model: @cf/meta/llama-3.1-8b-instruct via Workers AI binding.
+Model: @cf/meta/llama-3.1-8b-instruct-fast via Workers AI binding.
