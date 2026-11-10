@@ -479,7 +479,7 @@ def clean_public_sarkaritoday_text(value):
     """Remove third-party publisher branding/attribution from public-facing text."""
     text = str(value or "")
     kept = []
-    for line in text.splitlines():
+    for line in re.split(r"\\n|\r?\n", text):
         low = line.lower()
         if "sarkaritoday" in low or "sarkaritoday.com" in low:
             continue
