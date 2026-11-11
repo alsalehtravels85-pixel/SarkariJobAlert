@@ -36,6 +36,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: gemini-3.8-flash
-          AUTO_PUBLISH_STUDY_GUIDES: "true"
+          # AI-generated lessons stay in Draft until a human editor verifies and improves them.
+          AUTO_PUBLISH_STUDY_GUIDES: "false"
 
         run: python scripts/publish_school_article.py
