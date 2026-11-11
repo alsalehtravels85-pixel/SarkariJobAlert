@@ -49,7 +49,7 @@ class StaticJobPageTests(unittest.TestCase):
         self.assertIn("प्रवेश पत्र डाउनलोड करें", render_page(admit))
         result = self.sample(category="Result", result_date="2099-02-01",
                              result_status="Declared", result_url="https://example.gov.in/result")
-        self.assertIn("परिणाम देखें", render_page(result))
+        self.assertIn("परिणाम / नोटिस देखें", render_page(result))
         self.assertIn("Declared", render_page(result))
 
     def test_result_page_prefers_specific_official_notice_over_homepage(self):
