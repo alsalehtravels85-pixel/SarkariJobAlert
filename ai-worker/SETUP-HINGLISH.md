@@ -21,7 +21,7 @@ No GEMINI_API_KEY is needed. Do not use the Supabase service-role key.
 The Worker uses the Cloudflare Workers AI binding named AI, declared in wrangler.toml. Model: @cf/meta/llama-3.2-3b-instruct.
 
 ## Existing systems
-The existing Pages frontend, push-notification Worker, Supabase schema and job scanner are not replaced. Worker reads published jobs and published study guides only.
+The existing Pages frontend, push-notification Worker, Supabase schema and job scanner are not replaced. Worker reads published jobs and published study guides only. For academic questions it supplies the matching guide's article content (not just title/summary) to the model, so answers can explain the actual published material and link back to the article.
 
 ## Test
 GET /health should return ok:true and configured:true after deployment.
