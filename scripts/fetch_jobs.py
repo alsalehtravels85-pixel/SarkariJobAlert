@@ -1136,7 +1136,7 @@ def main():
                     pdf_verified=pdf_is_publishable,
                     source_notice_text=notice_text,
                 ),
-                "status": "published" if pdf_is_publishable else "draft",
+                "status": "draft",  # Human editor must add original value before public publication.
             }
             response = session.post(
                 DB + "/rest/v1/jobs",
@@ -1254,7 +1254,7 @@ def main():
 
             # Publish only if the official PDF is readable and verifies the key facts.
             # An official apply URL alone is enough for a draft, never automatic publishing.
-            status = "published" if pdf_verified and notification_url else "draft"
+            status = "draft"  # Discovery-source content requires human editorial review.
             fields["last_date"] = last_date
             fields["department"] = department
             fields["official_url"] = verified_pdf_url or ""
@@ -1363,7 +1363,7 @@ def main():
                     merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
                     source_text=detail_text,
                 ),
-                "status": "published",
+                "status": "draft",  # Official update is saved for human review before publication.
                 "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
