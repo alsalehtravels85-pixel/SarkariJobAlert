@@ -1,27 +1,30 @@
-# SarkariJobAlert AI Worker setup (Hinglish)
+# SarkariJobAlert AI Worker setup — Free mode
 
-Yeh alag Cloudflare Worker hai. Existing Pages frontend, push-notification Worker, Supabase schema aur job scanner ko replace ya modify nahi karta.
+Sarkari Dost uses Cloudflare Workers AI. No Gemini/OpenAI API key, paid AI API, or separate AI provider billing is configured.
+
+## Free usage
+- Cloudflare Workers AI Free allocation: 10,000 Neurons per day.
+- The daily allowance resets at 00:00 UTC.
+- After the free allowance is exhausted, AI requests may fail until reset. It is not unlimited free usage.
+- Monitor usage in Cloudflare Dashboard → Workers & Pages → AI → Usage.
 
 ## Automated deployment
-GitHub Actions workflow `.github/workflows/deploy-ai-worker.yml` Worker ko deploy karta hai. Repository Actions secrets:
-- `CLOUDFLARE_API_TOKEN`: dedicated token with Account / Workers Scripts / Edit permission.
-- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID.
-- `GEMINI_API_KEY`: existing Gemini API key.
-- `SUPABASE_URL`: Supabase project URL.
-- `SUPABASE_ANON_KEY`: Supabase publishable/anon key (copy the public key from root config.js).
+GitHub Actions deploys the separate AI Worker. Required repository Actions secrets:
+- CLOUDFLARE_API_TOKEN — Account Workers Scripts Edit permission.
+- CLOUDFLARE_ACCOUNT_ID — Cloudflare account ID.
+- SUPABASE_URL — existing Supabase project URL.
+- SUPABASE_ANON_KEY — public publishable/anon key.
 
-Do NOT configure or use the Supabase service-role key for this Worker. The Worker uses the public anon/publishable key and relies on Supabase RLS to expose published jobs only.
+No GEMINI_API_KEY is needed. Do not use the Supabase service-role key.
 
-## Frontend
-The root config.js points to `https://sarkarijobalert-ai.gulfjob.workers.dev`. Confirm that this is the exact Worker URL after deployment. Test `/health`; it should return `ok:true` and `configured:true`.
+## Worker binding
+The Worker uses the Cloudflare Workers AI binding named AI, declared in wrangler.toml. Model: @cf/meta/llama-3.2-3b-instruct.
 
-## Privacy and safeguards
-- Gemini API key is stored as a Cloudflare Worker secret and never sent to the browser.
-- Job Passport stays in browser localStorage; it is sent only with a chat/matching request and is not written to Supabase.
-- Worker reads only published jobs; it has no insert/update/delete endpoints.
-- AI may be inaccurate; verify dates, fees and eligibility against the official notification.
-- CORS allows only the production custom domain and www host. If Pages preview domains are needed, add the exact trusted hostname explicitly.
-- Before broad public launch, configure Cloudflare rate limiting / Turnstile and monitor Gemini API usage.
+## Existing systems
+The existing Pages frontend, push-notification Worker, Supabase schema and job scanner are not replaced. Worker reads published jobs and published study guides only.
 
-Endpoints: GET /health, POST /chat, POST /match.
-Model: `gemini-3.8-flash` through Google's Gemini generateContent API.
+## Test
+GET /health should return ok:true and configured:true after deployment.
+POST /chat and POST /match are the AI endpoints.
+
+Job Passport stays in browser localStorage and is sent only when a user asks for matching. Never submit Aadhaar, OTP or passwords.
