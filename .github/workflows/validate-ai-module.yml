@@ -48,6 +48,7 @@ jobs:
           assert 'PUSH_WORKER_URL' in config, "Existing push worker config must remain"
           assert 'AI_WORKER_URL' in config, "AI worker config key is missing"
           assert 'status=eq.published' in worker, "AI must read published jobs only"
-          assert 'SUPABASE_SERVICE_ROLE_KEY' not in worker, "AI worker must not use service-role credentials"
+          assert 'SUPABASE_ANON_KEY' in worker, "AI worker must use the anon/publishable key"
+          assert 'SUPABASE_SERVICE_ROLE_KEY' not in worker, "AI worker must never use service-role credentials"
           print("AI integration safety checks passed.")
           PY
