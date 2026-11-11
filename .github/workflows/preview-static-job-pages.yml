@@ -51,7 +51,24 @@ jobs:
           root = ET.parse("sitemap-jobs.xml").getroot()
           urls = root.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url")
           assert len(urls) == len(pages), (len(urls), len(pages))
-          print(f"Validated {len(pages)} generated HTML pages and {len(urls)} sitemap URLs")
+
+          # Check every sitemap URL resolves to a generated local page.
+          for item in urls:
+              loc = item.find("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")
+              assert loc is not None and loc.text, "Sitemap entry missing loc"
+              path = loc.text.split("sarkari-jobalert.com", 1)[-1].lstrip("/")
+              assert (Path(".") / path).is_file(), f"Sitemap target missing: {loc.text}"
+          # Ensure no duplicate canonical URLs and no accidental draft page leakage.
+          canonicals = []
+          for page in pages:
+              body = page.read_text(encoding="utf-8")
+              import re
+              match = re.search(r'<link rel="canonical" href="([^"]+)"', body)
+              assert match, page
+              canonicals.append(match.group(1))
+              assert "noindex" not in body.lower(), page
+          assert len(canonicals) == len(set(canonicals)), "Duplicate canonical URLs found"
+          print(f"Validated {len(pages)} generated HTML pages and {len(urls)} sitemap URLs; all local targets exist and canonicals are unique")
           PY
       - name: Upload static page preview artifact
         uses: actions/upload-artifact@v4
