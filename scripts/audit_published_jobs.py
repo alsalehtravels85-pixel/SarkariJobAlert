@@ -51,6 +51,9 @@ def assess(row):
         (row.get("result_url") or notification) if cat in ("result", "results") else None
     )
 
+    if "duplicate" in title.lower() or "merged into main" in title.lower():
+        flags.append("duplicate_or_consolidation_page_needs_editorial_rewrite")
+
     if not title:
         flags.append("missing_title")
     if not department:
