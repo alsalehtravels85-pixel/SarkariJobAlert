@@ -21,7 +21,7 @@ async function loadPublishedGuides(env) {
  const url=base+"/rest/v1/school_articles?status=eq.published&article_type=eq.study_guide&select="+encodeURIComponent(fields)+"&order=published_at.desc&limit=60";
  const r=await fetch(url,{headers:{apikey:key,Authorization:"Bearer "+key}});
  if(!r.ok) return [];
- return (await r.json()).map(a=>({id:a.id,title:clean(a.title,180),excerpt:clean(a.excerpt,300),grade:clean(a.grade,60),subject:clean(a.subject,80),url:ORIGIN+"/education.html#article-"+encodeURIComponent(a.id)}));
+ return (await r.json()).map(a=>({id:a.id,title:clean(a.title,180),slug:clean(a.slug,180),excerpt:clean(a.excerpt,500),content:clean(a.content,6500),grade:clean(a.grade,60),subject:clean(a.subject,80),url:ORIGIN+"/education.html#article-"+encodeURIComponent(a.id)}));
 }
 const makeProfile=p=>["Qualification: "+clean(p?.qualification,100),"DOB: "+clean(p?.dob,10),"Category: "+clean(p?.category,40),"State: "+clean(p?.state,80),"Preference: "+clean(p?.preference,100)].join("\n");
 
@@ -57,18 +57,21 @@ export default { async fetch(request,env) {
   const [jobs,guides]=await Promise.all([loadPublishedJobs(env),loadPublishedGuides(env)]);
   const profile=makeProfile(body.profile);
   const jobContext=jobs.map((j,i)=>[i+1,j.title,"Department: "+j.department,"Category: "+j.category,"Vacancies: "+j.vacancies,"Last date: "+j.last_date,"Qualification: "+j.qualification,"Age: "+j.age_limit,"Fees: "+j.fees,"Selection: "+j.selection_process,"Notification URL: "+j.notification_url,"Apply URL: "+j.apply_url,"Description: "+j.description].join(" | ")).join("\n");
-  const guideContext=guides.map((g,i)=>[i+1,g.title,"Class/course: "+g.grade,"Subject: "+g.subject,"Summary: "+g.excerpt,"Article URL: "+g.url].join(" | ")).join("\n");
+  const queryText=[message,...(Array.isArray(body.history)?body.history.slice(-4).map(x=>clean(x.content,300)):[])].join(" ").toLowerCase();
+  const terms=queryText.split(/[^\\p{L}\\p{N}]+/u).filter(x=>x.length>2);
+  const relevantGuides=guides.map(g=>({g,score:terms.reduce((n,t)=>n+((g.title+" "+g.excerpt+" "+g.grade+" "+g.subject+" "+g.content).toLowerCase().includes(t)?1:0),0)})).sort((a,b)=>b.score-a.score).slice(0,5);
+  const guideContext=relevantGuides.map(({g},i)=>[i+1,g.title,"Class/course: "+g.grade,"Subject: "+g.subject,"Summary: "+g.excerpt,"Full guide content: "+g.content.slice(0,4200),"Article URL: "+g.url].join(" | ")).join("\\n");
   const system=[
    "You are Sarkari Dost, a capable, warm, patient Hindi/Hinglish AI study and career assistant for Indian students.",
    "Be conversational and context-aware. Answer the student's actual question first, clearly and completely. Ask only one useful follow-up when essential. Never end mid-sentence.",
    "For job questions, use only the published jobs dataset for current vacancy facts. Resolve follow-ups like isme, us vacancy, apply karna hai using conversation history. Give exact title, department, vacancy count, last date, qualification, age, fee and selection process when available. Explain application steps. Never claim eligibility unless verified. Put exact Apply Online and Official Notification URLs on separate lines. Never invent or alter links.",
-   "For academic questions, solve/explain the question first. Then, only if a published School & Exam Guide article genuinely matches, recommend it naturally, explain its benefit, invite the student to read it once, and provide the exact Article URL on a separate line. Do not force unrelated promotions or invent article URLs.",
+   "For academic questions, use the supplied full guide content as a source when relevant. Explain the requested topic/solution first in student-friendly Hindi/Hinglish, with steps and examples where useful. If a published School & Exam Guide article genuinely matches, recommend it naturally and provide its exact Article URL on a separate line. If no guide matches, answer from general educational knowledge and do not invent article URLs. Never claim an article says something absent from its supplied content.",
    "Never request Aadhaar, OTP, passwords or bank details. Never guarantee job selection or exam results. Clearly distinguish general guidance from verified official facts.",
    "Optional Job Passport:\n"+profile,
    "Published jobs:\n"+(jobContext||"No published jobs are currently available."),
    "Published School & Exam Guide articles:\n"+(guideContext||"No published School & Exam Guide articles were returned.")
   ].join("\n\n");
-  const history=Array.isArray(body.history)?body.history.slice(-10).map(x=>({role:x.role==="assistant"?"model":"user",content:clean(x.content,900)})):[];
+  const history=Array.isArray(body.history)?body.history.slice(-10).map(x=>({role:x.role==="assistant"?"assistant":"user",content:clean(x.content,900)})):[];
   const prompt=url.pathname==="/match"?"Mere Job Passport ke hisaab se matching published jobs ka shortlist banao. Match ka reason, missing eligibility checks aur official links do.":message;
   const answer=await callFreeCloudflareAI(env,system,history,prompt);
   return json({answer,jobsChecked:jobs.length,guidesChecked:guides.length,disclaimer:"Vacancy ki final eligibility, dates aur fees official notification se verify karein."},200,origin);
