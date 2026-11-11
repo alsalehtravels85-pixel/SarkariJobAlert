@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only AdSense content audit for published SarkariJobAlert records.
 
-Refresh 2026-11-11: re-audit after the latest safe Draft quarantine.
+Refresh 2026-11-11: verify the final published set after all reviewed quarantines.
 
 Exports a review CSV. It NEVER updates or deletes Supabase rows.
 Rows are classified for human review; an automated heuristic is not an AdSense verdict.
