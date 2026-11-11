@@ -2,6 +2,7 @@
 """Generate crawlable static detail pages for published job records.
 
 Run only in a trusted GitHub Actions environment with Supabase secrets.
+Current owner-approved published set was re-audited at 16 records on 2026-11-11.
 Never exposes credentials in generated HTML. Draft and expired vacancy rows
 are excluded. Generated output is intended for the Cloudflare Pages upload.
 """
