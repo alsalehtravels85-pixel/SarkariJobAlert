@@ -70,6 +70,16 @@ def description_for(row):
     return raw
 
 
+def is_generic_destination(value):
+    """Identify a department homepage that is not a specific result/download destination."""
+    from urllib.parse import urlparse
+    try:
+        parsed = urlparse(str(value or ""))
+        return parsed.scheme in ("http", "https") and parsed.path in ("", "/") and not parsed.query
+    except ValueError:
+        return True
+
+
 def detail_rows(row):
     category = str(row.get("category") or "").strip().lower()
     common = [("विभाग", row.get("department"))]
@@ -96,9 +106,17 @@ def detail_rows(row):
             ("परिणाम की स्थिति", row.get("result_status")),
             ("कट-ऑफ विवरण", row.get("cutoff_details") or row.get("cutoff")),
         ]
+        result_url = row.get("result_url")
+        # If the action field only points to a generic homepage, prefer the
+        # specific official result notice/PDF already stored in notification_url.
+        if is_generic_destination(result_url) and row.get("notification_url"):
+            result_url = row.get("notification_url")
+        merit_url = row.get("merit_list_url")
+        if is_generic_destination(merit_url):
+            merit_url = None
         links = [
-            ("परिणाम देखें", row.get("result_url")),
-            ("मेरिट सूची", row.get("merit_list_url")),
+            ("परिणाम / नोटिस देखें", result_url),
+            ("मेरिट सूची", merit_url),
             ("आधिकारिक अधिसूचना", row.get("notification_url")),
         ]
     else:
