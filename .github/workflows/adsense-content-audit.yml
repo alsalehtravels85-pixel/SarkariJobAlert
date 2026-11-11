@@ -33,6 +33,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sarkarijobalert-adsense-content-audit
-          path: audit-output/published-jobs-adsense-audit.csv
+          path: audit-output/
           if-no-files-found: error
           retention-days: 14
