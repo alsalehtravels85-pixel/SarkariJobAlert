@@ -1,54 +1,68 @@
-const ORIGIN="https://sarkari-jobalert.com";
-const MODEL="gemini-3.8-flash";
-const allowed=o=>{try{const u=new URL(o);return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com")?u.origin:null}catch{return null}};
-const headers=o=>({"Access-Control-Allow-Origin":allowed(o)||ORIGIN,"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Vary":"Origin"});
-const reply=(d,s=200,o="")=>new Response(JSON.stringify(d),{status:s,headers:{...headers(o),"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
-const clean=(v,n=500)=>String(v??"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,n);
-async function jobs(env){
+const ORIGIN = "https://sarkari-jobalert.com";
+const MODEL = "gemini-3.8-flash";
+const allowedOrigin = value => { try { const u=new URL(value); return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com")?u.origin:null; } catch { return null; } };
+const cors = origin => ({ "Access-Control-Allow-Origin":allowedOrigin(origin)||ORIGIN,"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Vary":"Origin" });
+const json = (data,status=200,origin="") => new Response(JSON.stringify(data),{status,headers:{...cors(origin),"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
+const clean = (v,n=500) => String(v??"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,n);
+
+async function loadPublishedJobs(env) {
  const base=String(env.SUPABASE_URL||"").replace(/\/$/,""),key=env.SUPABASE_ANON_KEY;
- if(!base||!key)throw Error("Supabase Worker configuration incomplete.");
- const cols="id,title,department,category,vacancies,last_date,qualification,age_limit,fees,selection_process,notification_url,apply_url,description";
- const r=await fetch(base+"/rest/v1/jobs?status=eq.published&select="+encodeURIComponent(cols)+"&order=created_at.desc&limit=40",{headers:{apikey:key,Authorization:"Bearer "+key}});
- if(!r.ok)throw Error("Published jobs could not be loaded.");
- return(await r.json()).map(j=>({id:j.id,title:clean(j.title,180),department:clean(j.department,100),category:clean(j.category,40),vacancies:clean(j.vacancies,100),last_date:j.last_date||"",qualification:clean(j.qualification,260),age_limit:clean(j.age_limit,160),fees:clean(j.fees,120),selection_process:clean(j.selection_process,180),notification_url:j.notification_url||"",apply_url:j.apply_url||"",description:clean(j.description,350)}));
-}
-async function guides(env){
- const base=String(env.SUPABASE_URL||"").replace(/\/$/,""),key=env.SUPABASE_ANON_KEY;
- if(!base||!key)return [];
- const cols="id,title,slug,excerpt,grade,subject,published_at";
- const url=base+"/rest/v1/school_articles?status=eq.published&article_type=eq.study_guide&select="+encodeURIComponent(cols)+"&order=published_at.desc&limit=35";
+ if(!base||!key) throw new Error("Supabase Worker configuration incomplete.");
+ const fields="id,title,department,category,vacancies,last_date,qualification,age_limit,fees,selection_process,notification_url,apply_url,description";
+ const url=base+"/rest/v1/jobs?status=eq.published&select="+encodeURIComponent(fields)+"&order=created_at.desc&limit=60";
  const r=await fetch(url,{headers:{apikey:key,Authorization:"Bearer "+key}});
- if(!r.ok)return [];
- return(await r.json()).map(a=>({id:a.id,title:clean(a.title,180),slug:clean(a.slug,160),excerpt:clean(a.excerpt,260),grade:clean(a.grade,60),subject:clean(a.subject,80),url:ORIGIN+"/education.html#article-"+encodeURIComponent(a.id)}));
+ if(!r.ok) throw new Error("Published job data abhi load nahi ho pa raha.");
+ return (await r.json()).map(j=>({id:j.id,title:clean(j.title,180),department:clean(j.department,100),category:clean(j.category,40),vacancies:clean(j.vacancies,100),last_date:clean(j.last_date,30),qualification:clean(j.qualification,260),age_limit:clean(j.age_limit,160),fees:clean(j.fees,120),selection_process:clean(j.selection_process,180),notification_url:clean(j.notification_url,500),apply_url:clean(j.apply_url,500),description:clean(j.description,500)}));
 }
-const profile=p=>["Qualification: "+clean(p?.qualification,100),"DOB: "+clean(p?.dob,10),"Category: "+clean(p?.category,40),"State: "+clean(p?.state,80),"Preference: "+clean(p?.preference,100)].join("\n");
-async function askGemini(env,system,history,prompt){
- if(!env.GEMINI_API_KEY)throw Error("Gemini API key is not configured.");
+async function loadPublishedGuides(env) {
+ const base=String(env.SUPABASE_URL||"").replace(/\/$/,""),key=env.SUPABASE_ANON_KEY;
+ if(!base||!key) return [];
+ const fields="id,title,slug,excerpt,content,grade,subject,published_at";
+ const url=base+"/rest/v1/school_articles?status=eq.published&article_type=eq.study_guide&select="+encodeURIComponent(fields)+"&order=published_at.desc&limit=60";
+ const r=await fetch(url,{headers:{apikey:key,Authorization:"Bearer "+key}});
+ if(!r.ok) return [];
+ return (await r.json()).map(a=>({id:a.id,title:clean(a.title,180),excerpt:clean(a.excerpt,300),grade:clean(a.grade,60),subject:clean(a.subject,80),url:ORIGIN+"/education.html#article-"+encodeURIComponent(a.id)}));
+}
+const makeProfile=p=>["Qualification: "+clean(p?.qualification,100),"DOB: "+clean(p?.dob,10),"Category: "+clean(p?.category,40),"State: "+clean(p?.state,80),"Preference: "+clean(p?.preference,100)].join("\n");
+
+async function callGemini(env,system,history,prompt) {
+ if(!env.GEMINI_API_KEY) throw new Error("AI configuration incomplete.");
  const contents=[...history.map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:x.content}]})),{role:"user",parts:[{text:prompt}]}];
- const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{temperature:0.2,maxOutputTokens:650}})});
+ const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{maxOutputTokens:1100,thinkingConfig:{thinkingLevel:"low"}}})});
  const data=await r.json().catch(()=>({}));
- if(!r.ok)throw Error(clean(data?.error?.message||"Gemini service temporarily unavailable.",220));
- return (data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+ if(!r.ok){const code=data?.error?.code||r.status;if(code===429||data?.error?.status==="RESOURCE_EXHAUSTED")throw new Error("AI ki request limit/quota abhi poori ho gayi hai. Thodi der baad try karein. Baar-baar aaye to Google AI Studio mein Usage, Rate Limits aur Billing check karein.");if(code===503||code===504)throw new Error("AI service par abhi zyada load hai. 30 second baad dobara try karein.");if(code===401||code===403)throw new Error("Gemini API key ya project permission mein problem hai. Admin ko API key aur project access check karna hoga.");throw new Error(clean(data?.error?.message||"AI service se jawab nahi mil paya.",240));}
+ const answer=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+ if(!answer)throw new Error("AI ne khaali jawab diya. Sawal ko thoda chhota karke dobara poochhein.");
+ return answer;
 }
-export default{async fetch(req,env){
- const origin=req.headers.get("Origin")||"";
- if(req.method==="OPTIONS")return allowed(origin)?new Response(null,{status:204,headers:headers(origin)}):new Response(null,{status:403});
- if(!allowed(origin))return reply({error:"Origin not allowed."},403,origin);
- const u=new URL(req.url);
- if(req.method==="GET"&&u.pathname==="/health")return reply({ok:true,service:"SarkariJobAlert AI",provider:"Gemini",model:MODEL,configured:!!env.GEMINI_API_KEY&&!!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY},200,origin);
- if(req.method!=="POST"||!["/chat","/match"].includes(u.pathname))return reply({error:"Not found."},404,origin);
- let body;try{body=await req.json()}catch{return reply({error:"Invalid request."},400,origin)}
- if(JSON.stringify(body).length>12000)return reply({error:"Request too large."},413,origin);
- const message=clean(body.message,1200);
- if(u.pathname==="/chat"&&!message)return reply({error:"Apna sawal type karein."},400,origin);
- try{
-  const list=await jobs(env),guideList=await guides(env),p=profile(body.profile);
-  const context=list.map((j,i)=>[i+1,j.title,"Dept:"+j.department,"Category:"+j.category,"Vacancies:"+j.vacancies,"Last date:"+j.last_date,"Qualification:"+j.qualification,"Age:"+j.age_limit,"Fees:"+j.fees,"Selection:"+j.selection_process,"Official PDF:"+j.notification_url,"Apply:"+j.apply_url].join(" | ")).join("\n");
-  const guideContext=guideList.map((g,i)=>[i+1,g.title,"Class/Course:"+g.grade,"Subject:"+g.subject,"Summary:"+g.excerpt,"Read URL:"+g.url].join(" | ")).join("\\n");\n  const system="You are Sarkari Dost, a helpful study mentor and government-job counsellor for Indian students. For academic/student questions (school subjects, board exams, college study, revision, study plans, scholarships/admissions or learning skills), FIRST answer the actual question clearly and usefully. THEN, when a published School & Exam Guide article is relevant, naturally recommend the best matching article: explain in one sentence why it will benefit the student, invite them to read it once, and provide its exact Read Article URL on its own line. Do not force an unrelated article; if none matches, mention the School & Exam Guide page only when genuinely useful. Never invent an article or URL. Keep the answer helpful, not like an advertisement. For career/job questions, prioritize relevant published vacancies and official application links.  Always answer in clear, natural Hinglish/Hindi with complete sentences. Never output broken fragments, unfinished sentences, raw ### headings, or vague filler. Understand the full conversation history: if the user says apply for it/isme apply karna hai, identify the exact vacancy mentioned earlier and explain its application process. Use ONLY the Published jobs dataset below for live vacancy claims. For every relevant vacancy, clearly say 'Ye vacancy aapke liye relevant ho sakti hai' only when the user profile/asked qualification reasonably matches; otherwise say eligibility needs checking. Give exact post title, department, vacancies, last date, qualification, age/age relaxation if supplied, fees if supplied, and selection process if supplied. Then give the exact Apply Online URL and Official Notification URL from the dataset on separate lines, labelled 'Apply Online:' and 'Official Notification:'. Never invent or modify URLs. If a URL is absent, clearly say 'Apply link database mein available nahi hai' rather than guessing. If user asks to apply, give numbered step-by-step instructions and remind them to verify details in official notice before payment/submission. If several jobs match, list up to 5 best matches, each with its own links; do not dump unrelated vacancies. If no job matches or the named job is not in the dataset, say so plainly and ask one focused question or guide them to the relevant job page. Distinguish verified dataset facts from advice. Never guarantee selection or eligibility; DOB cut-off, category relaxation and qualification equivalence must be checked in official notice. Never request Aadhaar, OTP, passwords or bank details. Keep answer structured and easy to read. User profile for this request:\n"+p+"\nPublished jobs dataset (URLs must be copied exactly):\n"+(context||"No published jobs found.")+"\\nPublished School & Exam Guide articles (recommend only relevant matches; exact URLs):\\n"+(guideContext||"No published study-guide articles currently found.");
-  const prompt=u.pathname==="/match"?"Create a cautious shortlist based on the profile. Explain match reasons and what must be verified in the official notice. If no clear matches, say so.":message;
-  const history=Array.isArray(body.history)?body.history.slice(-8).map(x=>({role:x.role==="assistant"?"assistant":"user",content:clean(x.content,700)})):[];
-  const answer=clean(await askGemini(env,system,history,prompt),5000);
-  if(!answer)throw Error("AI returned an empty response.");
-  return reply({answer,jobsChecked:list.length,disclaimer:"Dates aur eligibility official notification se verify karein."},200,origin);
- }catch(e){return reply({error:clean(e.message||"AI temporarily unavailable.",220)},502,origin)}
+export default { async fetch(request,env) {
+ const origin=request.headers.get("Origin")||"";
+ if(request.method==="OPTIONS")return allowedOrigin(origin)?new Response(null,{status:204,headers:cors(origin)}):new Response(null,{status:403});
+ if(!allowedOrigin(origin))return json({error:"Origin not allowed."},403,origin);
+ const url=new URL(request.url);
+ if(request.method==="GET"&&url.pathname==="/health")return json({ok:true,service:"Sarkari Dost",provider:"Gemini",model:MODEL,configured:!!env.GEMINI_API_KEY&&!!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY},200,origin);
+ if(request.method!=="POST"||!["/chat","/match"].includes(url.pathname))return json({error:"Not found."},404,origin);
+ let body;try{body=await request.json();}catch{return json({error:"Request format sahi nahi hai."},400,origin);}
+ if(JSON.stringify(body).length>14000)return json({error:"Message bahut lamba hai. Chhota karke bhejein."},413,origin);
+ const message=clean(body.message,1200);if(url.pathname==="/chat"&&!message)return json({error:"Apna sawal type karein."},400,origin);
+ try {
+  const [jobs,guides]=await Promise.all([loadPublishedJobs(env),loadPublishedGuides(env)]);
+  const profile=makeProfile(body.profile);
+  const jobContext=jobs.map((j,i)=>[i+1,j.title,"Department: "+j.department,"Category: "+j.category,"Vacancies: "+j.vacancies,"Last date: "+j.last_date,"Qualification: "+j.qualification,"Age: "+j.age_limit,"Fees: "+j.fees,"Selection: "+j.selection_process,"Notification URL: "+j.notification_url,"Apply URL: "+j.apply_url,"Description: "+j.description].join(" | ")).join("\n");
+  const guideContext=guides.map((g,i)=>[i+1,g.title,"Class/course: "+g.grade,"Subject: "+g.subject,"Summary: "+g.excerpt,"Article URL: "+g.url].join(" | ")).join("\n");
+  const system=[
+   "You are Sarkari Dost, a capable, warm, patient Hindi/Hinglish AI study and career assistant for Indian students.",
+   "Be conversational and context-aware. Answer the student's actual question first, clearly and completely. Ask only one useful follow-up when essential. Never end mid-sentence.",
+   "For job questions, use only the published jobs dataset for current vacancy facts. Resolve follow-ups like isme, us vacancy, apply karna hai using conversation history. Give exact title, department, vacancy count, last date, qualification, age, fee and selection process when available. Explain application steps. Never claim eligibility unless verified. Put exact Apply Online and Official Notification URLs on separate lines. Never invent or alter links.",
+   "For academic questions, solve/explain the question first. Then, only if a published School & Exam Guide article genuinely matches, recommend it naturally, explain its benefit, invite the student to read it once, and provide the exact Article URL on a separate line. Do not force unrelated promotions or invent article URLs.",
+   "Never request Aadhaar, OTP, passwords or bank details. Never guarantee job selection or exam results. Clearly distinguish general guidance from verified official facts.",
+   "Optional Job Passport:\n"+profile,
+   "Published jobs:\n"+(jobContext||"No published jobs are currently available."),
+   "Published School & Exam Guide articles:\n"+(guideContext||"No published School & Exam Guide articles were returned.")
+  ].join("\n\n");
+  const history=Array.isArray(body.history)?body.history.slice(-10).map(x=>({role:x.role==="assistant"?"model":"user",content:clean(x.content,900)})):[];
+  const prompt=url.pathname==="/match"?"Mere Job Passport ke hisaab se matching published jobs ka shortlist banao. Match ka reason, missing eligibility checks aur official links do.":message;
+  const answer=await callGemini(env,system,history,prompt);
+  return json({answer,jobsChecked:jobs.length,guidesChecked:guides.length,disclaimer:"Vacancy ki final eligibility, dates aur fees official notification se verify karein."},200,origin);
+ } catch(e){return json({error:clean(e.message||"AI service abhi available nahi hai.",320)},502,origin);}
 }};
