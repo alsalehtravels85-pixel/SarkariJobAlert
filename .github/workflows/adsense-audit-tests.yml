@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/cleanup_expired_jobs.py"
+      - "index.html"
       - "scripts/generate-sitemap.mjs"
       - "sitemap.xml"
       - ".github/workflows/update-sitemap.yml"
