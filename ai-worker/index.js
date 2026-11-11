@@ -58,9 +58,9 @@ export default { async fetch(request,env) {
   const profile=makeProfile(body.profile);
   const jobContext=jobs.map((j,i)=>[i+1,j.title,"Department: "+j.department,"Category: "+j.category,"Vacancies: "+j.vacancies,"Last date: "+j.last_date,"Qualification: "+j.qualification,"Age: "+j.age_limit,"Fees: "+j.fees,"Selection: "+j.selection_process,"Notification URL: "+j.notification_url,"Apply URL: "+j.apply_url,"Description: "+j.description].join(" | ")).join("\n");
   const queryText=[message,...(Array.isArray(body.history)?body.history.slice(-4).map(x=>clean(x.content,300)):[])].join(" ").toLowerCase();
-  const terms=queryText.split(/[^\\p{L}\\p{N}]+/u).filter(x=>x.length>2);
+  const terms=queryText.split(/[^\p{L}\p{N}]+/u).filter(x=>x.length>2);
   const relevantGuides=guides.map(g=>({g,score:terms.reduce((n,t)=>n+((g.title+" "+g.excerpt+" "+g.grade+" "+g.subject+" "+g.content).toLowerCase().includes(t)?1:0),0)})).sort((a,b)=>b.score-a.score).slice(0,5);
-  const guideContext=relevantGuides.map(({g},i)=>[i+1,g.title,"Class/course: "+g.grade,"Subject: "+g.subject,"Summary: "+g.excerpt,"Full guide content: "+g.content.slice(0,4200),"Article URL: "+g.url].join(" | ")).join("\\n");
+  const guideContext=relevantGuides.map(({g},i)=>[i+1,g.title,"Class/course: "+g.grade,"Subject: "+g.subject,"Summary: "+g.excerpt,"Full guide content: "+g.content.slice(0,4200),"Article URL: "+g.url].join(" | ")).join("\n");
   const system=[
    "You are Sarkari Dost, a capable, warm, patient Hindi/Hinglish AI study and career assistant for Indian students.",
    "Be conversational and context-aware. Answer the student's actual question first, clearly and completely. Ask only one useful follow-up when essential. Never end mid-sentence.",
