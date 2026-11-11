@@ -1,5 +1,5 @@
 const ORIGIN = "https://sarkari-jobalert.com";
-const MODEL = "gemini-3.8-flash";
+const MODEL = "@cf/meta/llama-3.2-3b-instruct";
 const allowedOrigin = value => { try { const u=new URL(value); return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com")?u.origin:null; } catch { return null; } };
 const cors = origin => ({ "Access-Control-Allow-Origin":allowedOrigin(origin)||ORIGIN,"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Vary":"Origin" });
 const json = (data,status=200,origin="") => new Response(JSON.stringify(data),{status,headers:{...cors(origin),"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
@@ -25,22 +25,30 @@ async function loadPublishedGuides(env) {
 }
 const makeProfile=p=>["Qualification: "+clean(p?.qualification,100),"DOB: "+clean(p?.dob,10),"Category: "+clean(p?.category,40),"State: "+clean(p?.state,80),"Preference: "+clean(p?.preference,100)].join("\n");
 
-async function callGemini(env,system,history,prompt) {
- if(!env.GEMINI_API_KEY) throw new Error("AI configuration incomplete.");
- const contents=[...history.map(x=>({role:x.role==="assistant"?"model":"user",parts:[{text:x.content}]})),{role:"user",parts:[{text:prompt}]}];
- const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":env.GEMINI_API_KEY},body:JSON.stringify({systemInstruction:{parts:[{text:system}]},contents,generationConfig:{maxOutputTokens:1100,thinkingConfig:{thinkingLevel:"low"}}})});
- const data=await r.json().catch(()=>({}));
- if(!r.ok){const code=data?.error?.code||r.status;if(code===429||data?.error?.status==="RESOURCE_EXHAUSTED")throw new Error("AI ki request limit/quota abhi poori ho gayi hai. Thodi der baad try karein. Baar-baar aaye to Google AI Studio mein Usage, Rate Limits aur Billing check karein.");if(code===503||code===504)throw new Error("AI service par abhi zyada load hai. 30 second baad dobara try karein.");if(code===401||code===403)throw new Error("Gemini API key ya project permission mein problem hai. Admin ko API key aur project access check karna hoga.");throw new Error(clean(data?.error?.message||"AI service se jawab nahi mil paya.",240));}
- const answer=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
- if(!answer)throw new Error("AI ne khaali jawab diya. Sawal ko thoda chhota karke dobara poochhein.");
- return answer;
+async function callFreeCloudflareAI(env,system,history,prompt) {
+ if(!env.AI) throw new Error("Cloudflare Workers AI binding configure nahi hai.");
+ const messages=[
+  {role:"system",content:system},
+  ...history.map(x=>({role:x.role==="assistant"?"assistant":"user",content:x.content})),
+  {role:"user",content:prompt}
+ ];
+ try {
+  const result=await env.AI.run(MODEL,{messages,max_tokens:900,temperature:0.35});
+  const answer=String(result?.response||"").trim();
+  if(!answer) throw new Error("AI ne khaali jawab diya. Sawal ko chhota karke dobara poochhein.");
+  return answer;
+ } catch(error) {
+  const message=String(error?.message||"");
+  if(/limit|quota|neurons|429|exceed/i.test(message)) throw new Error("Aaj ki free AI limit poori ho gayi hai. Cloudflare ki daily limit reset hone par dobara try karein.");
+  throw new Error(clean(message||"Free AI service abhi busy hai. Thodi der baad try karein.",240));
+ }
 }
 export default { async fetch(request,env) {
  const origin=request.headers.get("Origin")||"";
  if(request.method==="OPTIONS")return allowedOrigin(origin)?new Response(null,{status:204,headers:cors(origin)}):new Response(null,{status:403});
  if(!allowedOrigin(origin))return json({error:"Origin not allowed."},403,origin);
  const url=new URL(request.url);
- if(request.method==="GET"&&url.pathname==="/health")return json({ok:true,service:"Sarkari Dost",provider:"Gemini",model:MODEL,configured:!!env.GEMINI_API_KEY&&!!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY},200,origin);
+ if(request.method==="GET"&&url.pathname==="/health")return json({ok:true,service:"Sarkari Dost",provider:"Cloudflare Workers AI",model:MODEL,configured:!!env.AI&&!!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY},200,origin);
  if(request.method!=="POST"||!["/chat","/match"].includes(url.pathname))return json({error:"Not found."},404,origin);
  let body;try{body=await request.json();}catch{return json({error:"Request format sahi nahi hai."},400,origin);}
  if(JSON.stringify(body).length>14000)return json({error:"Message bahut lamba hai. Chhota karke bhejein."},413,origin);
@@ -62,7 +70,7 @@ export default { async fetch(request,env) {
   ].join("\n\n");
   const history=Array.isArray(body.history)?body.history.slice(-10).map(x=>({role:x.role==="assistant"?"model":"user",content:clean(x.content,900)})):[];
   const prompt=url.pathname==="/match"?"Mere Job Passport ke hisaab se matching published jobs ka shortlist banao. Match ka reason, missing eligibility checks aur official links do.":message;
-  const answer=await callGemini(env,system,history,prompt);
+  const answer=await callFreeCloudflareAI(env,system,history,prompt);
   return json({answer,jobsChecked:jobs.length,guidesChecked:guides.length,disclaimer:"Vacancy ki final eligibility, dates aur fees official notification se verify karein."},200,origin);
  } catch(e){return json({error:clean(e.message||"AI service abhi available nahi hai.",320)},502,origin);}
 }};
