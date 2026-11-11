@@ -5,3 +5,13 @@
 .sja-ai-action-link:focus-visible{outline:3px solid #f5b942;outline-offset:2px}
 .sja-ai-bubble{white-space:normal}
 .sja-ai-bubble br{display:block;content:"";margin:5px 0}
+
+/* Attractive site-wide welcome guide */
+.sja-ai-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.sja-ai-feature-grid>a{display:flex;flex-direction:column;gap:5px;min-width:0;padding:11px;border:1px solid #d9e7f8;border-radius:12px;background:linear-gradient(145deg,#fff,#f2f7ff);text-decoration:none;color:#18365d;transition:transform .18s,border-color .18s}
+.sja-ai-feature-grid>a:hover{transform:translateY(-2px);border-color:#8bbcff}
+.sja-ai-feature-grid>a b{font-size:12px;line-height:1.35}
+.sja-ai-feature-grid>a small{font-size:10px;line-height:1.5;color:#60738d}
+.sja-ai-feature-cta{margin-top:auto;padding-top:3px;font-size:10px;font-weight:800;color:#075bd9}
+.sja-ai-welcome-note{padding:10px 12px;border-radius:11px;background:#eaf5ff;color:#28517e;font-size:11px;line-height:1.55}
+@media(max-width:380px){.sja-ai-feature-grid{grid-template-columns:1fr}.sja-ai-feature-grid>a{padding:10px}}
