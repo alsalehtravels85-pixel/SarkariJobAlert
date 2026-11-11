@@ -76,7 +76,7 @@ def main():
     for row in public_rows(rows):
         node = SubElement(root, "{http://www.sitemaps.org/schemas/sitemap/0.9}url")
         SubElement(node, "{http://www.sitemaps.org/schemas/sitemap/0.9}loc").text = (
-            f"{BASE}/jobs/{slugify(row.get(\"title\"))}-{row['id']}.html"
+            f"{BASE}/jobs/{slugify(row["title"])}-{row['id']}.html"
         )
         lastmod = iso_date(row.get("updated_at") or row.get("created_at"))
         if lastmod:
