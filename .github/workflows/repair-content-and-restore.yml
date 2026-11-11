@@ -1,0 +1,35 @@
+name: SarkariJobAlert - Repair content and restore verified posts
+on:
+  workflow_dispatch:
+  push:
+    branches: [adsense-readiness-audit]
+    paths:
+      - "scripts/repair_content_and_restore.py"
+      - ".github/workflows/repair-content-and-restore.yml"
+permissions:
+  contents: read
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: adsense-readiness-audit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependency
+        run: python -m pip install requests
+      - name: Back up all rows, repair useful content and restore verified posts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/repair_content_and_restore.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sja-pre-content-repair-full-backup
+          path: repair-output/pre-repair-all-jobs-backup.json
+          if-no-files-found: warn
+          retention-days: 30

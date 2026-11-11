@@ -1,0 +1,49 @@
+name: AdSense Readiness - Safe Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/cleanup_expired_jobs.py"
+      - "scripts/audit_published_jobs.py"
+      - "tests/test_audit_published_jobs.py"
+      - ".github/workflows/adsense-content-audit.yml"
+      - "index.html"
+      - "app.js"
+      - "styles.css"
+      - "scripts/generate-sitemap.mjs"
+      - "scripts/generate_job_pages.py"
+      - "scripts/generate_job_sitemap.py"
+      - "tests/test_generate_job_pages.py"
+      - "sitemap.xml"
+      - ".github/workflows/update-sitemap.yml"
+      - "tests/test_cleanup_expired_jobs.py"
+      - "tests/test_fetch_jobs.py"
+      - "scripts/fetch_jobs.py"
+      - "scripts/fetch_education_news.py"
+      - ".github/workflows/daily-education-news.yml"
+      - "tests/test_education_news_safety.py"
+      - ".github/workflows/adsense-audit-tests.yml"
+      - ".github/workflows/auto-government-jobs.yml"
+      - ".github/workflows/daily-school-exam-guide.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install requests beautifulsoup4 pypdf certifi
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py scripts/generate_job_pages.py scripts/fetch_education_news.py scripts/audit_published_jobs.py
+      - name: Validate frontend and sitemap JavaScript syntax
+        run: node --check app.js && node --check scripts/generate-sitemap.mjs
+      - name: Run regression and cleanup safety tests
+        run: python -m unittest discover -s tests -v

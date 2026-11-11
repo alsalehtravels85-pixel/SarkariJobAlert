@@ -1136,7 +1136,7 @@ def main():
                     pdf_verified=pdf_is_publishable,
                     source_notice_text=notice_text,
                 ),
-                "status": "published" if pdf_is_publishable else "draft",
+                "status": "draft",  # Human editor must add original value before public publication.
             }
             response = session.post(
                 DB + "/rest/v1/jobs",
@@ -1148,16 +1148,13 @@ def main():
             known_urls.update((normalized_url(notification_url), normalized_url(detail_url)))
             known_titles.add(title_key)
             saved += 1
-            if pdf_is_publishable:
-                published += 1
-            else:
-                drafts += 1
+            drafts += 1
             optional_missing = [
                 key for key in ("vacancies", "qualification", "fees", "age_limit", "selection_process")
                 if not fields.get(key)
             ]
             print(
-                "AUTO-PUBLISHED:" if pdf_is_publishable else "DRAFT SAVED:",
+                "DRAFT SAVED FOR EDITORIAL REVIEW:",
                 title,
                 "| PDF verified:", "yes" if pdf_is_publishable else "no",
                 "| confirmed core facts:", core_facts, "/3",
@@ -1254,7 +1251,7 @@ def main():
 
             # Publish only if the official PDF is readable and verifies the key facts.
             # An official apply URL alone is enough for a draft, never automatic publishing.
-            status = "published" if pdf_verified and notification_url else "draft"
+            status = "draft"  # Discovery-source content requires human editorial review.
             fields["last_date"] = last_date
             fields["department"] = department
             fields["official_url"] = verified_pdf_url or ""
@@ -1283,10 +1280,7 @@ def main():
                 known_urls.add(normalized_url(verified_pdf_url))
             known_titles.add(title_key)
             sarkaritoday_saved += 1
-            if status == "published":
-                published += 1
-            else:
-                drafts += 1
+            drafts += 1
             saved += 1
             print(
                 "SARKARITODAY", status.upper(), "SAVED:", title,
@@ -1363,7 +1357,7 @@ def main():
                     merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
                     source_text=detail_text,
                 ),
-                "status": "published",
+                "status": "draft",  # Official update is saved for human review before publication.
                 "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
@@ -1380,7 +1374,7 @@ def main():
             known_urls.add(normalized_url(detail_url))
             known_titles.add(title_key)
             up_updates_saved += 1
-            print("UP UPDATE AUTO-PUBLISHED:", category, title, "| official action:", action_url, "| source:", source_name)
+            print("UP UPDATE SAVED FOR EDITORIAL REVIEW:", category, title, "| official action:", action_url, "| source:", source_name)
         except Exception as exc:
             process_errors += 1
             print("UP UPDATE PROCESS ERROR:", candidate_title[:160], str(exc)[:260])
@@ -1400,11 +1394,11 @@ def main():
         "| skipped:", skipped,
         "| duplicates:", duplicates,
         "| processing errors:", process_errors,
-        "| vacancy auto-published:", published, "(strict official-PDF gate)",
+        "| vacancy auto-published:", published, "(human review required; expected 0)",
         "| UP admit/result candidates:", len(up_update_candidates),
-        "| UP admit/result auto-published:", up_updates_saved,
+        "| UP admit/result saved for editorial review:", up_updates_saved,
         "| UP admit/result skipped (not verified/duplicate/fetch issue):", up_updates_skipped + up_updates_duplicates,
-        "| UP Admit Card/Result auto-publish only with verified official action links",
+        "| all automatically discovered public posts remain Draft pending human editorial review",
     )
     return 1 if process_errors else 0
 

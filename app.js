@@ -345,6 +345,10 @@
         buttonText = "Apply Online ↗";
       }
 
+      const detailSlug = String(job.title || "update").toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "update";
+      const detailUrl = `/jobs/${detailSlug}-${encodeURIComponent(job.id)}.html`;
+
       return `
         <article class="job-card">
           <div class="card-top">
@@ -355,7 +359,7 @@
           </div>
 
           <h3>
-            ${escapeHtml(job.title)}
+            <a class="job-title-link" href="${detailUrl}">${escapeHtml(job.title)}</a>
             ${isNewJob(job) ? ' <span class="new-badge">NEW</span>' : ""}
           </h3>
 

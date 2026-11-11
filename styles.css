@@ -822,3 +822,8 @@ button.share-btn:hover,
   #adminRoot #jobForm textarea{min-height:100px}
 }
 
+
+
+/* Crawlable job-detail links retain the existing card typography. */
+.job-title-link{color:inherit;text-decoration:none}
+.job-title-link:hover,.job-title-link:focus-visible{color:#075bd9;text-decoration:underline;text-underline-offset:3px}
