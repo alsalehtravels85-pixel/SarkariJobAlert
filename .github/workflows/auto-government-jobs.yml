@@ -43,7 +43,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python scripts/fetch_jobs.py
 
-      - name: Delete all expired vacancies (manual and automatic) after 30 days
+      - name: Unpublish expired vacancies while preserving records (manual and automatic)
         if: github.event.schedule == '35 19 * * *'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
