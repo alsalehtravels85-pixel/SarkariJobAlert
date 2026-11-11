@@ -33,7 +33,7 @@ jobs:
           python -m pip install --upgrade requests beautifulsoup4 pypdf certifi
           python -c "import certifi; print('TLS CA bundle:', certifi.where())"
       - name: Validate Python scanner and cleanup syntax
-        run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py
+        run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py scripts/generate_job_pages.py
       - name: Run scanner regression tests
         run: python -m unittest discover -s tests -v
       - name: Scan vacancies plus UP Admit Cards/Results; auto-publish only strictly verified records
@@ -66,14 +66,15 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            python scripts/generate_job_pages.py
             python scripts/generate_job_sitemap.py
 
-            if [ -z "$(git status --porcelain -- sitemap-jobs.xml)" ]; then
-              echo "Published jobs sitemap is already up to date."
+            if [ -z "$(git status --porcelain -- jobs sitemap-jobs.xml)" ]; then
+              echo "Static job pages and sitemap are already up to date."
               exit 0
             fi
 
-            git add sitemap-jobs.xml
+            git add jobs sitemap-jobs.xml
             git commit -m "Update published jobs sitemap"
 
             if git push origin HEAD:main; then
