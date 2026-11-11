@@ -3,6 +3,7 @@
 
 Refresh 2026-11-11: verify the current published set after owner cleanup.
 Owner instruction: retain all published posts; this audit is strictly report-only.
+Latest read-only verification follows the single-post editorial correction.
 Never move a post to Draft, delete a row, or change database content.
 
 Exports a review CSV. It NEVER updates or deletes Supabase rows.
