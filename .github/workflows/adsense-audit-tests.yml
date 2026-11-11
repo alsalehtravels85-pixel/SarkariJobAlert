@@ -19,6 +19,7 @@ on:
       - ".github/workflows/daily-education-news.yml"
       - "tests/test_education_news_safety.py"
       - ".github/workflows/adsense-audit-tests.yml"
+      - ".github/workflows/auto-government-jobs.yml"
       - ".github/workflows/daily-school-exam-guide.yml"
 
 permissions:
