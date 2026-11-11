@@ -6,6 +6,8 @@ on:
     paths:
       - "scripts/cleanup_expired_jobs.py"
       - "index.html"
+      - "app.js"
+      - "styles.css"
       - "scripts/generate-sitemap.mjs"
       - "scripts/generate_job_pages.py"
       - "scripts/generate_job_sitemap.py"
