@@ -1,0 +1,47 @@
+name: Publish AdSense-ready static job pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/generate_job_pages.py"
+      - "scripts/generate_job_sitemap.py"
+      - ".github/workflows/publish-static-job-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sja-static-job-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependency
+        run: python -m pip install requests
+      - name: Generate crawlable job pages and sitemap
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/generate_job_pages.py
+          python scripts/generate_job_sitemap.py
+      - name: Commit generated public pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add jobs sitemap-jobs.xml
+          if git diff --cached --quiet; then
+            echo "Static pages and sitemap already current."
+          else
+            git commit -m "Publish crawlable static job detail pages"
+            git push origin HEAD:main
+          fi
