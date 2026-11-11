@@ -107,7 +107,7 @@ Last verified: 11 November 2026."""
 5. यदि आप 76 अर्ह अभ्यर्थियों में हैं, तो document upload और आगे की प्रक्रिया की सूचना पढ़ें।
 
 ## Official Links
-- Direct Result: ${UPSSSC_RESULT}
+- Direct Result: https://upsssc.gov.in/Online_App/Results.aspx?ID=169&Result_Type=M&Exam_Code=5&Advt_Code=564&Dept_Code=552&Post_Code=1&OnlyIntview=No
 - Official UPSSSC Website: https://upsssc.gov.in/
 
 Last verified: 11 November 2026."""
@@ -138,7 +138,7 @@ Bihar Public Service Commission (BPSC) ने Integrated 71st Combined Competiti
 Mains में सफल घोषित होना अंतिम नियुक्ति नहीं है। Interview/Personality Test और आयोग द्वारा निर्धारित आगे की प्रक्रिया पूरी होने के बाद ही अंतिम मेरिट/चयन संबंधी निर्णय होगा। Cut-off या category-wise marks के बारे में कोई संख्या तभी मानें जब वह आयोग की official notice में प्रकाशित हो।
 
 ## Official Links
-- Direct Mains Result PDF: ${BPSC_PDF}
+- Direct Mains Result PDF: https://bpsc.bihar.gov.in/wp-content/uploads/BPSC_content/Notices/Results-Integrated-71st-CCE-Main-Written-CCE_BPSC-20261106-wz2q4y.pdf
 - BPSC Official Website: https://bpsc.bihar.gov.in/
 
 Last verified: 11 November 2026."""
@@ -169,7 +169,7 @@ Delhi Subordinate Services Selection Board (DSSSB) ने New Delhi Municipal Co
 Result notice में नाम आने का अर्थ स्वतः नियुक्ति नहीं है। अंतिम नियुक्ति से पहले संबंधित विभाग द्वारा पात्रता और दस्तावेजों की जांच की जा सकती है। उम्मीदवार केवल DSSSB द्वारा जारी मूल notice को अंतिम मानें।
 
 ## Official Links
-- Result Notice No. 384: ${DSSSB_RESULT}
+- Result Notice No. 384: https://dsssb.delhi.gov.in/node/74344
 - DSSSB Results: https://dsssb.delhi.gov.in/results?page=1
 - DSSSB Official Website: https://dsssb.delhi.gov.in/
 
@@ -199,7 +199,7 @@ Staff Selection Commission (SSC) ने Sub-Inspector in Delhi Police and Centra
 PET/PST result में shortlist होना अंतिम चयन नहीं है। उम्मीदवारों को Paper-II और आगे की document/medical प्रक्रिया से संबंधित SSC की आधिकारिक सूचनाएं देखनी चाहिए। इस पोस्ट में category-wise cut-off या shortlisted संख्या तभी जोड़ी जाएगी जब वह official PDF से पुष्टि हो।
 
 ## Official Links
-- Direct SSC PET/PST Notice PDF: ${SSC_SI_PDF}
+- Direct SSC PET/PST Notice PDF: https://ssc.gov.in/api/attachment/uploads/masterData/NoticeBoards/writeup_29102026.pdf
 - SSC Official Website: https://ssc.gov.in/
 
 Last verified: 11 November 2026."""
@@ -237,7 +237,7 @@ Staff Selection Commission (SSC) ने Combined Hindi Translators Examination 2
 FRTA का अर्थ First Round of Tentative Allocation है। Provisional recommendation अपने-आप अंतिम नियुक्ति या सभी दस्तावेजों की स्वीकृति नहीं है। Final status SSC और संबंधित user department की verification के बाद ही तय होगा।
 
 ## Official Links
-- Direct FRTA Result PDF: ${SSC_JHT_PDF}
+- Direct FRTA Result PDF: https://ssc.gov.in/api/attachment/uploads/masterData/Results/ROLL_05112026.pdf
 - SSC Official Website: https://ssc.gov.in/
 
 Last verified: 11 November 2026."""
