@@ -43,8 +43,8 @@ def assess(row):
     source = row.get("source_url")
     action_url = (
         row.get("apply_url") if vacancy else
-        row.get("admit_card_url") if cat in ("admit card", "admitcard") else
-        row.get("result_url") if cat in ("result", "results") else None
+        (row.get("admit_card_url") or notification) if cat in ("admit card", "admitcard") else
+        (row.get("result_url") or notification) if cat in ("result", "results") else None
     )
 
     if not title:
@@ -108,7 +108,7 @@ def write_report(rows, output=OUT):
     path = output / "published-jobs-adsense-audit.csv"
     fields = [
         "id", "title", "department", "category", "status", "last_date",
-        "description_length", "notification_url", "source_url", "apply_url",
+        "description_length", "description", "notification_url", "source_url", "apply_url",
         "admit_card_url", "result_url", "recommended_action", "review_flags",
     ]
     with path.open("w", newline="", encoding="utf-8-sig") as stream:
@@ -124,6 +124,7 @@ def write_report(rows, output=OUT):
                 "status": row.get("status", ""),
                 "last_date": row.get("last_date", ""),
                 "description_length": len(str(row.get("description") or "").strip()),
+                "description": row.get("description", ""),
                 "notification_url": row.get("notification_url", ""),
                 "source_url": row.get("source_url", ""),
                 "apply_url": row.get("apply_url", ""),
@@ -132,8 +133,13 @@ def write_report(rows, output=OUT):
                 "recommended_action": action,
                 "review_flags": ";".join(flags),
             })
+    # Keep a private full-row snapshot so the owner can restore records
+    # before any separately approved destructive cleanup.
+    import json
+    backup = output / "published-jobs-backup.json"
+    backup.write_text(json.dumps(rows, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     flagged = sum(bool(assess(row)[0]) for row in rows)
-    print(f"READ-ONLY AUDIT | published={len(rows)} | needs_review={flagged} | passes_basic_checks={len(rows)-flagged} | report={path}")
+    print(f"READ-ONLY AUDIT | published={len(rows)} | needs_review={flagged} | passes_basic_checks={len(rows)-flagged} | report={path} | backup={backup}")
     print("NO DATABASE ROWS WERE UPDATED OR DELETED.")
     return path
 
