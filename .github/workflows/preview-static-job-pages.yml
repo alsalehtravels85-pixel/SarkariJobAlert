@@ -1,0 +1,64 @@
+name: SarkariJobAlert - Static Pages Preview Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [adsense-readiness-audit]
+    paths:
+      - "scripts/generate_job_pages.py"
+      - "scripts/generate_job_sitemap.py"
+      - "tests/test_generate_job_pages.py"
+      - ".github/workflows/preview-static-job-pages.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: adsense-readiness-audit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install requests
+      - name: Run static page regression tests
+        run: python -m unittest tests.test_generate_job_pages -v
+      - name: Generate real static job pages and sitemap from published records
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python scripts/generate_job_pages.py
+          python scripts/generate_job_sitemap.py
+      - name: Validate generated HTML and sitemap
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          pages = sorted(Path("jobs").glob("*.html"))
+          assert pages, "No static job pages generated"
+          for page in pages:
+              body = page.read_text(encoding="utf-8")
+              assert '<link rel="canonical"' in body, page
+              assert '<meta name="description"' in body, page
+              assert '<meta name="robots" content="index,follow' in body, page
+              assert "sarkari-jobalert.com/jobs/" in body, page
+          root = ET.parse("sitemap-jobs.xml").getroot()
+          urls = root.findall("{http://www.sitemaps.org/schemas/sitemap/0.9}url")
+          assert len(urls) == len(pages), (len(urls), len(pages))
+          print(f"Validated {len(pages)} generated HTML pages and {len(urls)} sitemap URLs")
+          PY
+      - name: Upload static page preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sja-static-pages-preview
+          path: |
+            jobs/
+            sitemap-jobs.xml
+          if-no-files-found: error
+          retention-days: 14
