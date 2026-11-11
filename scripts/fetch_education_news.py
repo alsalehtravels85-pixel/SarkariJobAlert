@@ -108,7 +108,7 @@ def collect_items():
                 "source_url": link,
                 "source_name": source_from_item(item),
                 "original_published_at": published,
-                "status": "draft"  # RSS headline excerpts are not standalone editorial articles.,
+                "status": "draft",  # RSS headline excerpts are not standalone editorial articles.
                 "published_at": NOW.isoformat(),
                 "updated_at": NOW.isoformat(),
             })
