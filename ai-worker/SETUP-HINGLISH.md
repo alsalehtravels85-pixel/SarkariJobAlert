@@ -1,24 +1,27 @@
 # SarkariJobAlert AI Worker setup (Hinglish)
 
-Yeh alag Worker hai; existing Pages, push-notification Worker, Supabase schema aur scanner ko replace nahi karta.
+Yeh alag Cloudflare Worker hai. Existing Pages frontend, push-notification Worker, Supabase schema aur job scanner ko replace ya modify nahi karta.
 
-## Cloudflare setup
-1. Cloudflare Dashboard → Workers & Pages → Create → Worker. Name: sarkarijobalert-ai.
-2. Is folder ki index.js paste karke Deploy karein.
-3. Settings → Bindings → Add → Workers AI. Binding variable exactly AI.
-4. Settings → Variables and Secrets mein SUPABASE_URL aur SUPABASE_ANON_KEY add karein (existing public project URL/publishable key). Service-role key kabhi na daalein.
-5. Worker URL note karein, e.g. https://sarkarijobalert-ai.<account-subdomain>.workers.dev.
+## Automated deployment
+GitHub Actions workflow `.github/workflows/deploy-ai-worker.yml` Worker ko deploy karta hai. Repository Actions secrets:
+- `CLOUDFLARE_API_TOKEN`: dedicated token with Account / Workers Scripts / Edit permission.
+- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID.
+- `GEMINI_API_KEY`: existing Gemini API key.
+- `SUPABASE_URL`: Supabase project URL.
+- `SUPABASE_ANON_KEY`: Supabase publishable/anon key (copy the public key from root config.js).
 
-## Frontend connect
-Root config.js mein AI_WORKER_URL ko actual Worker URL se set karein. Commit ke baad Pages deployment check karein. Worker URL + /health open karke ok:true aur aiConfigured:true verify karein.
+Do NOT configure or use the Supabase service-role key for this Worker. The Worker uses the public anon/publishable key and relies on Supabase RLS to expose published jobs only.
 
-## Privacy / limits
-- Workers AI free allocation limited hai, unlimited free nahi. Current usage/pricing Cloudflare docs mein verify karein.
-- Job Passport v1 localStorage mein save hota hai. Profile sirf chat/matching request ke waqt Worker ko bheja jata hai; Supabase mein save nahi hota.
-- AI Worker sirf published jobs read karta hai. Drafts, admin accounts, push subscriptions ya job rows modify nahi karta.
-- AI responses galat/incomplete ho sakte hain; official notice se dates/fees/eligibility verify karein.
-- CORS origin check alone complete abuse protection nahi. Public launch se pehle Cloudflare rate limiting/Turnstile aur usage monitoring configure karein.
-- Worker unconfigured ho to AI feature error show karega; normal website chalti rahegi.
+## Frontend
+The root config.js points to `https://sarkarijobalert-ai.gulfjob.workers.dev`. Confirm that this is the exact Worker URL after deployment. Test `/health`; it should return `ok:true` and `configured:true`.
+
+## Privacy and safeguards
+- Gemini API key is stored as a Cloudflare Worker secret and never sent to the browser.
+- Job Passport stays in browser localStorage; it is sent only with a chat/matching request and is not written to Supabase.
+- Worker reads only published jobs; it has no insert/update/delete endpoints.
+- AI may be inaccurate; verify dates, fees and eligibility against the official notification.
+- CORS allows only the production custom domain and www host. If Pages preview domains are needed, add the exact trusted hostname explicitly.
+- Before broad public launch, configure Cloudflare rate limiting / Turnstile and monitor Gemini API usage.
 
 Endpoints: GET /health, POST /chat, POST /match.
-Model: @cf/meta/llama-3.1-8b-instruct-fast via Workers AI binding.
+Model: `gemini-3.8-flash` through Google's Gemini generateContent API.
