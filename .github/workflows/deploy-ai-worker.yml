@@ -50,7 +50,7 @@ jobs:
         run: |
           test -n "$SUPABASE_URL"
           printf '%s' "$SUPABASE_URL" | wrangler secret put SUPABASE_URL
-      - name: Upload Supabase service role key
+      - name: Upload Supabase anon key
         working-directory: ai-worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
