@@ -54,31 +54,7 @@ MTS पदों के लिए 10वीं/मैट्रिक की य�
 
 Last verified: 11 November 2026."""
 },
-"48178d2a-d322-4979-9f5c-e3c5f45503e0":{
- "status":"published","admit_card_url":IIBF_ADMIT,"notification_url":IIBF_ADMIT,"source_url":"https://www.iibf.org.in/",
- "description":"""# JAIIB November 2026 Admit Card – IIBF Hall Ticket
 
-Indian Institute of Banking & Finance (IIBF) के JAIIB November 2026 examination के लिए registered candidates अपना admit card IIBF के candidate login/profile से प्राप्त कर सकते हैं। यह सुविधा केवल इस परीक्षा के लिए पंजीकृत अभ्यर्थियों के लिए है।
-
-## Admit Card कैसे डाउनलोड करें
-1. IIBF की official website खोलें।
-2. Notice / Admit Letter – JAIIB/DBF पेज पर जाएं।
-3. JAIIB November 2026 से संबंधित admit-letter सूचना चुनें।
-4. Candidate login/profile में अपने registered credentials से sign in करें।
-5. Admit card डाउनलोड करके नाम, registration details, subject, exam date, session और centre जांचें।
-6. परीक्षा के दिन admit card में बताए गए identity proof और अन्य निर्देशों का पालन करें।
-
-## जरूरी सावधानियां
-- अपना password, OTP या login details किसी के साथ साझा न करें।
-- यदि admit card profile में दिखाई नहीं देता, तो IIBF की official help/support से संपर्क करें।
-- परीक्षा की तिथि, समय और centre वही मानें जो आपके व्यक्तिगत admit card पर छपे हैं।
-
-## Official Links
-- IIBF JAIIB Admit Letter page: https://www.iibf.org.in/pages/notice-admit-letter-jaiib-dbf
-- IIBF Official Website: https://www.iibf.org.in/
-
-Last verified: 11 November 2026."""
-},
 "a505fb3b-9926-40f6-940f-36c5f0353bf0":{
  "description":"""# UPSSSC BCG Technician Result 2026 – 76 अभ्यर्थी अभिलेख परीक्षण के लिए अर्ह
 
