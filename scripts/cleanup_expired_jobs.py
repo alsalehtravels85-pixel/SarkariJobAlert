@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Delete expired vacancies (manual or scanner-created) 30 days after last_date.
+"""Unpublish expired vacancy posts while preserving their records.
 
 Only Latest Jobs, Vacancy and Jobs categories are eligible. Admit Cards,
-Results and other categories are excluded. Missing or invalid last_date is not deleted.
+Results and other categories are excluded. Missing or invalid last_date is
+never changed. Expired rows are moved from published to draft, not deleted,
+so administrators can review or restore them when appropriate.
 """
 import os
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import requests
@@ -26,19 +28,17 @@ def main():
         print("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY GitHub secret")
         return 2
 
-    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-    cutoff = (today - timedelta(days=30)).isoformat()
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
     session = requests.Session()
-    deleted = 0
+    unpublished = 0
 
-    # Re-query from the beginning after each batch so there is no offset
-    # pagination gap when the selected records are deleted.
     try:
         while True:
             params = {
-                "select": "id,title,last_date",
+                "select": "id,title,last_date,status",
+                "status": "eq.published",
                 "category": 'in.("Latest Jobs",Vacancy,Jobs)',
-                "last_date": "lte." + cutoff,
+                "last_date": "lt." + today,
                 "order": "last_date.asc",
                 "limit": "100",
             }
@@ -56,39 +56,34 @@ def main():
             if not ids:
                 raise ValueError("Eligible rows returned without IDs")
 
-            delete_params = {
+            update_params = {
                 "id": "in.(" + ",".join(ids) + ")",
-                "last_date": "lte." + cutoff,
+                "status": "eq.published",
+                "last_date": "lt." + today,
             }
-            result = session.delete(
+            result = session.patch(
                 DB + "/rest/v1/jobs",
                 headers=HEADERS,
-                params=delete_params,
+                params=update_params,
+                json={"status": "draft"},
                 timeout=30,
             )
             result.raise_for_status()
-            removed = result.json() if result.content else []
-            if not isinstance(removed, list):
-                raise ValueError("Unexpected delete response (expected list)")
-            if not removed:
-                raise RuntimeError("No rows deleted; stopping to avoid infinite loop")
-            deleted += len(removed)
-            for row in removed:
-                print(
-                    "DELETED",
-                    row.get("id"),
-                    row.get("title"),
-                    "last_date=",
-                    row.get("last_date"),
-                )
+            changed = result.json() if result.content else []
+            if not isinstance(changed, list):
+                raise ValueError("Unexpected update response (expected list)")
+            if not changed:
+                raise RuntimeError("No rows updated; stopping to avoid an infinite loop")
 
-        print(
-            f"CLEANUP REPORT | India date={today} | vacancy last_date<={cutoff}"
-            f" | deleted={deleted} | manual+automatic | all statuses"
-        )
+            unpublished += len(changed)
+            for row in changed:
+                print("UNPUBLISHED", row.get("id"), row.get("title"),
+                      "last_date=", row.get("last_date"))
+
+        print(f"EXPIRY REVIEW | India date={today} | expired published vacancies moved to draft={unpublished} | records preserved")
         return 0
     except Exception as exc:
-        print("CLEANUP ERROR:", exc)
+        print("EXPIRY CLEANUP ERROR:", str(exc)[:500])
         return 1
 
 
