@@ -27,6 +27,11 @@ REVIEW={
  "fbc12022-f7d7-4f1d-89e0-550e1424a500":"application deadline has passed",
  "fe45b44a-677a-42a1-9636-747f3cb4696e":"application deadline has passed",
  "7ddf059b-b02e-4ad7-8913-d7e7182a4d85":"vacancy count and key recruitment facts not confirmed from official notice",
+ "d5777272-7ea6-45d0-953f-c4b96533aa69":"NICL Graduate Apprentice article links only to generic NICL and NATS homepages; specific official notice/application listing not verified",
+ "f0fd898b-f454-4ba6-8d5f-6b18255ee18c":"CEN 09/2026 Isolated Categories notice could not be confirmed on official RRB recruitment notices; listed PDF is hosted by a third party",
+ "dedd2681-92ca-4691-bda2-7e668dfb74a4":"Bulandshahar ECCE listing does not match verified current Sewayojan records; matching records found had earlier closing dates",
+ "6a543f95-0070-42fa-a777-7cd6f8e5f6e0":"UPSSSC PET 2026 exam dates ended on 1 November 2026; admit-card page is no longer a timely update",
+ "0854e0e3-437d-4999-8e7d-14de08a4ee0b":"SSC MTS Havaldar PET/PST exam date 3 November 2026 has passed; archive pending next official stage",
 }
 def main():
  h={"apikey":KEY,"Authorization":f"Bearer {KEY}"}
