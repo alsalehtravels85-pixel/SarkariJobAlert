@@ -3,7 +3,7 @@
 
 Uses the existing Supabase jobs table and service-role credentials supplied by
 GitHub Actions. Drafts are never included. Expired Vacancy posts are excluded.
-Current public detail URLs use the site's existing ?job=<id> deep-link route.
+Current public detail URLs use crawlable /jobs/<slug>-<id>.html pages.
 """
 import os
 import sys
@@ -48,7 +48,7 @@ def main():
 
     while True:
         params = {
-            "select": "id,category,last_date,updated_at,created_at,status",
+            "select": "id,title,category,last_date,updated_at,created_at,status",
             "status": "eq.published",
             "order": "updated_at.desc.nullslast,created_at.desc",
             "limit": PAGE_SIZE,
