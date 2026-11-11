@@ -52,6 +52,17 @@ class StaticJobPageTests(unittest.TestCase):
         self.assertIn("परिणाम देखें", render_page(result))
         self.assertIn("Declared", render_page(result))
 
+    def test_result_page_prefers_specific_official_notice_over_homepage(self):
+        row = self.sample(
+            category="Result",
+            result_url="https://bpsc.bihar.gov.in/",
+            notification_url="https://bpsc.bihar.gov.in/wp-content/uploads/result.pdf",
+            merit_list_url="https://bpsc.bihar.gov.in/",
+        )
+        page = render_page(row)
+        self.assertIn('href="https://bpsc.bihar.gov.in/wp-content/uploads/result.pdf"', page)
+        self.assertNotIn(">मेरिट सूची ↗</a>", page)
+
     def test_generator_removes_stale_html_but_preserves_other_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / "jobs"
