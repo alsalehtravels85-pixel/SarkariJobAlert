@@ -30,6 +30,16 @@ class PublishedJobsAuditTests(unittest.TestCase):
         self.assertEqual(flags, [])
         self.assertEqual(action, "PASSES_BASIC_CHECKS")
 
+    def test_result_category_accepts_official_notification_page(self):
+        row = {
+            "id": "4", "title": "Board Result", "department": "Board",
+            "category": "Result", "description": "Useful details " * 30,
+            "notification_url": "https://example.gov.in/results",
+        }
+        flags, action = assess(row)
+        self.assertNotIn("missing_result_link", flags)
+        self.assertEqual(action, "PASSES_BASIC_CHECKS")
+
     def test_report_is_csv_and_read_only(self):
         row = {"id": "3", "title": "Old", "category": "Vacancy", "description": "x", "last_date": "2020-01-01"}
         with tempfile.TemporaryDirectory() as tmp:
@@ -38,6 +48,7 @@ class PublishedJobsAuditTests(unittest.TestCase):
             self.assertIn("expired_vacancy", content)
             self.assertIn("REVIEW_BEFORE_PUBLISH", content)
             self.assertTrue(path.exists())
+            self.assertTrue((Path(tmp) / "published-jobs-backup.json").exists())
 
 
 if __name__ == "__main__":
