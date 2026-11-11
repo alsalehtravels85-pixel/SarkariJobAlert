@@ -1,11 +1,11 @@
 const ORIGIN="https://sarkari-jobalert.com";
 const MODEL="gemini-3.8-flash";
-const allowed=o=>{try{const u=new URL(o);return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com"||u.hostname.endsWith(".pages.dev"))?u.origin:null}catch{return null}};
+const allowed=o=>{try{const u=new URL(o);return u.protocol==="https:"&&(u.hostname==="sarkari-jobalert.com"||u.hostname==="www.sarkari-jobalert.com")?u.origin:null}catch{return null}};
 const headers=o=>({"Access-Control-Allow-Origin":allowed(o)||ORIGIN,"Access-Control-Allow-Methods":"GET,POST,OPTIONS","Access-Control-Allow-Headers":"Content-Type","Vary":"Origin"});
 const reply=(d,s=200,o="")=>new Response(JSON.stringify(d),{status:s,headers:{...headers(o),"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"}});
 const clean=(v,n=500)=>String(v??"").replace(/[<>]/g,"").replace(/\s+/g," ").trim().slice(0,n);
 async function jobs(env){
- const base=String(env.SUPABASE_URL||"").replace(/\/$/,""),key=env.SUPABASE_SERVICE_ROLE_KEY;
+ const base=String(env.SUPABASE_URL||"").replace(/\/$/,""),key=env.SUPABASE_ANON_KEY;
  if(!base||!key)throw Error("Supabase Worker configuration incomplete.");
  const cols="id,title,department,category,vacancies,last_date,qualification,age_limit,fees,selection_process,notification_url,apply_url,description";
  const r=await fetch(base+"/rest/v1/jobs?status=eq.published&select="+encodeURIComponent(cols)+"&order=created_at.desc&limit=40",{headers:{apikey:key,Authorization:"Bearer "+key}});
@@ -26,7 +26,7 @@ export default{async fetch(req,env){
  if(req.method==="OPTIONS")return allowed(origin)?new Response(null,{status:204,headers:headers(origin)}):new Response(null,{status:403});
  if(!allowed(origin))return reply({error:"Origin not allowed."},403,origin);
  const u=new URL(req.url);
- if(req.method==="GET"&&u.pathname==="/health")return reply({ok:true,service:"SarkariJobAlert AI",provider:"Gemini",model:MODEL,configured:!!env.GEMINI_API_KEY&&!!env.SUPABASE_URL&&!!env.SUPABASE_SERVICE_ROLE_KEY},200,origin);
+ if(req.method==="GET"&&u.pathname==="/health")return reply({ok:true,service:"SarkariJobAlert AI",provider:"Gemini",model:MODEL,configured:!!env.GEMINI_API_KEY&&!!env.SUPABASE_URL&&!!env.SUPABASE_ANON_KEY},200,origin);
  if(req.method!=="POST"||!["/chat","/match"].includes(u.pathname))return reply({error:"Not found."},404,origin);
  let body;try{body=await req.json()}catch{return reply({error:"Invalid request."},400,origin)}
  if(JSON.stringify(body).length>12000)return reply({error:"Request too large."},413,origin);
