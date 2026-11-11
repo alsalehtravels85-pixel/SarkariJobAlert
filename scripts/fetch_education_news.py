@@ -131,13 +131,7 @@ def main():
         if not response.ok:
             raise RuntimeError(f"Supabase insert failed ({response.status_code}): {response.text[:500]}")
         inserted += 1
-    # Keep feed compact: retain the latest 120 news rows; no existing study-guide rows are touched.
-    cutoff = (NOW - dt.timedelta(days=60)).isoformat()
-    cleanup_headers = dict(HEADERS)
-    cleanup_headers["Prefer"] = "return=minimal"
-    cleanup = requests.delete(endpoint, headers=cleanup_headers, params={"article_type":"eq.news", "created_at":f"lt.{cutoff}"}, timeout=25)
-    if not cleanup.ok:
-        print(f"Old news cleanup skipped: {cleanup.status_code}")
+    # Preserve all existing news rows; do not delete content automatically.
     print(f"RSS feed saved as Draft for editorial review: {inserted} headlines; nothing auto-published.")
 
 if __name__ == "__main__":
