@@ -1,0 +1,39 @@
+name: SarkariJobAlert - Safe AdSense Content Cleanup
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [adsense-readiness-audit]
+    paths:
+      - "scripts/quarantine_flagged_jobs.py"
+      - ".github/workflows/adsense-content-cleanup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: adsense-readiness-audit
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependency
+        run: python -m pip install requests
+      - name: Backup and move flagged public posts to Draft
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python scripts/quarantine_flagged_jobs.py
+      - name: Upload pre-cleanup backup
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sja-pre-quarantine-database-backup
+          path: audit-output/pre-quarantine-published-jobs.json
+          if-no-files-found: warn
+          retention-days: 30
