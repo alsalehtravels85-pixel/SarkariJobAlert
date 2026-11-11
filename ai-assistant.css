@@ -28,3 +28,12 @@
 .sja-ai-feature-cta{margin-top:auto;padding-top:3px;font-size:10px;font-weight:800;color:#0754d9}
 .sja-ai-welcome-note{padding:10px 12px;border-radius:11px;background:#eaf5ff;color:#28517e;font-size:11px;line-height:1.55}
 @media(max-width:380px){.sja-ai-feature-grid{grid-template-columns:1fr}.sja-ai-new{padding:7px 8px}}
+
+/* Compact student education-guide suggestion under every AI reply */
+.sja-ai-guide-tip{display:flex;align-items:center;gap:8px;margin-top:7px;padding:8px 10px;border:1px solid #cfe2fa;border-radius:11px;background:linear-gradient(110deg,#f0f7ff,#e8f8ff);color:#16477d;text-decoration:none;max-width:100%;box-sizing:border-box}
+.sja-ai-guide-tip>span:first-child{font-size:18px;flex:0 0 auto}
+.sja-ai-guide-tip>span:nth-child(2){display:grid;gap:2px;min-width:0;flex:1}
+.sja-ai-guide-tip b{font-size:10px;line-height:1.3}
+.sja-ai-guide-tip small{font-size:9px;color:#607895;line-height:1.3}
+.sja-ai-guide-tip strong{font-size:9px;white-space:nowrap;color:#075bd9}
+.sja-ai-guide-tip:active{transform:scale(.99)}
