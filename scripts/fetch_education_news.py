@@ -108,7 +108,7 @@ def collect_items():
                 "source_url": link,
                 "source_name": source_from_item(item),
                 "original_published_at": published,
-                "status": "published",
+                "status": "draft"  # RSS headline excerpts are not standalone editorial articles.,
                 "published_at": NOW.isoformat(),
                 "updated_at": NOW.isoformat(),
             })
@@ -138,7 +138,7 @@ def main():
     cleanup = requests.delete(endpoint, headers=cleanup_headers, params={"article_type":"eq.news", "created_at":f"lt.{cutoff}"}, timeout=25)
     if not cleanup.ok:
         print(f"Old news cleanup skipped: {cleanup.status_code}")
-    print(f"RSS feed processed: {inserted} current headlines; duplicates ignored by unique slug.")
+    print(f"RSS feed saved as Draft for editorial review: {inserted} headlines; nothing auto-published.")
 
 if __name__ == "__main__":
     main()
