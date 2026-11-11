@@ -731,22 +731,26 @@ async function shareJobImage(data) {
 
 document.addEventListener("click", async event => {
   const shareButton = event.target.closest("[data-share-job]");
-  if (!shareButton) return;
-  const data = getJobShareData(shareButton.dataset.shareJob);
-  if (!data) return;
-  const original = shareButton.textContent;
-  shareButton.disabled = true;
-  shareButton.textContent = "Preparing…";
-  try { await shareJobImage(data); }
-  catch (error) {
-    if (error?.name !== "AbortError") {
-      console.error("Job share failed:", error);
-      alert("Poster share nahi ho paya. Dobara try karein.");
+  if (shareButton) {
+    const data = getJobShareData(shareButton.dataset.shareJob);
+    if (!data) return;
+    const original = shareButton.textContent;
+    shareButton.disabled = true;
+    shareButton.textContent = "Preparing…";
+    try { await shareJobImage(data); }
+    catch (error) {
+      if (error?.name !== "AbortError") {
+        console.error("Job share failed:", error);
+        alert("Poster share nahi ho paya. Dobara try karein.");
+      }
+    } finally {
+      shareButton.disabled = false;
+      shareButton.textContent = original;
     }
-  } finally {
-    shareButton.disabled = false;
-    shareButton.textContent = original;
+    return;
   }
+  const detailButton = event.target.closest("[data-detail]");
+  if (detailButton) showDetails(detailButton.dataset.detail);
 });
 
   $("#detailClose").addEventListener("click", () => {
