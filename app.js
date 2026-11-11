@@ -626,7 +626,7 @@ function openSharedJobFromUrl() {
 }
 
 function posterText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
-  const words = String(text || "").split(/\\s+/);
+  const words = String(text || "").split(/\s+/);
   let line = "", lines = [];
   for (const word of words) {
     const test = line ? line + " " + word : word;
