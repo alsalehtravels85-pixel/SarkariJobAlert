@@ -2,6 +2,11 @@ name: SarkariJobAlert - Read-only AdSense Content Audit
 
 on:
   workflow_dispatch:
+  push:
+    branches: [adsense-readiness-audit]
+    paths:
+      - "scripts/audit_published_jobs.py"
+      - ".github/workflows/adsense-content-audit.yml"
 
 permissions:
   contents: read
