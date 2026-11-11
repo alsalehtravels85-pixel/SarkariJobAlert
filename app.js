@@ -615,59 +615,137 @@ function openSharedJobFromUrl() {
   }
 }
   function getJobShareData(id) {
-  const job = allJobs.find(
-    item => String(item.id) === String(id)
-  );
-
+  const job = allJobs.find(item => String(item.id) === String(id));
   if (!job) return null;
-
   const url = new URL(window.location.href);
   url.searchParams.set("job", String(job.id));
   url.hash = "";
-
   const shareUrl = url.toString();
-
-  const message =
-    `${job.title}\n` +
-    `${job.department || ""}\n` +
-    `Category: ${displayCategory(job.category)}\n` +
-    `Details: ${shareUrl}`;
-
-  return {
-    title: job.title,
-    text: message,
-    url: shareUrl
-  };
+  const message = `${job.title}\n${job.department || ""}\nCategory: ${displayCategory(job.category)}\nDetails: ${shareUrl}`;
+  return { job, title: job.title, text: message, url: shareUrl };
 }
 
-document.addEventListener("click", event => {
-  const shareButton = event.target.closest("[data-share-job]");
+function posterText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+  const words = String(text || "").split(/\\s+/);
+  let line = "", lines = [];
+  for (const word of words) {
+    const test = line ? line + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = word; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  if (lines.length > maxLines) { lines = lines.slice(0, maxLines); lines[maxLines - 1] = lines[maxLines - 1].replace(/[.…]*$/, "…"); }
+  lines.forEach((item, i) => ctx.fillText(item, x, y + i * lineHeight));
+  return lines.length;
+}
 
-  if (shareButton) {
-    const data = getJobShareData(shareButton.dataset.shareJob);
-    if (!data) return;
+async function createJobSharePoster(job) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080; canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Poster image could not be created.");
+  const bg = ctx.createLinearGradient(0, 0, 1080, 1350);
+  bg.addColorStop(0, "#062a52"); bg.addColorStop(.48, "#075ca8"); bg.addColorStop(1, "#082b55");
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, 1080, 1350);
+  const glow = ctx.createRadialGradient(850, 130, 20, 850, 130, 650);
+  glow.addColorStop(0, "rgba(27,214,190,.28)"); glow.addColorStop(1, "rgba(27,214,190,0)");
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, 1080, 780);
+  const rail = ctx.createLinearGradient(0, 0, 0, 1350);
+  rail.addColorStop(0, "#20c878"); rail.addColorStop(.5, "#20b8d1"); rail.addColorStop(1, "#7c5cff");
+  ctx.fillStyle = rail; ctx.fillRect(0, 0, 16, 1350); ctx.fillRect(1064, 0, 16, 1350);
+  ctx.strokeStyle = "rgba(255,255,255,.42)"; ctx.lineWidth = 3; ctx.strokeRect(38, 38, 1004, 1274);
 
-    if (navigator.share) {
-      navigator.share({
-        title: data.title,
-        text: data.text,
-        url: data.url
-      }).catch(() => {});
-    } else {
-      window.open(
-        "https://wa.me/?text=" + encodeURIComponent(data.text),
-        "_blank",
-        "noopener,noreferrer"
-      );
-    }
+  // Very light repeated website watermark across the full poster.
+  ctx.save(); ctx.translate(540, 680); ctx.rotate(-Math.PI / 5);
+  ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,255,255,.055)";
+  ctx.font = "bold 54px Arial";
+  for (let y = -900; y <= 900; y += 175) ctx.fillText("SARKARI-JOBALERT.COM", 0, y);
+  ctx.restore(); ctx.textAlign = "left";
+
+  ctx.fillStyle = "#fff"; ctx.font = "bold 48px Arial";
+  ctx.fillText("SARKARI JOB ALERT", 78, 112);
+  ctx.fillStyle = "#c8f7e8"; ctx.font = "bold 23px Arial";
+  ctx.fillText("LATEST GOVERNMENT JOB UPDATES", 80, 154);
+
+  const badge = ctx.createLinearGradient(0, 0, 360, 0);
+  badge.addColorStop(0, "#17c878"); badge.addColorStop(1, "#0b9eae");
+  ctx.fillStyle = badge; ctx.beginPath(); ctx.roundRect(78, 198, 330, 62, 18); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.font = "bold 26px Arial";
+  ctx.fillText(String(displayCategory(job.category) || "VACANCY").toUpperCase(), 101, 239);
+
+  ctx.fillStyle = "#fff"; ctx.font = "bold 57px Arial";
+  const titleLines = posterText(ctx, job.title || "Government Job Update", 80, 350, 920, 68, 3);
+  const deptY = 350 + titleLines * 68 + 20;
+  ctx.fillStyle = "#cceaff"; ctx.font = "bold 29px Arial";
+  posterText(ctx, job.department || "Government Department", 82, deptY, 915, 38, 2);
+
+  const rows = [
+    ["TOTAL VACANCIES", job.vacancies || "As per notification"],
+    ["LAST DATE", formatDate(job.last_date) || "Check notification"],
+    ["QUALIFICATION", job.qualification || "As per notification"],
+    ["AGE LIMIT", job.age_limit || "As per notification"],
+    ["APPLICATION FEE", job.fees || job.application_fee || "Check notification"]
+  ];
+  let y = Math.max(550, deptY + 95);
+  rows.forEach((pair, i) => {
+    const rowY = y + i * 124;
+    const grad = ctx.createLinearGradient(78, rowY, 1002, rowY + 100);
+    grad.addColorStop(0, i % 2 ? "rgba(20,190,190,.28)" : "rgba(60,120,255,.30)");
+    grad.addColorStop(1, "rgba(255,255,255,.12)");
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.roundRect(78, rowY, 924, 104, 17); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = "#b8f4df"; ctx.font = "bold 22px Arial"; ctx.fillText(pair[0], 105, rowY + 37);
+    ctx.fillStyle = "#fff"; ctx.font = "bold 30px Arial";
+    let value = String(pair[1]); while (ctx.measureText(value).width > 650 && value.length > 12) value = value.slice(0, -3) + "…";
+    ctx.fillText(value, 105, rowY + 78);
+  });
+
+  const footerY = Math.min(1225, y + rows.length * 124 + 22);
+  ctx.fillStyle = "#d4f5ff"; ctx.font = "bold 25px Arial";
+  ctx.fillText("OFFICIAL NOTIFICATION & APPLY LINK", 80, footerY);
+  ctx.fillStyle = "#fff"; ctx.font = "bold 30px Arial";
+  ctx.fillText("SARKARI-JOBALERT.COM", 80, footerY + 48);
+  ctx.fillStyle = "#c9e8ff"; ctx.font = "20px Arial";
+  ctx.fillText("Apply only after checking the official notification.", 80, footerY + 84);
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  if (!blob) throw new Error("Poster export failed.");
+  const safe = String(job.title || "Job").replace(/[^a-z0-9]+/gi, "-").slice(0, 45);
+  return new File([blob], `SarkariJobAlert-${safe}.png`, { type: "image/png" });
+}
+
+async function shareJobImage(data) {
+  const file = await createJobSharePoster(data.job);
+  const shareData = { title: data.title || "Sarkari Job Alert", text: data.text, files: [file] };
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share(shareData);
     return;
   }
+  const blobUrl = URL.createObjectURL(file);
+  const a = document.createElement("a"); a.href = blobUrl; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+  if (navigator.share) await navigator.share({ title: data.title, text: data.text, url: data.url });
+  else window.open("https://wa.me/?text=" + encodeURIComponent(data.text), "_blank", "noopener,noreferrer");
+}
 
-
-
-  const button = event.target.closest("[data-detail]");
-  if (button) {
-    showDetails(button.dataset.detail);
+document.addEventListener("click", async event => {
+  const shareButton = event.target.closest("[data-share-job]");
+  if (!shareButton) return;
+  const data = getJobShareData(shareButton.dataset.shareJob);
+  if (!data) return;
+  const original = shareButton.textContent;
+  shareButton.disabled = true;
+  shareButton.textContent = "Preparing…";
+  try { await shareJobImage(data); }
+  catch (error) {
+    if (error?.name !== "AbortError") {
+      console.error("Job share failed:", error);
+      alert("Poster share nahi ho paya. Dobara try karein.");
+    }
+  } finally {
+    shareButton.disabled = false;
+    shareButton.textContent = original;
   }
 });
 
