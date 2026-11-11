@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "scripts/cleanup_expired_jobs.py"
+      - "scripts/generate-sitemap.mjs"
+      - "sitemap.xml"
+      - ".github/workflows/update-sitemap.yml"
       - "tests/test_cleanup_expired_jobs.py"
       - "tests/test_fetch_jobs.py"
       - "scripts/fetch_jobs.py"
@@ -26,5 +29,7 @@ jobs:
         run: python -m pip install requests beautifulsoup4 pypdf certifi
       - name: Compile Python scripts
         run: python -m py_compile scripts/fetch_jobs.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py
+      - name: Validate sitemap generator syntax
+        run: node --check scripts/generate-sitemap.mjs
       - name: Run regression and cleanup safety tests
         run: python -m unittest discover -s tests -v
