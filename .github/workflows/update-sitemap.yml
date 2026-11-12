@@ -1,4 +1,4 @@
-name: Update SarkariJobAlert Static Sitemap
+name: Update SarkariJobAlert Sitemap Index
 
 on:
   workflow_dispatch:
@@ -18,16 +18,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Generate static sitemap
+      - name: Generate sitemap index and static pages
         run: node scripts/generate-sitemap.mjs
       - name: Commit sitemap if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add sitemap.xml
+          git add sitemap.xml sitemap-pages.xml
           if git diff --cached --quiet; then
-            echo "Static sitemap is already up to date."
+            echo "Sitemap files are already up to date."
           else
-            git commit -m "Update static sitemap"
+            git commit -m "Fix sitemap index and static sitemap"
             git push
           fi
