@@ -45,6 +45,25 @@
   </script>
   <link rel="stylesheet" href="styles.css?v=compact-admin-20261110-2">
   <style>
+    /* Slim top navigation: live ticker sits above the menu */
+    .topbar{
+      padding:5px clamp(10px,2.2vw,28px)!important;
+      min-height:unset!important;
+      gap:9px;
+    }
+    .brand-mark{transform:scale(.82);transform-origin:left center}
+    .brand-copy{line-height:1.08}
+    .brand-copy small{margin-top:1px!important;font-size:9px!important}
+    .main-nav{gap:4px!important}
+    .main-nav .nav-link{padding:5px 8px!important;min-height:29px!important;font-size:11px!important;line-height:1.05!important}
+    .header-actions{gap:6px!important}
+    .icon-search,.admin-open{min-height:29px!important;padding:5px 8px!important;font-size:11px!important}
+    @media(max-width:760px){
+      .topbar{padding:4px 8px!important;gap:6px}
+      .brand-mark{transform:scale(.78)}
+      .main-nav{gap:3px!important}
+      .main-nav .nav-link{padding:5px 7px!important;font-size:10px!important;min-height:27px!important}
+    }
     /* Slimmer top navigation bar */
     .topbar{
       padding-top:5px!important;padding-bottom:5px!important;
@@ -115,6 +134,7 @@
 </head>
 <body>
 
+  
     <section class="sja-live-ticker" aria-label="Sarkari Job Alert live updates">
       <div class="sja-live-heading">
         <div class="sja-live-brand"><span class="sja-live-emblem">🇮🇳</span><span>सरकारी नौकरी <b>LIVE UPDATE</b></span></div>
@@ -124,7 +144,8 @@
         <div class="sja-news-window"><div class="sja-news-track" id="sjaBreakingTrack"><span id="sjaBreakingText">नई Vacancy, Admit Card और Result अपडेट यहाँ दिखाई देंगी।</span></div></div>
       </div>
     </section>
-  <header class="topbar">
+
+<header class="topbar">
     <a class="brand" href="./" aria-label="Sarkari Job Alert home">
       <span class="brand-mark" aria-hidden="true"><span>SA</span><small>भारत</small></span>
       <span class="brand-copy">Sarkari <span class="brand-accent">Job Alert</span><small>Vacancy • Result • Admit Card</small></span>
