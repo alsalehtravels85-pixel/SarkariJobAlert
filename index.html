@@ -106,6 +106,49 @@
     @media(max-width:600px){.home-education-grid{grid-template-columns:1fr;gap:12px}.home-education-card{padding:15px}}
   
     .home-guide-subtitle{margin:5px 0 0;color:var(--muted,#64748b);font-size:.88rem;line-height:1.45}
+
+    /* Homepage compact cards: School Guide slightly slimmer, Education News much slimmer */
+    #homeEducationGuides .home-education-card{
+      padding:14px!important;
+      border-radius:13px!important;
+      box-shadow:0 5px 16px #173a750c!important;
+    }
+    #homeEducationGuides .home-education-card h3{
+      font-size:14px!important;line-height:1.35!important;
+      margin:7px 0!important;white-space:normal!important;
+      display:-webkit-box!important;-webkit-box-orient:vertical!important;
+      -webkit-line-clamp:2!important;overflow:hidden!important;
+    }
+    #homeEducationGuides .home-education-card p{
+      font-size:12px!important;line-height:1.45!important;
+      margin:6px 0 8px!important;display:-webkit-box!important;
+      -webkit-box-orient:vertical!important;-webkit-line-clamp:3!important;
+      overflow:hidden!important;
+    }
+    #homeEducationGuides .home-education-tag{padding:3px 8px!important;font-size:10px!important}
+    #homeEducationNews .home-education-card{
+      padding:10px!important;border-radius:11px!important;
+      box-shadow:0 3px 11px #173a7509!important;
+    }
+    #homeEducationNews .home-education-card h3{
+      font-size:13px!important;line-height:1.3!important;
+      margin:5px 0!important;white-space:normal!important;
+      display:-webkit-box!important;-webkit-box-orient:vertical!important;
+      -webkit-line-clamp:2!important;overflow:hidden!important;
+    }
+    #homeEducationNews .home-education-card p{
+      font-size:11px!important;line-height:1.35!important;
+      margin:4px 0 6px!important;display:-webkit-box!important;
+      -webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
+      overflow:hidden!important;
+    }
+    #homeEducationNews .home-education-tag{padding:2px 7px!important;font-size:9px!important}
+    #homeEducationNews .home-education-meta{font-size:10px!important;gap:5px!important}
+    #homeEducationNews .home-education-card>a{font-size:11px!important;padding-top:4px!important}
+    @media(max-width:600px){
+      #homeEducationGuides .home-education-card{padding:12px!important}
+      #homeEducationNews .home-education-card{padding:9px!important}
+    }
 </style>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
