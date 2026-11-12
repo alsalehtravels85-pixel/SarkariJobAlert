@@ -47,31 +47,31 @@
   <style>
     /* Slimmer top navigation bar */
     .topbar{
-      padding-top:8px!important;padding-bottom:8px!important;
-      min-height:unset!important;gap:12px;
+      padding-top:5px!important;padding-bottom:5px!important;
+      min-height:unset!important;gap:10px;
     }
-    .brand-mark{transform:scale(.92);transform-origin:left center}
-    .brand-copy{line-height:1.15}
-    .brand-copy small{margin-top:2px!important;font-size:10px!important}
-    .main-nav{gap:5px!important}
+    .brand-mark{transform:scale(.86);transform-origin:left center}
+    .brand-copy{line-height:1.1}
+    .brand-copy small{margin-top:1px!important;font-size:9px!important}
+    .main-nav{gap:4px!important}
     .main-nav .nav-link{
-      padding:7px 9px!important;min-height:32px!important;
-      font-size:12px!important;line-height:1.1!important;
+      padding:6px 8px!important;min-height:29px!important;
+      font-size:11px!important;line-height:1.1!important;
       cursor:pointer;white-space:nowrap;
     }
-    .header-actions{gap:8px!important}
+    .header-actions{gap:7px!important}
     .icon-search,.admin-open{
-      min-height:32px!important;padding:7px 9px!important;
-      font-size:12px!important;
+      min-height:29px!important;padding:6px 8px!important;
+      font-size:11px!important;
     }
     .main-nav .nav-link.nav-working-active{
       background:#e7efff!important;color:#1746a2!important;
       border-radius:9px;font-weight:800;
     }
     @media(max-width:760px){
-      .topbar{padding:7px 10px!important;gap:8px}
-      .main-nav{gap:4px!important}
-      .main-nav .nav-link{padding:7px 8px!important;font-size:11px!important}
+      .topbar{padding:5px 10px!important;gap:7px}
+      .main-nav{gap:3px!important}
+      .main-nav .nav-link{padding:6px 7px!important;font-size:10px!important;min-height:28px!important}
     }
     /* Education articles and news: four cards per row on desktop */
     .home-education-section{margin-top:28px}
@@ -114,6 +114,16 @@
 </style>
 </head>
 <body>
+
+    <section class="sja-live-ticker" aria-label="Sarkari Job Alert live updates">
+      <div class="sja-live-heading">
+        <div class="sja-live-brand"><span class="sja-live-emblem">🇮🇳</span><span>सरकारी नौकरी <b>LIVE UPDATE</b></span></div>
+      </div>
+      <div class="sja-live-news">
+        <div class="sja-live-badge"><i></i> LIVE</div>
+        <div class="sja-news-window"><div class="sja-news-track" id="sjaBreakingTrack"><span id="sjaBreakingText">नई Vacancy, Admit Card और Result अपडेट यहाँ दिखाई देंगी।</span></div></div>
+      </div>
+    </section>
   <header class="topbar">
     <a class="brand" href="./" aria-label="Sarkari Job Alert home">
       <span class="brand-mark" aria-hidden="true"><span>SA</span><small>भारत</small></span>
@@ -135,15 +145,6 @@
   <main>
     <section class="hero">
 
-    <section class="sja-live-ticker" aria-label="Sarkari Job Alert live updates">
-      <div class="sja-live-heading">
-        <div class="sja-live-brand"><span class="sja-live-emblem">🇮🇳</span><span>सरकारी नौकरी <b>LIVE UPDATE</b></span></div>
-      </div>
-      <div class="sja-live-news">
-        <div class="sja-live-badge"><i></i> LIVE</div>
-        <div class="sja-news-window"><div class="sja-news-track" id="sjaBreakingTrack"><span id="sjaBreakingText">नई Vacancy, Admit Card और Result अपडेट यहाँ दिखाई देंगी।</span></div></div>
-      </div>
-    </section>
       <div class="patriotic-art" aria-hidden="true">
         <div class="tricolor tricolor-left"></div><div class="tricolor tricolor-right"></div>
         <div class="chakra">☸</div>
