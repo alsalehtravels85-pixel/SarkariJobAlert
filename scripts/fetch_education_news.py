@@ -108,7 +108,7 @@ def collect_items():
                 "source_url": link,
                 "source_name": source_from_item(item),
                 "original_published_at": published,
-                "status": "draft",  # RSS headline excerpts are not standalone editorial articles.
+                "status": "published",  # Publish attributed headline + short excerpt; link readers to the original publisher.
                 "published_at": NOW.isoformat(),
                 "updated_at": NOW.isoformat(),
             })
@@ -130,9 +130,19 @@ def main():
         response = requests.post(endpoint, headers=HEADERS, params={"on_conflict": "slug"}, json=item, timeout=25)
         if not response.ok:
             raise RuntimeError(f"Supabase insert failed ({response.status_code}): {response.text[:500]}")
+        # Also publish an earlier matching Draft without replacing its edited title/content.
+        publish_response = requests.patch(
+            endpoint,
+            headers={**HEADERS, "Prefer": "return=minimal"},
+            params={"slug": f"eq.{item['slug']}"},
+            json={"status": "published", "updated_at": NOW.isoformat()},
+            timeout=25,
+        )
+        if not publish_response.ok:
+            raise RuntimeError(f"Supabase publish failed ({publish_response.status_code}): {publish_response.text[:500]}")
         inserted += 1
-    # Preserve all existing news rows; do not delete content automatically.
-    print(f"RSS feed saved as Draft for editorial review: {inserted} headlines; nothing auto-published.")
+    # Keep the feed idempotent and never delete existing school articles.
+    print(f"Education news feed published: {inserted} headlines; original publisher links retained.")
 
 if __name__ == "__main__":
     main()
