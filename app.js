@@ -465,9 +465,9 @@
       if (!raw) return L.unavailable;
 
       // Descriptions may contain intentional HTML formatting. Render only a
-      // small safe allow-list instead of escaping tags and showing them as text.
+      // small safe allow-list instead of showing HTML tags as visible text.
       const template = document.createElement("template");
-      if (/<\\s*[a-z][^>]*>/i.test(raw)) {
+      if (/<\s*[a-z][^>]*>/i.test(raw)) {
         template.innerHTML = raw;
       } else {
         raw.split(/\n{2,}|\n/).map(part => part.trim()).filter(Boolean)
@@ -480,7 +480,7 @@
 
       // SEO metadata belongs in the page head, not in the visible article.
       template.content.querySelectorAll("p,div").forEach(node => {
-        if (/^SEO\\s*Meta\\s*Description\\s*:/i.test(node.textContent.trim())) {
+        if (/^SEO\s*Meta\s*Description\s*:/i.test(node.textContent.trim())) {
           node.remove();
         }
       });
@@ -490,7 +490,7 @@
       function renderSafe(node) {
         if (node.nodeType === Node.TEXT_NODE) {
           const text = node.nodeValue || "";
-          if (/[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b/i.test(text) ||
+          if (/[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\bpage\s+\d+\s+of\s+\d+\b/i.test(text) ||
               /This automatically collected entry is saved as a draft/i.test(text)) return "";
           return escapeHtml(text);
         }
@@ -584,7 +584,7 @@
     const descriptionText = document.createElement("div");
     descriptionText.innerHTML = descriptionSource;
     let description = (descriptionText.textContent || descriptionText.innerText || descriptionSource)
-      .replace(/^SEO\\s*Meta\\s*Description\\s*:\\s*/i, "")
+      .replace(/^SEO\s*Meta\s*Description\s*:\s*/i, "")
       .replace(/\s+/g, " ").trim();
     if (description.length > 155) description = description.slice(0, 152).trimEnd() + "...";
 
