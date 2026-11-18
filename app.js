@@ -470,12 +470,44 @@
       if (/<\s*[a-z][^>]*>/i.test(raw)) {
         template.innerHTML = raw;
       } else {
-        raw.split(/\n{2,}|\n/).map(part => part.trim()).filter(Boolean)
-          .forEach(part => {
-            const p = document.createElement("p");
-            p.textContent = part;
-            template.content.appendChild(p);
-          });
+        // Convert common Markdown markers (# headings, **bold**, bullets)
+        // into HTML so formatting symbols are never shown to readers.
+        const inlineMarkdown = (line) => escapeHtml(line)
+          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+          .replace(/__(.+?)__/g, "<strong>$1</strong>")
+          .replace(/\*(.+?)\*/g, "<em>$1</em>")
+          .replace(/_(.+?)_/g, "<em>$1</em>")
+          .replace(/\`([^\`]+)\`/g, "<strong>$1</strong>");
+        const lines = raw.split("\n");
+        const output = [];
+        let listType = null;
+        const closeList = () => {
+          if (listType) output.push(`</${listType}>`);
+          listType = null;
+        };
+        for (const sourceLine of lines) {
+          const line = sourceLine.trim();
+          if (!line) { closeList(); continue; }
+          const heading = line.match(/^(#{1,4})\s+(.+)$/);
+          if (heading) {
+            closeList();
+            const level = Math.min(4, Math.max(2, heading[1].length));
+            output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+            continue;
+          }
+          const bullet = line.match(/^[-*+]\s+(.+)$/);
+          const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+          if (bullet || numbered) {
+            const nextType = bullet ? "ul" : "ol";
+            if (listType !== nextType) { closeList(); output.push(`<${nextType}>`); listType = nextType; }
+            output.push(`<li>${inlineMarkdown((bullet || numbered)[1])}</li>`);
+            continue;
+          }
+          closeList();
+          output.push(`<p>${inlineMarkdown(line)}</p>`);
+        }
+        closeList();
+        template.innerHTML = output.join("");
       }
 
       // SEO metadata belongs in the page head, not in the visible article.
