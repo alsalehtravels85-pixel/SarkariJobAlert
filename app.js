@@ -463,13 +463,57 @@
     function readableDescription(value) {
       const raw = String(value || "").replace(/\r/g, "").trim();
       if (!raw) return L.unavailable;
-      const parts = raw.split(/(?<=[.!?।])\s+/).filter(Boolean);
-      const good = parts.filter(part =>
-        !/[�\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\bpage\s+\d+\s+of\s+\d+\b/i.test(part) &&
-        !/This automatically collected entry is saved as a draft/i.test(part)
-      );
-      if (good.length !== parts.length) hiddenUnclearFields++;
-      return good.length ? good.map(part => `<p>${escapeHtml(part)}</p>`).join("") : L.badText;
+
+      // Descriptions may contain intentional HTML formatting. Render only a
+      // small safe allow-list instead of escaping tags and showing them as text.
+      const template = document.createElement("template");
+      if (/<\\s*[a-z][^>]*>/i.test(raw)) {
+        template.innerHTML = raw;
+      } else {
+        raw.split(/\n{2,}|\n/).map(part => part.trim()).filter(Boolean)
+          .forEach(part => {
+            const p = document.createElement("p");
+            p.textContent = part;
+            template.content.appendChild(p);
+          });
+      }
+
+      // SEO metadata belongs in the page head, not in the visible article.
+      template.content.querySelectorAll("p,div").forEach(node => {
+        if (/^SEO\\s*Meta\\s*Description\\s*:/i.test(node.textContent.trim())) {
+          node.remove();
+        }
+      });
+
+      const allowed = new Set(["P","H2","H3","H4","UL","OL","LI","STRONG","B","EM","I","BR","BLOCKQUOTE","A"]);
+      const blocked = new Set(["SCRIPT","STYLE","IFRAME","OBJECT","EMBED","SVG","MATH","FORM","INPUT","BUTTON","VIDEO","AUDIO"]);
+      function renderSafe(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.nodeValue || "";
+          if (/[�\\uFFFD]|Ã.|Â.|â€|â€™|â€œ|\\bpage\\s+\\d+\\s+of\\s+\\d+\\b/i.test(text) ||
+              /This automatically collected entry is saved as a draft/i.test(text)) return "";
+          return escapeHtml(text);
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE || blocked.has(node.tagName)) return "";
+        const children = Array.from(node.childNodes).map(renderSafe).join("");
+        if (!allowed.has(node.tagName)) return children;
+        const tag = node.tagName.toLowerCase();
+        if (tag === "br") return "<br>";
+        if (tag === "a") {
+          const href = node.getAttribute("href") || "";
+          try {
+            const url = new URL(href, window.location.href);
+            if (url.protocol === "https:" || url.protocol === "http:") {
+              return `<a href="${escapeHtml(url.href)}" target="_blank" rel="noopener noreferrer nofollow">${children}</a>`;
+            }
+          } catch (_) {}
+          return children;
+        }
+        return `<${tag}>${children}</${tag}>`;
+      }
+
+      const html = Array.from(template.content.childNodes).map(renderSafe).join("").trim();
+      return html || L.badText;
     }
 
     function addRow(label, value) {
@@ -536,7 +580,11 @@
     const title = `${job.title} | Sarkari Job Alert`;
     document.title = title;
 
-    let description = String(job.description || `${job.title} की पूरी जानकारी, योग्यता, महत्वपूर्ण तिथियां और आधिकारिक आवेदन लिंक देखें।`)
+    const descriptionSource = String(job.description || `${job.title} की पूरी जानकारी, योग्यता, महत्वपूर्ण तिथियां और आधिकारिक आवेदन लिंक देखें।`);
+    const descriptionText = document.createElement("div");
+    descriptionText.innerHTML = descriptionSource;
+    let description = (descriptionText.textContent || descriptionText.innerText || descriptionSource)
+      .replace(/^SEO\\s*Meta\\s*Description\\s*:\\s*/i, "")
       .replace(/\s+/g, " ").trim();
     if (description.length > 155) description = description.slice(0, 152).trimEnd() + "...";
 
