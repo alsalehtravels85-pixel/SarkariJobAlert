@@ -470,41 +470,33 @@
       if (/<\s*[a-z][^>]*>/i.test(raw)) {
         template.innerHTML = raw;
       } else {
-        // Convert common Markdown markers (# headings, **bold**, bullets)
-        // into HTML so formatting symbols are never shown to readers.
-        const inlineMarkdown = (line) => escapeHtml(line)
-          .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-          .replace(/__(.+?)__/g, "<strong>$1</strong>")
-          .replace(/\*(.+?)\*/g, "<em>$1</em>")
-          .replace(/_(.+?)_/g, "<em>$1</em>")
-          .replace(/\`([^\`]+)\`/g, "<strong>$1</strong>");
+        // Admin descriptions are stored as clean plain text. Detect standalone
+        // section headings and bullet lines without HTML/Markdown syntax.
         const lines = raw.split("\n");
         const output = [];
-        let listType = null;
+        let listOpen = false;
         const closeList = () => {
-          if (listType) output.push(`</${listType}>`);
-          listType = null;
+          if (listOpen) output.push("</ul>");
+          listOpen = false;
         };
+        let firstContentLine = true;
         for (const sourceLine of lines) {
           const line = sourceLine.trim();
           if (!line) { closeList(); continue; }
-          const heading = line.match(/^(#{1,4})\s+(.+)$/);
-          if (heading) {
-            closeList();
-            const level = Math.min(4, Math.max(2, heading[1].length));
-            output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
-            continue;
-          }
-          const bullet = line.match(/^[-*+]\s+(.+)$/);
-          const numbered = line.match(/^\d+[.)]\s+(.+)$/);
-          if (bullet || numbered) {
-            const nextType = bullet ? "ul" : "ol";
-            if (listType !== nextType) { closeList(); output.push(`<${nextType}>`); listType = nextType; }
-            output.push(`<li>${inlineMarkdown((bullet || numbered)[1])}</li>`);
+          const bullet = line.match(/^[•-]\s*(.+)$/);
+          if (bullet) {
+            if (!listOpen) { output.push("<ul>"); listOpen = true; }
+            output.push(`<li>${escapeHtml(bullet[1])}</li>`);
+            firstContentLine = false;
             continue;
           }
           closeList();
-          output.push(`<p>${inlineMarkdown(line)}</p>`);
+          const looksLikeHeading = line.length <= 95 &&
+            !/[.!?।,:;]$/.test(line) &&
+            (firstContentLine || line.length <= 75);
+          if (looksLikeHeading) output.push(`<h2>${escapeHtml(line)}</h2>`);
+          else output.push(`<p>${escapeHtml(line)}</p>`);
+          firstContentLine = false;
         }
         closeList();
         template.innerHTML = output.join("");
