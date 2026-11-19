@@ -44,3 +44,10 @@
 .sja-ai-guide-tip{display:inline-flex;align-items:center;gap:5px;margin:0;padding:5px 9px;min-height:0;border:1px solid #c9dcf5;border-radius:999px;background:#f0f7ff;color:#0754b5;text-decoration:none;font-size:10px;font-weight:700;line-height:1.25;box-shadow:none}
 .sja-ai-guide-tip:after{content:none}
 .sja-ai-guide-tip:active{transform:scale(.98)}
+
+/* Slightly smaller floating Sarkari Dost launcher; chat panel stays unchanged. */
+.sja-ai-launch{right:14px;padding:7px 11px 7px 7px;gap:8px;}
+.sja-ai-launch-icon{width:32px;height:32px;font-size:19px;}
+.sja-ai-launch-copy b{font-size:12px;}
+.sja-ai-launch-copy small{font-size:9px;}
+@media(max-width:600px){.sja-ai-launch{right:9px;bottom:15px;padding:6px 9px 6px 6px;gap:7px}.sja-ai-launch-icon{width:29px;height:29px;font-size:17px}.sja-ai-launch-copy b{font-size:11px}.sja-ai-launch-copy small{font-size:8px}}
