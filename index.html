@@ -500,60 +500,6 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
 </script>
 
 
-  <div class="sja-language-dock" id="sjaLanguageDock" aria-label="Website language selector">
-    <button class="sja-language-tab" id="sjaLanguageToggle" type="button" aria-expanded="false" aria-controls="sjaLanguagePanel">
-      <span class="sja-language-tab-icon" aria-hidden="true">🌐</span>
-      <span class="sja-language-tab-label">हिंदी&nbsp; | &nbsp;English</span>
-    </button>
-    <div class="sja-language-panel" id="sjaLanguagePanel" aria-label="Choose website language" hidden>
-      <div class="sja-language-panel-title">🌐 भाषा चुनें / Select Language</div>
-      <div id="google_translate_element"></div>
-    </div>
-  </div>
-  <style>
-    .sja-language-dock{position:fixed;right:0;top:50%;z-index:9998;display:flex;align-items:center;transform:translateY(-50%);font-family:Arial,sans-serif;perspective:900px}
-    .sja-language-tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;min-height:142px;padding:13px 9px;border:1px solid #b9d6ff;border-right:0;border-radius:13px 0 0 13px;background:linear-gradient(155deg,#075bd9,#073b91 65%,#052b69);color:#fff;box-shadow:0 8px 24px rgba(9,45,105,.25);cursor:pointer;transition:transform .28s ease,box-shadow .28s ease;transform-origin:right center}
-    .sja-language-tab:hover{transform:rotateY(-9deg) translateX(-2px);box-shadow:0 10px 28px rgba(9,45,105,.32)}
-    .sja-language-tab-icon{font-size:19px;line-height:1}
-    .sja-language-tab-label{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
-    .sja-language-panel{position:absolute;right:calc(100% + 9px);top:50%;width:220px;padding:14px;border:1px solid #c8dcfa;border-radius:14px;background:rgba(255,255,255,.98);color:#12336d;box-shadow:0 12px 34px rgba(9,45,105,.2);transform:translateY(-50%) rotateY(-8deg);transform-origin:right center;animation:sjaLanguageFlip .24s ease both}
-    .sja-language-panel[hidden]{display:none}
-    @keyframes sjaLanguageFlip{from{opacity:0;transform:translateY(-50%) rotateY(-28deg) translateX(8px)}to{opacity:1;transform:translateY(-50%) rotateY(0) translateX(0)}}
-    .sja-language-panel-title{margin-bottom:10px;font-size:12px;font-weight:800}
-    .sja-language-panel .goog-te-gadget{font:12px Arial,sans-serif!important;color:#12336d!important}
-    .sja-language-panel .goog-te-gadget select{width:100%;max-width:100%!important;min-height:38px;padding:7px 9px!important;border:1px solid #c8d9f2!important;border-radius:9px!important;background:#fff!important;color:#12336d!important;font-size:13px!important}
-    .sja-language-panel .goog-te-gadget span,.sja-language-panel .goog-logo-link{display:none!important}
-    body{top:0!important}.goog-te-banner-frame{display:none!important}
-    @media(max-width:600px){.sja-language-tab{min-height:126px;padding:11px 7px;border-radius:11px 0 0 11px}.sja-language-tab-label{font-size:11px}.sja-language-panel{right:calc(100% + 7px);width:min(220px,calc(100vw - 65px));padding:12px}}
-    @media(prefers-reduced-motion:reduce){.sja-language-tab,.sja-language-panel{animation:none!important;transition:none!important}}
-  </style>
-  <script>
-    (function(){
-      const toggle=document.getElementById('sjaLanguageToggle');
-      const panel=document.getElementById('sjaLanguagePanel');
-      if(!toggle||!panel)return;
-      toggle.addEventListener('click',function(){
-        const opening=panel.hidden;
-        panel.hidden=!opening;
-        toggle.setAttribute('aria-expanded',String(opening));
-      });
-      document.addEventListener('click',function(event){
-        const dock=document.getElementById('sjaLanguageDock');
-        if(dock&&!dock.contains(event.target)){
-          panel.hidden=true;
-          toggle.setAttribute('aria-expanded','false');
-        }
-      });
-      document.addEventListener('keydown',function(event){
-        if(event.key==='Escape'){panel.hidden=true;toggle.setAttribute('aria-expanded','false');}
-      });
-    })();
-    function googleTranslateElementInit(){
-      new google.translate.TranslateElement({pageLanguage:'hi',includedLanguages:'hi,en',autoDisplay:false,layout:google.translate.TranslateElement.InlineLayout.SIMPLE},'google_translate_element');
-    }
-  </script>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
-
   <script defer src="ai-assistant.js?v=3"></script>
   <script defer src="/pwa-install.js?v=1"></script>
 </body>
