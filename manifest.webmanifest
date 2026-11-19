@@ -1,0 +1,21 @@
+{
+  "id": "/",
+  "name": "Sarkari Job Alert",
+  "short_name": "Sarkari Alert",
+  "description": "Latest Government Jobs, Admit Cards and Results",
+  "lang": "hi-IN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f8ff",
+  "theme_color": "#064e3b",
+  "icons": [
+    {
+      "src": "/SarkariJobAlert_logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
