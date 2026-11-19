@@ -45,10 +45,22 @@
   </script>
   <link rel="stylesheet" href="styles.css?v=compact-admin-20261110-2">
   <style>
-    .sja-hero-video{grid-column:1/-1;min-width:0;width:100%}
-    .sja-hero-video-title{margin:0 0 8px;color:#fff;font-size:13px;font-weight:850;text-align:left}
-    .sja-hero-video-frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;border:1px solid #8ad8ff75;border-radius:12px;background:#020817;box-shadow:0 8px 22px #001b5738}
+    /* Compact hero: keep the latest video only, without the old feature grid. */
+    .trust-panel{grid-template-columns:minmax(0,1fr)!important;gap:0!important;padding:12px!important;width:100%;max-width:440px;justify-self:end}
+    .sja-hero-video{grid-column:1;min-width:0;width:100%}
+    .sja-hero-video-title{margin:0 0 7px;color:#fff;font-size:13px;font-weight:850;text-align:left}
+    .sja-hero-video-frame{position:relative;width:100%;aspect-ratio:16/9;max-height:190px;overflow:hidden;border:1px solid #8ad8ff75;border-radius:11px;background:#020817;box-shadow:0 8px 22px #001b5738}
     .sja-hero-video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    @media(max-width:760px){
+      .hero{padding:25px 15px 22px!important}
+      .hero-inner{row-gap:0!important}
+      .trust-panel{grid-column:1/-1;grid-row:2;justify-self:center;max-width:420px;margin:18px auto 0!important;padding:10px!important}
+      .hero-copy{grid-row:1}
+      .search-row{margin-top:17px!important}
+      .hero-points{display:none!important}
+      .hero h1{margin:12px 0 9px!important}
+      .hero-glass-actions{margin-top:15px!important}
+    }
     /* Slim top navigation: live ticker sits above the menu */
     .topbar{
       padding:5px clamp(10px,2.2vw,28px)!important;
@@ -243,10 +255,6 @@
                 allowfullscreen></iframe>
             </div>
           </div>
-          <div><span class="trust-icon green">✓</span><b>Official<br>Links</b></div>
-          <div><span class="trust-icon gold">भारत</span><b>All India<br>Updates</b></div>
-          <div><span class="trust-icon cyan">⚡</span><b>Fast &amp; Easy<br>Access</b></div>
-          <div><span class="trust-icon blue">▣</span><b>Mobile<br>Friendly</b></div>
         </div>
         <div class="search-row">
           <label class="sr-only" for="searchInput">Search jobs</label>
@@ -254,7 +262,6 @@
           <input id="searchInput" type="search" placeholder="Job, department ya qualification search karein…">
           <button id="searchBtn" type="button">Search <span aria-hidden="true">→</span></button>
         </div>
-        <div class="hero-points"><span>✓ Official links</span><span>✓ Mobile friendly</span><span>✓ Easy updates</span></div>
       </div>
     </section>
 
