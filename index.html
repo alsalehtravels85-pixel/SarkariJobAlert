@@ -11,6 +11,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#064e3b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>Sarkari Job Alert — Latest Updates, Admit Card, Results</title>
   <meta name="description" content="Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates Hindi mein paayen.">
   <!-- Social sharing preview (WhatsApp, Facebook, Telegram, etc.) -->
@@ -218,6 +222,7 @@
     </nav>
     <div class="header-actions">
       <a class="icon-search" href="#searchInput" aria-label="Go to search">⌕</a>
+      <button class="admin-open" id="installAppBtn" type="button" hidden>⬇ Install App</button>
       <button class="admin-open" id="adminOpen" type="button">♙ Admin Login</button>
     </div>
   </header>
@@ -548,5 +553,6 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
   <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
 
   <script defer src="ai-assistant.js?v=3"></script>
+  <script defer src="/pwa-install.js?v=1"></script>
 </body>
 </html>
