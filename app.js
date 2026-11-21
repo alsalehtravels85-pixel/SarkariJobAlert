@@ -20,7 +20,6 @@
   const $ = (s, root = document) => root.querySelector(s);
 
   const grid = $("#jobGrid");
-  const notice = $("#setupNotice");
   const count = $("#resultCount");
   const detailDialog = $("#detailDialog");
   const adminDialog = $("#adminDialog");
@@ -223,10 +222,6 @@
 
   async function loadJobs() {
     if (!supabase) {
-      if (notice) {
-        notice.hidden = false;
-        notice.textContent = "Live updates load nahi ho paaye. Supabase connection check kiya ja raha hai.";
-      }
       allJobs = [];
       renderJobs();
       return;
@@ -239,18 +234,11 @@
       .order("created_at", { ascending: false });
 
     if (error) {
-      if (notice) {
-        notice.hidden = false;
-        notice.textContent =
-          "Live database se connect nahi ho paya. Supabase connection ya database policy mein dikkat hai.";
-      }
-
+      console.error("SarkariJobAlert jobs query failed:", error);
       allJobs = [];
       renderJobs();
       return;
     }
-
-    if (notice) notice.hidden = true;
 
     allJobs = data || [];
     renderJobs();
