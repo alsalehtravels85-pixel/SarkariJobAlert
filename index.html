@@ -249,7 +249,7 @@
 <aside class="trust-panel" aria-label="Education and Learning latest YouTube videos">
       <div class="sja-hero-video">
         <div class="sja-hero-video-frame sja-latest-video-card">
-          <a id="sjaLatestVideoLink" class="sja-latest-video-link" href="https://www.youtube.com/watch?v=wfMUNZix9G0" target="_blank" rel="noopener noreferrer" aria-label="YouTube पर नया वीडियो देखें">
+          <a id="sjaLatestVideoLink" class="sja-latest-video-link" href="https://www.youtube.com/watch?v=wfMUNZix9G0" aria-label="वेबसाइट पर वीडियो चलाएँ">
             <img id="sjaLatestVideoThumb" src="https://i.ytimg.com/vi/wfMUNZix9G0/hqdefault.jpg" alt="Education And Learning tmb का सबसे नया वीडियो" loading="lazy">
             <span class="sja-latest-video-play" aria-hidden="true">▶</span>
             <span class="sja-latest-video-label">LATEST VIDEO · WATCH ON YOUTUBE</span>
@@ -514,6 +514,19 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
   if(!link||!thumb)return;
   function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
   showVideo(FALLBACK_VIDEO,'AIIMS 657 Vacancy 2026-27 | UGC NET December Exam Date | IIBF UP Centre Update');
+  link.addEventListener('click',function(event){
+    event.preventDefault();
+    const videoId=(link.href.match(/[?&]v=([A-Za-z0-9_-]{11})/)||[])[1]||FALLBACK_VIDEO;
+    const frame=document.createElement('iframe');
+    frame.src='https://www.youtube.com/embed/'+encodeURIComponent(videoId)+'?autoplay=1&rel=0';
+    frame.title='Education And Learning tmb latest video';
+    frame.loading='eager';
+    frame.referrerPolicy='strict-origin-when-cross-origin';
+    frame.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.allowFullscreen=true;
+    frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
+    link.replaceWith(frame);
+  });
   async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const match=item&&String(item.link||'').match(/[?&]v=([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
   refreshLatest();setInterval(refreshLatest,10*60*1000);
 })();
