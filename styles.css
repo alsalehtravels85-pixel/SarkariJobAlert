@@ -827,3 +827,9 @@ button.share-btn:hover,
 /* Crawlable job-detail links retain the existing card typography. */
 .job-title-link{color:inherit;text-decoration:none}
 .job-title-link:hover,.job-title-link:focus-visible{color:#075bd9;text-decoration:underline;text-underline-offset:3px}
+
+/* Homepage hero video: right-side desktop card, stacked on mobile */
+.hero-inner>.trust-panel{grid-column:2;grid-row:1;justify-self:end;align-self:center;width:100%;max-width:370px;margin:0;padding:6px;background:linear-gradient(135deg,rgba(255,255,255,.20),rgba(59,130,246,.16));border:1px solid rgba(255,255,255,.38);border-radius:22px;box-shadow:0 16px 36px rgba(0,20,70,.28);backdrop-filter:blur(8px)}
+.hero-inner>.trust-panel .sja-hero-video-frame{border:2px solid rgba(255,255,255,.92)!important;border-radius:17px!important;overflow:hidden;box-shadow:0 8px 24px rgba(0,20,70,.28)!important;background:#101827!important}
+.hero-inner>.trust-panel iframe{border-radius:15px}
+@media(max-width:760px){.hero-inner{grid-template-columns:minmax(0,1fr)!important;row-gap:0!important}.hero-inner>.trust-panel{grid-column:1;grid-row:2;justify-self:center;width:100%;max-width:360px;margin:22px auto 0!important}.hero-inner>.search-row{grid-column:1;grid-row:3;margin-top:17px!important}.hero-inner>.sja-live-ticker{grid-column:1/-1;grid-row:4!important;margin-top:12px!important}}
