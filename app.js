@@ -225,7 +225,7 @@
     if (!supabase) {
       if (notice) {
         notice.hidden = false;
-        notice.textContent = "Live updates abhi load nahi ho paaye. Kripya thodi der baad dobara try karein.";
+        notice.textContent = "Live updates load nahi ho paaye. Supabase connection check kiya ja raha hai.";
       }
       allJobs = [];
       renderJobs();
@@ -242,7 +242,7 @@
       if (notice) {
         notice.hidden = false;
         notice.textContent =
-          "Live database se connect nahi ho paya. Supabase settings aur policies check karein.";
+          "Live database se connect nahi ho paya. Supabase connection ya database policy mein dikkat hai.";
       }
 
       allJobs = [];
