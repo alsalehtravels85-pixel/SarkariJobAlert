@@ -7,6 +7,9 @@ on:
       - "scripts/generate_job_pages.py"
       - "scripts/generate_job_sitemap.py"
       - ".github/workflows/publish-static-job-pages.yml"
+  # Refresh published job pages after the daily morning job scan (08:30 IST).
+  schedule:
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 permissions:
