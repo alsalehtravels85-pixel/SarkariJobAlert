@@ -54,6 +54,10 @@
     .sja-hero-video{display:block!important;grid-column:1;min-width:0;width:100%;flex:none!important;margin:0!important;padding:0!important}
     .sja-hero-video-frame{position:relative;display:block;width:100%;aspect-ratio:16/9!important;max-height:none;overflow:hidden;border:2px solid rgba(255,255,255,.92)!important;border-radius:18px!important;background:#101827!important;box-shadow:0 10px 28px rgba(15,35,70,.22),0 0 0 1px rgba(37,99,235,.12)!important;margin:0!important;padding:0!important}
     .sja-hero-video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    .sja-latest-video-link{position:absolute;inset:0;display:block;overflow:hidden;background:#101827;color:#fff;text-decoration:none}
+    .sja-latest-video-link img{display:block;width:100%;height:100%;object-fit:cover}
+    .sja-latest-video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:48px;border-radius:14px;background:#e62117;color:#fff;display:grid;place-items:center;font-size:25px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+    .sja-latest-video-label{position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:linear-gradient(transparent,rgba(0,0,0,.82));font-size:11px;font-weight:800;letter-spacing:.06em;text-align:left;color:#fff}
     @media(max-width:760px){
       .hero{padding:25px 15px 22px!important}
       .hero-inner{row-gap:0!important}
@@ -244,14 +248,12 @@
         </div>
 <aside class="trust-panel" aria-label="Education and Learning latest YouTube videos">
       <div class="sja-hero-video">
-        <div class="sja-hero-video-frame">
-          <iframe
-            src="https://www.youtube.com/embed/videoseries?list=UUN4yhtIZEZVuNucKJ1GVqmg&amp;index=0&amp;rel=0&amp;origin=https%3A%2F%2Fsarkari-jobalert.com"
-            title="Education And Learning tmb - Latest channel uploads"
-            loading="lazy"
-            referrerpolicy="strict-origin-when-cross-origin"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen></iframe>
+        <div class="sja-hero-video-frame sja-latest-video-card">
+          <a id="sjaLatestVideoLink" class="sja-latest-video-link" href="https://www.youtube.com/watch?v=wfMUNZix9G0" target="_blank" rel="noopener noreferrer" aria-label="YouTube पर नया वीडियो देखें">
+            <img id="sjaLatestVideoThumb" src="https://i.ytimg.com/vi/wfMUNZix9G0/hqdefault.jpg" alt="Education And Learning tmb का सबसे नया वीडियो" loading="lazy">
+            <span class="sja-latest-video-play" aria-hidden="true">▶</span>
+            <span class="sja-latest-video-label">LATEST VIDEO · WATCH ON YOUTUBE</span>
+          </a>
         </div>
       </div>
     </aside>
@@ -502,6 +504,20 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
 </script>
 
 
+
+<script>
+(function(){
+  const CHANNEL_ID='UCN4yhtIZEZVuNucKJ1GVqmg';
+  const FALLBACK_VIDEO='wfMUNZix9G0';
+  const link=document.getElementById('sjaLatestVideoLink');
+  const thumb=document.getElementById('sjaLatestVideoThumb');
+  if(!link||!thumb)return;
+  function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
+  showVideo(FALLBACK_VIDEO,'AIIMS 657 Vacancy 2026-27 | UGC NET December Exam Date | IIBF UP Centre Update');
+  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const match=item&&String(item.link||'').match(/[?&]v=([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
+  refreshLatest();setInterval(refreshLatest,10*60*1000);
+})();
+</script>
   <script defer src="ai-assistant.js?v=3"></script>
   <script defer src="/pwa-install.js?v=1"></script>
 
