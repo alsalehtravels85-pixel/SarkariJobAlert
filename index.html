@@ -89,9 +89,18 @@
     }
     /* Slimmer top navigation bar */
     .topbar{
+      position:sticky!important;top:0!important;z-index:10050!important;
       padding-top:5px!important;padding-bottom:5px!important;
       min-height:unset!important;gap:10px;
+      background:linear-gradient(110deg,#063b91,#0759b8 55%,#073b91)!important;
+      box-shadow:0 5px 16px rgba(0,20,70,.24);
     }
+    /* Duplicate category row hidden; top navigation remains the working filter menu. */
+    .quick-cats{display:none!important}
+    /* Make the homepage search area slightly slimmer on mobile and desktop. */
+    .search-row{min-height:58px!important;padding:7px 9px!important;gap:8px!important}
+    .search-row input{min-height:42px!important;padding-top:7px!important;padding-bottom:7px!important}
+    .search-row button{min-height:42px!important;padding:8px 16px!important}
     .brand-mark{transform:scale(.86);transform-origin:left center}
     .brand-copy{line-height:1.1}
     .brand-copy small{margin-top:1px!important;font-size:9px!important}
@@ -419,12 +428,10 @@ document.querySelectorAll('.main-nav button[data-category]').forEach(menuButton=
   menuButton.addEventListener('click',()=>{
     const category=menuButton.dataset.category;
     const categoryButton=document.querySelector('.quick-cats .cat[data-category="'+category+'"]');
-    if(categoryButton){
-      categoryButton.click();
-      document.querySelectorAll('.main-nav .nav-link[data-category]').forEach(item=>item.classList.remove('nav-working-active'));
-      menuButton.classList.add('nav-working-active');
-      document.querySelector('.content-section')?.scrollIntoView({behavior:'smooth',block:'start'});
-    }
+    if(categoryButton) categoryButton.click();
+    document.querySelectorAll('.main-nav .nav-link[data-category]').forEach(item=>item.classList.remove('nav-working-active'));
+    menuButton.classList.add('nav-working-active');
+    document.querySelector('.content-section')?.scrollIntoView({behavior:'smooth',block:'start'});
   });
 });
 document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('click',function(){
