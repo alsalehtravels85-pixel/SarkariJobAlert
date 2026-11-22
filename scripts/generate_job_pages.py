@@ -254,16 +254,16 @@ def generate(rows, output=OUT):
     if begin in existing and end in existing:
         before = existing.split(begin, 1)[0].rstrip()
         after = existing.split(end, 1)[1].lstrip()
-        existing = "\\n".join(part for part in (before, after) if part)
-    block = "\\n".join([begin, *sorted(set(legacy_redirects)), end])
-    redirects_file.write_text((existing.rstrip() + "\\n" if existing.strip() else "") + block + "\\n", encoding="utf-8")
+        existing = "\n".join(part for part in (before, after) if part)
+    block = "\n".join([begin, *sorted(set(legacy_redirects)), end])
+    redirects_file.write_text((existing.rstrip() + "\n" if existing.strip() else "") + block + "\n", encoding="utf-8")
 
     # Sitemap contains only clean canonical detail URLs.
     sitemap = (
-        '<?xml version="1.0" encoding="UTF-8"?>\\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\\n'
-        + "\\n".join(sitemap_entries)
-        + '\\n</urlset>\\n'
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(sitemap_entries)
+        + '\n</urlset>\n'
     )
     (output.parent / "sitemap-jobs.xml").write_text(sitemap, encoding="utf-8")
 
