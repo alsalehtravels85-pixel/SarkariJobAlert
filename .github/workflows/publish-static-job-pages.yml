@@ -9,6 +9,7 @@ on:
       - ".github/workflows/publish-static-job-pages.yml"
       - "index.html"
       - "app.js"
+      - "tests/test_generate_job_pages.py"
   # Refresh generated job pages frequently so newly published posts get a dedicated URL soon.
   schedule:
     - cron: "*/5 * * * *"
@@ -43,7 +44,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jobs sitemap-jobs.xml
+          git add jobs sitemap-jobs.xml _redirects job-redirects.js
           if git diff --cached --quiet; then
             echo "Static pages and sitemap already current."
           else

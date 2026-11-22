@@ -142,7 +142,8 @@ def detail_rows(row):
     return rows, [(label, url) for label, url in links if url and str(url).startswith("https://")]
 
 
-def render_page(row, rows):
+def render_page(row, rows=None):
+    rows = rows or [row]
     title = str(row.get("title") or "सरकारी अपडेट").strip()
     category = str(row.get("category") or "Update").strip()
     description = description_for(row)
@@ -257,6 +258,12 @@ def generate(rows, output=OUT):
         existing = "\n".join(part for part in (before, after) if part)
     block = "\n".join([begin, *sorted(set(legacy_redirects)), end])
     redirects_file.write_text((existing.rstrip() + "\n" if existing.strip() else "") + block + "\n", encoding="utf-8")
+
+    # Publish a small ID-to-clean-URL map so legacy ?job= links can redirect
+    # before Supabase/config.js loads. This prevents preview-mode HTML being indexed.
+    job_url_map = {str(row["id"]): job_path(row, selected) for row in selected}
+    lookup_js = "window.SJA_JOB_URLS = " + __import__("json").dumps(job_url_map, ensure_ascii=False) + ";\n"
+    (output.parent / "job-redirects.js").write_text(lookup_js, encoding="utf-8")
 
     # Sitemap contains only clean canonical detail URLs.
     sitemap = (

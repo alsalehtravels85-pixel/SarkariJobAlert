@@ -22,7 +22,7 @@ class StaticJobPageTests(unittest.TestCase):
 
     def test_page_has_unique_canonical_metadata_and_official_links(self):
         page = render_page(self.sample())
-        self.assertIn("https://sarkari-jobalert.com/jobs/test-recruitment-2026-abc-123.html", page)
+        self.assertIn("https://sarkari-jobalert.com/jobs/test-recruitment-2026.html", page)
         self.assertIn("<title>Test Recruitment 2026 | Sarkari Job Alert</title>", page)
         self.assertIn("12th Pass", page)
         self.assertIn("https://example.gov.in/notice.pdf", page)
@@ -70,9 +70,12 @@ class StaticJobPageTests(unittest.TestCase):
             (out / "old.html").write_text("old", encoding="utf-8")
             (out / "keep.txt").write_text("keep", encoding="utf-8")
             generate([self.sample()], output=out)
-            self.assertTrue((out / "test-recruitment-2026-abc-123.html").exists())
+            self.assertTrue((out / "test-recruitment-2026.html").exists())
             self.assertFalse((out / "old.html").exists())
             self.assertTrue((out / "keep.txt").exists())
+            self.assertTrue((out.parent / "job-redirects.js").exists())
+            self.assertIn("/jobs/test-recruitment-2026.html", (out.parent / "job-redirects.js").read_text(encoding="utf-8"))
+            self.assertIn("301", (out.parent / "_redirects").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
