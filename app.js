@@ -335,7 +335,7 @@
 
       const detailSlug = String(job.title || "update").toLowerCase()
         .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 70) || "update";
-      const detailUrl = `/jobs/${detailSlug}-${encodeURIComponent(job.id)}.html`;
+      // Open the published record through the homepage data route immediately.\n      // Static /jobs/*.html pages are generated later by the scheduled SEO workflow,\n      // so linking to them at publish time can produce a 404 before that workflow runs.\n      const detailUrl = `/?job=${encodeURIComponent(job.id)}#updates`;
 
       return `
         <article class="job-card">
