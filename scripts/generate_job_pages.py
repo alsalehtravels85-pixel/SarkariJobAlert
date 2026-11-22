@@ -33,6 +33,17 @@ def slugify(value):
     return slug[:70] or "update"
 
 
+def job_path(row, rows):
+    """Readable URL; use a short ID suffix only if two titles create the same slug."""
+    slug = slugify(row.get("title"))
+    duplicates = [item for item in rows if slugify(item.get("title")) == slug]
+    suffix = ""
+    if len(duplicates) > 1:
+        short_id = re.sub(r"[^a-z0-9]", "", str(row.get("id") or "").lower())[:6]
+        suffix = f"-{short_id}" if short_id else ""
+    return f"/jobs/{slug}{suffix}.html"
+
+
 def iso_date(value):
     if not value:
         return ""
@@ -131,11 +142,11 @@ def detail_rows(row):
     return rows, [(label, url) for label, url in links if url and str(url).startswith("https://")]
 
 
-def render_page(row):
+def render_page(row, rows):
     title = str(row.get("title") or "सरकारी अपडेट").strip()
     category = str(row.get("category") or "Update").strip()
     description = description_for(row)
-    canonical = f"{BASE}/jobs/{slugify(title)}-{esc(row['id'])}.html"
+    canonical = f"{BASE}{job_path(row, rows)}"
     rows, links = detail_rows(row)
     table = "\n".join(
         f"<tr><th>{esc(label)}</th><td>{esc(value)}</td></tr>" for label, value in rows
@@ -211,15 +222,52 @@ def generate(rows, output=OUT):
     selected = public_rows(rows)
     output.mkdir(parents=True, exist_ok=True)
     expected = set()
+    legacy_redirects = []
+    sitemap_entries = []
+
     for row in selected:
-        filename = f"{slugify(row.get('title'))}-{row['id']}.html"
+        clean_path = job_path(row, selected)
+        filename = Path(clean_path).name
         expected.add(filename)
-        (output / filename).write_text(render_page(row), encoding="utf-8")
+        (output / filename).write_text(render_page(row, selected), encoding="utf-8")
+
+        # Redirect old indexed full-UUID URLs to the clean canonical URL.
+        legacy_name = f"{slugify(row.get('title'))}-{row['id']}.html"
+        legacy_path = f"/jobs/{legacy_name}"
+        if legacy_path != clean_path:
+            legacy_redirects.append(f"{legacy_path} {clean_path} 301")
+
+        updated = iso_date(row.get("updated_at") or row.get("created_at"))
+        lastmod = f"<lastmod>{updated}</lastmod>" if updated else ""
+        sitemap_entries.append(f"<url><loc>{BASE}{clean_path}</loc>{lastmod}</url>")
+
     # Remove stale generated HTML only; do not touch non-HTML assets or other files.
     for path in output.glob("*.html"):
         if path.name not in expected:
             path.unlink()
-    print(f"JOB PAGES GENERATED | published eligible records: {len(selected)} | output: {output}")
+
+    # Replace only this script's redirect block and preserve manually managed rules.
+    redirects_file = output.parent / "_redirects"
+    begin = "# BEGIN generated SarkariJobAlert legacy job URL redirects"
+    end = "# END generated SarkariJobAlert legacy job URL redirects"
+    existing = redirects_file.read_text(encoding="utf-8") if redirects_file.exists() else ""
+    if begin in existing and end in existing:
+        before = existing.split(begin, 1)[0].rstrip()
+        after = existing.split(end, 1)[1].lstrip()
+        existing = "\n".join(part for part in (before, after) if part)
+    block = "\n".join([begin, *sorted(set(legacy_redirects)), end])
+    redirects_file.write_text((existing.rstrip() + "\n" if existing.strip() else "") + block + "\n", encoding="utf-8")
+
+    # Sitemap contains only clean canonical detail URLs.
+    sitemap = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + "\n".join(sitemap_entries)
+        + '\n</urlset>\n'
+    )
+    (output.parent / "sitemap-jobs.xml").write_text(sitemap, encoding="utf-8")
+
+    print(f"JOB PAGES GENERATED | published eligible records: {len(selected)} | clean sitemap and legacy redirects refreshed")
     return selected
 
 

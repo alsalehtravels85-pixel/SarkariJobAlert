@@ -57,14 +57,19 @@
     }[c]));
   }
 
-  // Keep browser detail URLs identical to scripts/generate_job_pages.py.
+  // Readable URL; add a short suffix only when published titles collide.
   function jobDetailPath(job) {
-    const slug = String(job?.title || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 70) || "update";
-    return `/jobs/${slug}-${encodeURIComponent(job.id)}.html`;
+    const slug = String(job?.title || "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "update";
+    const duplicates = allJobs.filter(item => {
+      const other = String(item?.title || "").toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "update";
+      return other === slug;
+    });
+    const suffix = duplicates.length > 1
+      ? "-" + String(job?.id || "").replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase()
+      : "";
+    return `/jobs/${slug}${suffix}.html`;
   }
 
   function formatDate(value) {
@@ -593,12 +598,14 @@
 
   function updateJobSeo(job) {
     if (!job) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set("job", String(job.id));
-    url.hash = "";
-    window.history.replaceState({}, "", url.toString());
+    const modalUrl = new URL(window.location.href);
+    modalUrl.searchParams.set("job", String(job.id));
+    modalUrl.hash = "";
+    window.history.replaceState({}, "", modalUrl.toString());
 
-    const title = `${job.title} | Sarkari Job Alert`;
+    // Canonical is the clean static detail URL, never the duplicate query URL.
+    const canonicalUrl = new URL(jobDetailPath(job), window.location.origin);
+    const title = `${job.title} | Sarkari-JobAlert.com`;
     document.title = title;
 
     const descriptionSource = String(job.description || `${job.title} की पूरी जानकारी, योग्यता, महत्वपूर्ण तिथियां और आधिकारिक आवेदन लिंक देखें।`);
@@ -623,7 +630,7 @@
       canonical.rel = "canonical";
       document.head.appendChild(canonical);
     }
-    canonical.href = url.toString();
+    canonical.href = canonicalUrl.toString();
 
     const setMeta = (selector, value) => {
       let tag = document.querySelector(selector);
@@ -637,7 +644,7 @@
     };
     setMeta('meta[property="og:title"]', title);
     setMeta('meta[property="og:description"]', description);
-    setMeta('meta[property="og:url"]', url.toString());
+    setMeta('meta[property="og:url"]', canonicalUrl.toString());
     setMeta('meta[name="twitter:title"]', title);
     setMeta('meta[name="twitter:description"]', description);
 
