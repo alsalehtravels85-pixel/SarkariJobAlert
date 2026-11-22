@@ -183,6 +183,15 @@
     }
 </style>
 
+  <script src="/job-redirects.js?v=20261122-legacy-map"></script>
+  <script>
+    // Resolve old Google-indexed ?job=UUID URLs without waiting for Supabase.
+    (function () {
+      const id = new URLSearchParams(location.search).get("job");
+      const path = id && window.SJA_JOB_URLS && window.SJA_JOB_URLS[id];
+      if (path) location.replace(path);
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
