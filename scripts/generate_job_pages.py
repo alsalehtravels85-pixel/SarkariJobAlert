@@ -262,7 +262,7 @@ def generate(rows, output=OUT):
     # Publish a small ID-to-clean-URL map so legacy ?job= links can redirect
     # before Supabase/config.js loads. This prevents preview-mode HTML being indexed.
     job_url_map = {str(row["id"]): job_path(row, selected) for row in selected}
-    lookup_js = "window.SJA_JOB_URLS = " + __import__("json").dumps(job_url_map, ensure_ascii=False) + ";\\n"
+    lookup_js = "window.SJA_JOB_URLS = " + __import__("json").dumps(job_url_map, ensure_ascii=False) + ";\n"
     (output.parent / "job-redirects.js").write_text(lookup_js, encoding="utf-8")
 
     # Sitemap contains only clean canonical detail URLs.
