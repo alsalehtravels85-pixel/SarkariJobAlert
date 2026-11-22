@@ -683,17 +683,16 @@ function openSharedJobFromUrl() {
     item => String(item.id) === String(jobId)
   );
 
+  // Old Google-indexed ?job= links should land on the dedicated static page,
+  // not open the in-page detail popup.
   if (job) {
-    showDetails(job.id);
+    window.location.replace(jobDetailPath(job));
   }
 }
   function getJobShareData(id) {
   const job = allJobs.find(item => String(item.id) === String(id));
   if (!job) return null;
-  const url = new URL(window.location.href);
-  url.searchParams.set("job", String(job.id));
-  url.hash = "";
-  const shareUrl = url.toString();
+  const shareUrl = new URL(jobDetailPath(job), window.location.origin).toString();
   const message = `${job.title}\n${job.department || ""}\nCategory: ${displayCategory(job.category)}\nDetails: ${shareUrl}`;
   return { job, title: job.title, text: message, url: shareUrl };
 }
