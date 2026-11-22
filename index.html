@@ -534,12 +534,12 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
 <script>
 (function(){
   const CHANNEL_ID='UCN4yhtIZEZVuNucKJ1GVqmg';
-  const FALLBACK_VIDEO='wfMUNZix9G0';
+  const FALLBACK_VIDEO='Wq2QF9Z6a-g';
   const link=document.getElementById('sjaLatestVideoLink');
   const thumb=document.getElementById('sjaLatestVideoThumb');
   if(!link||!thumb)return;
   function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
-  showVideo(FALLBACK_VIDEO,'AIIMS 657 Vacancy 2026-27 | UGC NET December Exam Date | IIBF UP Centre Update');
+  showVideo(FALLBACK_VIDEO,'SSC JE Answer Key 2026 जारी 🔥 NTA Deputation Recruitment 13 Posts | Latest Govt Job Updates');
   link.addEventListener('click',function(event){
     event.preventDefault();
     const videoId=(link.href.match(/[?&]v=([A-Za-z0-9_-]{11})/)||[])[1]||FALLBACK_VIDEO;
@@ -553,7 +553,7 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
     frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
     link.replaceWith(frame);
   });
-  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const match=item&&String(item.link||'').match(/[?&]v=([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
+  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const itemUrl=item&&String(item.link||item.guid||item.id||'');const match=itemUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/)||itemUrl.match(/(?:youtu\.be\/|embed\/|yt:video:)([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
   refreshLatest();setInterval(refreshLatest,10*60*1000);
 })();
 </script>
