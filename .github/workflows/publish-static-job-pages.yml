@@ -10,9 +10,9 @@ on:
       - "index.html"
       - "app.js"
       - "tests/test_generate_job_pages.py"
-  # Refresh generated job pages frequently so newly published posts get a dedicated URL soon.
+  # Generate and refresh dedicated job pages daily at 10:00 AM India time (04:30 UTC).
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "30 4 * * *"
   workflow_dispatch:
 
 permissions:
