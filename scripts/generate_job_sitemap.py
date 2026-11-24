@@ -13,7 +13,7 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree, register_nam
 from pathlib import Path
 
 import requests
-from generate_job_pages import public_rows
+from generate_job_pages import public_rows, job_path
 
 BASE = "https://sarkari-jobalert.com"
 DB = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
@@ -76,7 +76,7 @@ def main():
     for row in public_rows(rows):
         node = SubElement(root, "{http://www.sitemaps.org/schemas/sitemap/0.9}url")
         SubElement(node, "{http://www.sitemaps.org/schemas/sitemap/0.9}loc").text = (
-            f"{BASE}/?job={row['id']}"
+            f"{BASE}{job_path(row, rows)}"
         )
         lastmod = iso_date(row.get("updated_at") or row.get("created_at"))
         if lastmod:
