@@ -1264,7 +1264,6 @@ document.addEventListener("click", async event => {
         <p id="loginMessage" class="form-message"></p>
       </form>
 
-      <p class="tiny-note">Public sign-up yahan disabled hai.</p>
     `;
   }
 
