@@ -3,7 +3,7 @@
 
 Uses the existing Supabase jobs table and service-role credentials supplied by
 GitHub Actions. Drafts are never included. Expired Vacancy posts are excluded.
-Current public detail URLs use crawlable /jobs/<slug>-<id>.html pages.
+Current public detail URLs preserve the original /?job=<id> format.
 """
 import os
 import sys
@@ -13,7 +13,7 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree, register_nam
 from pathlib import Path
 
 import requests
-from generate_job_pages import public_rows, slugify
+from generate_job_pages import public_rows
 
 BASE = "https://sarkari-jobalert.com"
 DB = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
@@ -76,7 +76,7 @@ def main():
     for row in public_rows(rows):
         node = SubElement(root, "{http://www.sitemaps.org/schemas/sitemap/0.9}url")
         SubElement(node, "{http://www.sitemaps.org/schemas/sitemap/0.9}loc").text = (
-            f"{BASE}/jobs/{slugify(row['title'])}-{row['id']}.html"
+            f"{BASE}/?job={row['id']}"
         )
         lastmod = iso_date(row.get("updated_at") or row.get("created_at"))
         if lastmod:
