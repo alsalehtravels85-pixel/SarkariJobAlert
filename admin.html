@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="hi" class="admin-page">
+<head>
+  <meta name="msvalidate.01" content="FD39683AA56D1CA8061306AEBA47B630" />
+  <link rel="icon" type="image/png" href="/favicon.png">
+<link rel="shortcut icon" href="/favicon.png">
+<link rel="apple-touch-icon" href="/favicon.png">
+<meta name="google-site-verification" content="-KC52kEmQzYCEjwE81gG7xVwZle6MGy8aWUnTf0-Vzw" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#064e3b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <title>Admin Login | SarkariJobAlert</title>
+  <meta name="description" content="Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates Hindi mein paayen.">
+  <!-- Social sharing preview (WhatsApp, Facebook, Telegram, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="hi_IN">
+  <meta property="og:site_name" content="Sarkari-JobAlert.com">
+  <meta name="application-name" content="Sarkari-JobAlert.com">
+  <meta property="og:title" content="Sarkari Job Alert — Latest Govt Jobs, Admit Card & Results">
+  <meta property="og:description" content="Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates Hindi mein paayen.">
+  <meta property="og:url" content="https://sarkari-jobalert.com/">
+  <meta property="og:image" content="https://sarkari-jobalert.com/og-image.png?v=20261111-sharefix">
+  <meta property="og:image:secure_url" content="https://sarkari-jobalert.com/og-image.png?v=20261111-sharefix">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:url" content="https://sarkari-jobalert.com/og-image.png?v=20261111-sharefix">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Sarkari Job Alert — सरकारी नौकरी अपडेट्स">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sarkari Job Alert — Latest Govt Jobs, Admit Card & Results">
+  <meta name="twitter:description" content="Sarkari Job Alert (SarkariJobAlert) par latest sarkari naukri, government job notifications, admit cards, results aur answer keys ki verified updates Hindi mein paayen.">
+  <meta name="twitter:image" content="https://sarkari-jobalert.com/og-image.png?v=20261111-sharefix">
+<meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="googlebot" content="noindex,nofollow,noarchive">
+  <link rel="canonical" href="https://sarkari-jobalert.com/">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Sarkari-JobAlert.com",
+    "alternateName": ["Sarkari Job Alert", "SarkariJobAlert"],
+    "url": "https://sarkari-jobalert.com/"
+  }
+  </script>
+  <link rel="stylesheet" href="styles.css?v=compact-admin-20261110-2">
+
+  <style>
+    html.admin-page,body.admin-page{min-height:100%;margin:0;background:linear-gradient(135deg,#071d4d,#075cd4 55%,#3420a0)}
+    body.admin-page>*:not(#adminDialog){display:none!important}
+    body.admin-page #adminDialog{display:block!important;position:relative;inset:auto;margin:0 auto;width:min(100%,920px);min-height:100vh;max-height:none;height:auto;border:0;border-radius:0;padding:28px 20px;overflow:visible;box-shadow:none;background:transparent}
+    body.admin-page #adminDialog::backdrop{display:none}
+    body.admin-page #adminClose{display:none}
+    body.admin-page #adminRoot{width:100%;max-width:880px;margin:5vh auto 0;background:#fff;border-radius:22px;padding:26px;box-shadow:0 25px 80px #061b3a55;min-height:360px}
+    body.admin-page .admin-login-head h2{color:#143d82;font-size:27px}
+    body.admin-page .admin-back{display:inline-block;margin:0 auto 16px;color:#fff;text-decoration:none;font-weight:800}
+    body.admin-page .admin-dialog{display:block}
+    body.admin-page .editor-form{max-height:none}
+    @media(max-width:600px){body.admin-page #adminDialog{padding:14px}body.admin-page #adminRoot{margin:4vh auto 0;padding:20px 15px;border-radius:18px}}
+  </style>
+
+  <style>
+    /* Compact hero: keep the latest video only, without the old feature grid. */
+    .trust-panel{display:block!important;grid-template-columns:minmax(0,1fr)!important;gap:0!important;padding:5px!important;width:100%;max-width:370px;justify-self:end;background:linear-gradient(135deg,rgba(37,99,235,.10),rgba(14,165,233,.08))!important;border:1px solid rgba(59,130,246,.18)!important;border-radius:22px!important;box-shadow:0 8px 24px rgba(15,35,70,.10)!important;backdrop-filter:none!important;animation:none!important}
+    .sja-hero-video{display:block!important;grid-column:1;min-width:0;width:100%;flex:none!important;margin:0!important;padding:0!important}
+    .sja-hero-video-frame{position:relative;display:block;width:100%;aspect-ratio:16/9!important;max-height:none;overflow:hidden;border:2px solid rgba(255,255,255,.92)!important;border-radius:18px!important;background:#101827!important;box-shadow:0 10px 28px rgba(15,35,70,.22),0 0 0 1px rgba(37,99,235,.12)!important;margin:0!important;padding:0!important}
+    .sja-hero-video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    .sja-latest-video-link{position:absolute;inset:0;display:block;overflow:hidden;background:#101827;color:#fff;text-decoration:none}
+    .sja-latest-video-link img{display:block;width:100%;height:100%;object-fit:cover}
+    .sja-latest-video-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:68px;height:48px;border-radius:14px;background:#e62117;color:#fff;display:grid;place-items:center;font-size:25px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+    .sja-latest-video-label{position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:linear-gradient(transparent,rgba(0,0,0,.82));font-size:11px;font-weight:800;letter-spacing:.06em;text-align:left;color:#fff}
+    @media(max-width:760px){
+      .hero{padding:25px 15px 22px!important}
+      .hero-inner{row-gap:0!important}
+      .trust-panel{grid-column:1/-1;grid-row:2;justify-self:center;width:100%;max-width:360px;margin:28px auto 0!important;padding:0!important}
+      .hero-copy{grid-row:1}
+      .search-row{margin-top:17px!important}
+      .hero-points{display:none!important}
+      .hero h1{margin:12px 0 9px!important}
+      .hero-glass-actions{margin-top:15px!important}
+    }
+    /* Slim top navigation: live ticker sits above the menu */
+    .topbar{
+      padding:5px clamp(10px,2.2vw,28px)!important;
+      min-height:unset!important;
+      gap:9px;
+    }
+    .brand-mark{transform:scale(.82);transform-origin:left center}
+    .brand-copy{line-height:1.08}
+    .brand-copy small{margin-top:1px!important;font-size:9px!important}
+    .main-nav{gap:4px!important}
+    .main-nav .nav-link{padding:5px 8px!important;min-height:29px!important;font-size:11px!important;line-height:1.05!important}
+    .header-actions{gap:6px!important}
+    .icon-search,.admin-open{min-height:29px!important;padding:5px 8px!important;font-size:11px!important}
+    @media(max-width:760px){
+      .topbar{padding:4px 8px!important;gap:6px}
+      .brand-mark{transform:scale(.78)}
+      .main-nav{gap:3px!important}
+      .main-nav .nav-link{padding:5px 7px!important;font-size:10px!important;min-height:27px!important}
+    }
+    /* Slimmer top navigation bar */
+    .topbar{
+      position:sticky!important;top:0!important;z-index:10050!important;
+      padding-top:5px!important;padding-bottom:5px!important;
+      min-height:unset!important;gap:10px;
+      background:linear-gradient(110deg,#063b91,#0759b8 55%,#073b91)!important;
+      box-shadow:0 5px 16px rgba(0,20,70,.24);
+    }
+    /* Duplicate category row hidden; top navigation remains the working filter menu. */
+    .quick-cats{display:none!important}
+    /* Make the homepage search area slightly slimmer on mobile and desktop. */
+    .search-row{min-height:58px!important;padding:7px 9px!important;gap:8px!important}
+    .search-row input{min-height:42px!important;padding-top:7px!important;padding-bottom:7px!important}
+    .search-row button{min-height:42px!important;padding:8px 16px!important}
+    .brand-mark{transform:scale(.86);transform-origin:left center}
+    .brand-copy{line-height:1.1}
+    .brand-copy small{margin-top:1px!important;font-size:9px!important}
+    .main-nav{gap:4px!important}
+    .main-nav .nav-link{
+      padding:6px 8px!important;min-height:29px!important;
+      font-size:11px!important;line-height:1.1!important;
+      cursor:pointer;white-space:nowrap;
+    }
+    .header-actions{gap:7px!important}
+    .icon-search,.admin-open{
+      min-height:29px!important;padding:6px 8px!important;
+      font-size:11px!important;
+    }
+    .main-nav .nav-link.nav-working-active{
+      background:#e7efff!important;color:#1746a2!important;
+      border-radius:9px;font-weight:800;
+    }
+    @media(max-width:760px){
+      .topbar{padding:5px 10px!important;gap:7px}
+      .main-nav{gap:3px!important}
+      .main-nav .nav-link{padding:6px 7px!important;font-size:10px!important;min-height:28px!important}
+    }
+    /* Education articles and news: four cards per row on desktop */
+    .home-education-section{margin-top:28px}
+    .home-education-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
+    .home-education-card{min-width:0;background:#fff;border:1px solid #dce7f8;border-radius:16px;padding:17px;box-shadow:0 8px 25px #173a7510;display:flex;flex-direction:column}
+    .home-education-card h3{font-size:16px;line-height:1.45;margin:9px 0;color:#172033;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+    .home-education-card p{display:block!important;-webkit-line-clamp:unset!important;line-clamp:unset!important;-webkit-box-orient:initial!important;overflow:visible!important;white-space:normal!important;font-size:13px;line-height:1.6;color:#526581;margin:8px 0 12px}
+    .home-education-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11px;color:#64748b}
+    .home-education-tag{display:inline-block;align-self:flex-start;border-radius:99px;background:#e5f0ff;color:#0954b5;padding:4px 9px;font-size:11px;font-weight:800}
+    .home-education-card>a{margin-top:auto;display:inline-flex;align-self:flex-start;color:#075bd9;font-size:12px;font-weight:800;text-decoration:none;padding-top:8px}
+    .education-news-note{color:#64748b;font-size:13px;margin:0 0 14px}
+    @media(max-width:1000px){.home-education-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:600px){.home-education-grid{grid-template-columns:1fr;gap:12px}.home-education-card{padding:15px}}
+  
+    .home-guide-subtitle{margin:5px 0 0;color:var(--muted,#64748b);font-size:.88rem;line-height:1.45}
+
+    /* Homepage compact cards: School Guide slightly slimmer, Education News much slimmer */
+    #homeEducationGuides .home-education-card{
+      padding:14px!important;
+      border-radius:13px!important;
+      box-shadow:0 5px 16px #173a750c!important;
+    }
+    #homeEducationGuides .home-education-card h3{
+      font-size:14px!important;line-height:1.35!important;
+      margin:7px 0!important;white-space:normal!important;
+      display:-webkit-box!important;-webkit-box-orient:vertical!important;
+      -webkit-line-clamp:2!important;overflow:hidden!important;
+    }
+    #homeEducationGuides .home-education-card p{
+      font-size:12px!important;line-height:1.45!important;
+      margin:6px 0 8px!important;display:-webkit-box!important;
+      -webkit-box-orient:vertical!important;-webkit-line-clamp:3!important;
+      overflow:hidden!important;
+    }
+    #homeEducationGuides .home-education-tag{padding:3px 8px!important;font-size:10px!important}
+    #homeEducationNews .home-education-card{
+      padding:10px!important;border-radius:11px!important;
+      box-shadow:0 3px 11px #173a7509!important;
+    }
+    #homeEducationNews .home-education-card h3{
+      font-size:13px!important;line-height:1.3!important;
+      margin:5px 0!important;white-space:normal!important;
+      display:-webkit-box!important;-webkit-box-orient:vertical!important;
+      -webkit-line-clamp:2!important;overflow:hidden!important;
+    }
+    #homeEducationNews .home-education-card p{
+      font-size:11px!important;line-height:1.35!important;
+      margin:4px 0 6px!important;display:-webkit-box!important;
+      -webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;
+      overflow:hidden!important;
+    }
+    #homeEducationNews .home-education-tag{padding:2px 7px!important;font-size:9px!important}
+    #homeEducationNews .home-education-meta{font-size:10px!important;gap:5px!important}
+    #homeEducationNews .home-education-card>a{font-size:11px!important;padding-top:4px!important}
+    @media(max-width:600px){
+      #homeEducationGuides .home-education-card{padding:12px!important}
+      #homeEducationNews .home-education-card{padding:9px!important}
+    }
+</style>
+
+  <script src="/job-redirects.js?v=20261122-legacy-map"></script>
+  <script>
+    // Resolve old Google-indexed ?job=UUID URLs without waiting for Supabase.
+    (function () {
+      const id = new URLSearchParams(location.search).get("job");
+      const path = id && window.SJA_JOB_URLS && window.SJA_JOB_URLS[id];
+      if (path) location.replace(path);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js"></script>
+  <script src="config.js?v=20261121-supabase-live"></script>
+  <script defer src="app.js?v=20261124-static-full-uuid"></script>
+  <script defer src="firebase-config.js"></script>
+  <script defer src="push-client.js"></script>
+<style>
+.push-popup-backdrop{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.62);backdrop-filter:blur(5px)}
+.push-popup-backdrop.is-open{display:flex}
+.push-popup{position:relative;width:min(100%,390px);padding:28px 22px 22px;border-radius:22px;background:#fff;color:#172033;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.28);animation:pushPopupIn .25s ease-out}
+@keyframes pushPopupIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.push-popup-icon{width:62px;height:62px;margin:0 auto 13px;border-radius:20px;display:grid;place-items:center;font-size:30px;background:linear-gradient(135deg,#fff7ed,#ffedd5)}
+.push-popup h2{margin:0 0 9px;font-size:22px;line-height:1.25;color:#172033}
+.push-popup p{margin:0 0 18px;color:#64748b;font-size:14px;line-height:1.55}
+.push-popup-actions{display:grid;gap:9px}
+.push-optin-btn{width:100%;border:0;border-radius:12px;padding:14px 16px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.push-optin-btn:disabled{opacity:.6;cursor:wait}
+.push-popup-later{border:0;background:transparent;color:#64748b;padding:9px;cursor:pointer;font-weight:600}
+#pushNotificationStatus{display:block;min-height:18px;margin-top:12px;font-size:12px;color:#475569;line-height:1.45}
+.push-popup-close{position:absolute;right:12px;top:10px;border:0;background:#f1f5f9;color:#64748b;width:30px;height:30px;border-radius:50%;font-size:19px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){.push-popup{animation:none}}
+</style>
+
+<style>
+/* Compact install shortcut; keep the existing header layout intact. */
+#installAppBtn.sja-install-compact{min-height:26px!important;height:26px!important;min-width:0!important;padding:3px 8px!important;font-size:10px!important;line-height:1!important;border-radius:8px!important;white-space:nowrap}
+
+    /* Compact student tools banner */
+    .student-tool-poster{max-width:960px!important;margin:16px auto!important;padding:10px 16px!important;min-height:unset!important;gap:12px!important;border-radius:14px!important}
+    .student-poster-icon{font-size:25px!important;width:42px!important;height:42px!important;flex:0 0 42px!important}
+    .student-poster-copy{gap:3px!important}
+    .student-poster-tag{font-size:9px!important;line-height:1.1!important}
+    .student-poster-copy h2{font-size:17px!important;line-height:1.2!important;margin:0!important}
+    .student-poster-copy p{font-size:11px!important;line-height:1.35!important;margin:2px 0 0!important}
+    .student-poster-cta{padding:8px 12px!important;font-size:11px!important;white-space:nowrap}
+    @media(max-width:600px){.student-tool-poster{margin:12px 10px!important;padding:9px 11px!important;gap:8px!important}.student-poster-copy h2{font-size:14px!important}.student-poster-copy p{font-size:10px!important}.student-poster-cta{padding:7px 9px!important;font-size:10px!important}}
+</style>
+</head>
+<body>
+
+  
+
+
+<header class="topbar">
+    <a class="brand" href="./" aria-label="Sarkari Job Alert home">
+      <span class="brand-mark" aria-hidden="true"><span>SA</span><small>भारत</small></span>
+      <span class="brand-copy">Sarkari <span class="brand-accent">Job Alert</span><small>Vacancy • Result • Admit Card</small></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a class="nav-link active" href="./"><span>⌂</span>Home</a>
+      <button class="nav-link" type="button" data-category="Vacancy"><span>▣</span>Vacancy</button>
+      <button class="nav-link" type="button" data-category="Latest Update"><span>◉</span>Latest Update</button>
+      <button class="nav-link" type="button" data-category="Admit Card"><span>▤</span>Admit Card</button>
+      <button class="nav-link" type="button" data-category="Result"><span>🏆</span>Result</button>
+      <a class="nav-link" href="education.html"><span>📚</span>School & Exam Guide</a>
+    </nav>
+    <div class="header-actions">
+      <button class="admin-open sja-install-compact" id="installAppBtn" type="button" hidden aria-label="Install App" title="Install App">Install App</button>
+      <a class="admin-open" id="adminOpen" href="/" rel="nofollow">← Website</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+
+      <div class="patriotic-art" aria-hidden="true">
+        <div class="tricolor tricolor-left"></div><div class="tricolor tricolor-right"></div>
+        <div class="chakra">☸</div>
+        <div class="parliament"><div class="parliament-dome"></div><div class="parliament-roof"></div><div class="parliament-body"></div><div class="parliament-columns"></div></div>
+        <div class="india-gate">INDIA<br>GATE</div>
+        <span class="light-orb orb-one"></span><span class="light-orb orb-two"></span><span class="light-orb orb-three"></span>
+      </div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-badge"><span class="mini-flag" aria-hidden="true"><i></i><b></b><em></em></span> भारत की सरकारी नौकरी अपडेट्स</div>
+          <h1><span>Sarkari-JobAlert.com</span><br>अपनी अगली <span>सरकारी नौकरी</span> यहाँ तलाश करें</h1>
+          <p>Vacancy, Admit Card aur Result — sabhi updates ek hi jagah.</p>
+          <div class="hero-glass-actions">
+            <a href="#updates" class="hero-glass-btn">Latest Updates <span>↘</span></a>
+            <a href="#searchInput" class="hero-glass-btn hero-glass-btn-light">Job Search <span>⌕</span></a>
+          </div>
+        </div>
+<aside class="trust-panel" aria-label="Education and Learning latest YouTube videos">
+      <div class="sja-hero-video">
+        <div class="sja-hero-video-frame sja-latest-video-card">
+          <a id="sjaLatestVideoLink" class="sja-latest-video-link" href="https://www.youtube.com/watch?v=wfMUNZix9G0" aria-label="वेबसाइट पर वीडियो चलाएँ">
+            <img id="sjaLatestVideoThumb" src="https://i.ytimg.com/vi/wfMUNZix9G0/hqdefault.jpg" alt="Education And Learning tmb का सबसे नया वीडियो" loading="lazy">
+            <span class="sja-latest-video-play" aria-hidden="true">▶</span>
+            <span class="sja-latest-video-label">LATEST VIDEO · WATCH ON YOUTUBE</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+                <div class="search-row">
+          <label class="sr-only" for="searchInput">Search jobs</label>
+          <span class="search-symbol" aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Job, department ya qualification search karein…">
+          <button id="searchBtn" type="button">Search <span aria-hidden="true">→</span></button>
+        </div>
+        
+        
+      </div>
+    </section>
+
+    <section class="quick-cats" aria-label="Job categories">
+      <button class="cat active" data-category="All"><span>▦</span>All Updates</button>
+      <button class="cat" data-category="Vacancy"><span class="orange">▣</span>Vacancy</button>
+      <button class="cat" data-category="Latest Update"><span>◉</span>Latest Update</button>
+      <button class="cat" data-category="Result"><span class="gold-text">🏆</span>Result</button>
+      <button class="cat" data-category="Admit Card"><span class="pink">▣</span>Admit Card</button>
+    </section>
+
+    <section class="sja-live-ticker" style="position:relative;left:50%;transform:translateX(-50%);width:100vw;max-width:100vw;box-sizing:border-box;margin-top:0;border-left:0;border-right:0;border-radius:0" aria-label="Sarkari Job Alert live updates">
+      <div class="sja-live-heading">
+        <div class="sja-live-brand"><span class="sja-live-emblem">🇮🇳</span><span>सरकारी नौकरी <b>LIVE UPDATE</b></span></div>
+      </div>
+      <div class="sja-live-news">
+        <div class="sja-live-badge"><i></i> LIVE</div>
+        <div class="sja-news-window"><div class="sja-news-track" id="sjaBreakingTrack"><span id="sjaBreakingText">नई Vacancy, Admit Card और Result अपडेट यहाँ दिखाई देंगी।</span></div></div>
+      </div>
+        </section>
+
+    <div class="push-popup-backdrop" id="pushPopupBackdrop" role="dialog" aria-modal="true" aria-labelledby="pushPopupTitle">
+      <div class="push-popup">
+        <button type="button" class="push-popup-close" id="closePushPopup" aria-label="Close">×</button>
+        <div class="push-popup-icon" aria-hidden="true">🔔</div>
+        <h2 id="pushPopupTitle">Latest Job Alerts Paayein!</h2>
+        <p>Vacancy, Admit Card aur Result ki nayi update sabse pehle apne mobile ya computer par paayein.</p>
+        <div class="push-popup-actions">
+          <button type="button" id="enableJobNotifications" class="push-optin-btn">🔔 Enable Notifications</button>
+          <button type="button" class="push-popup-later" id="laterPushPopup">Abhi nahi</button>
+        </div>
+        <small id="pushNotificationStatus" role="status" aria-live="polite"></small>
+      </div>
+    </div>
+
+    <section class="content-section" id="updates">
+      <div class="section-heading">
+        <div><p class="eyebrow">LATEST UPDATES</p><h2 id="listingHeading">Latest Updates</h2></div>
+        <span class="result-count" id="resultCount">Loading…</span>
+      </div>
+      <div class="job-grid" id="jobGrid" aria-live="polite">
+        <div class="loading-card">Updates load ho rahe hain…</div>
+      </div>
+      <div class="show-more-wrap"><button class="show-more-jobs" id="showMoreJobs" type="button" hidden>Show More Jobs</button></div>
+    </section>
+
+
+
+    <section class="content-section home-education-section" aria-labelledby="homeGuideTitle">
+      <div class="section-heading">
+        <div><h2 id="homeGuideTitle">📚 School &amp; Exam Guide</h2><p class="home-guide-subtitle">Class 9–12, BA, BSc, BCom, MA, MSc aur MCom • Study Tips • Revision • Practice</p></div>
+        <a class="apply-btn" href="education.html">Saare Articles dekhein ↗</a>
+      </div>
+      <div id="homeEducationGuides" class="home-education-grid" aria-live="polite">
+        <div class="loading-card">Education articles load ho rahe hain…</div>
+      </div>
+    </section>
+
+    <section class="content-section home-education-section" aria-labelledby="educationNewsTitle">
+      <div class="section-heading">
+        <div><h2 id="educationNewsTitle">📰 Education News</h2></div>
+        <a class="apply-btn" href="education-news.html">Saari News dekhein ↗</a>
+      </div>
+      <div id="homeEducationNews" class="home-education-grid" aria-live="polite">
+        <div class="loading-card">Education news load ho rahi hai…</div>
+      </div>
+      <div id="homeEducationNewsMore" class="show-more-wrap"></div>
+    </section>
+
+    <section class="info-strip">
+      <div><span class="info-icon shield">✓</span><div><h3>Verify before applying</h3><p>Dates, eligibility aur fees official notification se confirm karein.</p></div></div>
+      <div><span class="info-icon link-icon">↗</span><div><h3>Official links</h3><p>Application ke liye hamesha official department website use karein.</p></div></div>
+      <div><span class="info-icon phone-icon">▯</span><div><h3>Phone friendly</h3><p>Simple layout, fast loading aur easy navigation.</p></div></div>
+      <div><span class="info-icon student-icon">♟</span><div><h3>For Students</h3><p>Ek hi jagah saari sarkari naukri ki jankari.</p></div></div>
+    </section>
+  </main>
+
+  <section class="student-tool-poster" aria-label="Student free tools advertisement">
+    <div class="student-poster-icon" aria-hidden="true">🎓</div>
+    <div class="student-poster-copy">
+      <span class="student-poster-tag">STUDENTS SPECIAL</span>
+      <h2>Students ke liye FREE Online Tools!</h2>
+      <p>QR Code, Image Resizer, PDF Tools aur padhai mein kaam aane wale useful tools — ek hi jagah.</p>
+    </div>
+    <a class="student-poster-cta" href="https://freetool-ai.blogspot.com/" target="_blank" rel="noopener noreferrer" aria-label="FreeTool website par jaayein">Free Tools Use Karein <span aria-hidden="true">↗</span></a>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-left"><div class="footer-brand">Sarkari <span>Job Alert</span></div><p>Vacancy • Result • Admit Card</p></div>
+    <div class="footer-center"><p>Information support only. Apply karne se pehle official notification zaroor padhein.</p><small>© <span id="year"></span> Sarkari Job Alert. All Rights Reserved.</small></div>
+    <nav aria-label="Footer links"><a href="about.html">About</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy Policy</a><a href="disclaimer.html">Disclaimer</a><a href="https://freetool-ai.blogspot.com/" target="_blank" rel="noopener noreferrer" title="Free online tools">🛠️ Free Online Tools</a></nav>
+  </footer>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <button class="dialog-close" id="detailClose" aria-label="Close">×</button>
+    <div id="detailContent"></div>
+  </dialog>
+
+  <dialog id="adminDialog" class="admin-dialog">
+    <a class="admin-back" href="/">← वापस वेबसाइट पर जाएँ</a>
+    <button class="dialog-close" id="adminClose" aria-label="Close">×</button>
+    <div id="adminRoot">
+      <div class="admin-login-head"><span class="brand-mark"><span>SA</span><small>भारत</small></span><h2>Admin Dashboard</h2><p>Private access for site owner</p></div>
+      <form id="loginForm" class="admin-form">
+        <label>Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label>
+        <label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Password"></label>
+        <button type="submit" class="primary-btn">Secure Login</button>
+        <p id="loginMessage" class="form-message"></p>
+      </form>
+      <p class="tiny-note">Admin account Supabase Dashboard mein create karein. Public sign-up yahan disabled hai.</p>
+    </div>
+    <div id="adminPushStatus" role="status" aria-live="polite" hidden
+         style="display:none;position:sticky;bottom:8px;z-index:100000;margin:14px 0 4px;padding:12px 14px;border:1px solid #93c5fd;border-radius:10px;background:#eff6ff;color:#1e3a8a;font-size:13px;line-height:1.5;overflow-wrap:anywhere;box-shadow:0 4px 16px rgba(15,23,42,.12);">
+    </div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(async()=>{
+  const guideBox=document.getElementById('homeEducationGuides');
+  const newsBox=document.getElementById('homeEducationNews');
+  const moreBox=document.getElementById('homeEducationNewsMore');
+  if(!guideBox||!newsBox) return;
+  const cfg=window.SJA_CONFIG||{};
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeUrl=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:''}catch{return ''}};
+  const dateText=v=>v?new Date(v).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
+  if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){guideBox.innerHTML='<div class="loading-card">Education articles configuration available nahi hai.</div>';newsBox.innerHTML='<div class="loading-card">Education news configuration available nahi hai.</div>';return;}
+  try{
+    const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+    const [guidesResult,newsResult]=await Promise.all([
+      sb.from('school_articles').select('title,excerpt,grade,subject,published_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false}).limit(4),
+      sb.from('school_articles').select('title,excerpt,source_url,source_name,original_published_at,published_at').eq('status','published').eq('article_type','news').order('original_published_at',{ascending:false,nullsFirst:false}).limit(100)
+    ]);
+    if(guidesResult.error) throw guidesResult.error;
+    if(newsResult.error) throw newsResult.error;
+    const guides=guidesResult.data||[]; const news=newsResult.data||[];
+    guideBox.innerHTML=guides.length?guides.map(a=>`<article class="home-education-card"><span class="home-education-tag">${esc(a.grade)} • ${esc(a.subject)}</span><h3>${esc(a.title)}</h3><div class="home-education-meta"><span>Study Guide</span><time>${dateText(a.published_at)}</time></div><p>${esc(a.excerpt)}</p><a href="education.html">पूरा लेख पढ़ें ↗</a></article>`).join(''):'<div class="loading-card">Abhi koi Education Guide article publish nahi hua hai.</div>';
+    let showAll=false;
+    const renderNews=()=>{
+      const visible=showAll?news:news.slice(0,4);
+      newsBox.innerHTML=visible.length?visible.map(n=>{const url=safeUrl(n.source_url);const date=n.original_published_at||n.published_at;return `<article class="home-education-card"><span class="home-education-tag">${esc(n.source_name||'Education News')}</span><h3>${esc(n.title)}</h3><div class="home-education-meta"><span>Education News</span><time>${dateText(date)}</time></div><p>${esc(n.excerpt)}</p>${url?`<a href="${esc(url)}" target="_blank" rel="noopener noreferrer nofollow">Original source par padhein ↗</a>`:'<a href="education-news.html">News details dekhein ↗</a>'}</article>`}).join(''):'<div class="loading-card">Abhi koi Education News available nahi hai.</div>';
+      if(moreBox){moreBox.innerHTML='';if(news.length>4&&!showAll){const btn=document.createElement('button');btn.type='button';btn.className='show-more-jobs';btn.textContent=`Show More News (${news.length-4} aur)`;btn.addEventListener('click',()=>{showAll=true;renderNews()});moreBox.appendChild(btn)}}
+    };
+    renderNews();
+  }catch(e){console.error('Homepage education content load error:',e);guideBox.innerHTML='<div class="loading-card">Education articles abhi load nahi ho paaye.</div>';newsBox.innerHTML='<div class="loading-card">Education news abhi load nahi ho paayi.</div>'; }
+})();
+</script>
+
+
+<script>
+/* Make the top Vacancy / Admit Card / Result menu buttons use the existing job filters. */
+document.querySelectorAll('.main-nav button[data-category]').forEach(menuButton=>{
+  menuButton.addEventListener('click',()=>{
+    const category=menuButton.dataset.category;
+    const categoryButton=document.querySelector('.quick-cats .cat[data-category="'+category+'"]');
+    if(categoryButton) categoryButton.click();
+    document.querySelectorAll('.main-nav .nav-link[data-category]').forEach(item=>item.classList.remove('nav-working-active'));
+    menuButton.classList.add('nav-working-active');
+    document.querySelector('.content-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('click',function(){
+  /* Keep this as a normal link so the guide page opens reliably. */
+});
+</script>
+
+
+<script>
+/* Automatic ticker: only the site's own published vacancies, admit cards, results and study guides. */
+(()=>{
+  const textEl=document.getElementById('sjaBreakingText');
+  const track=document.getElementById('sjaBreakingTrack');
+  const statusEl=document.getElementById('sjaMonitorStatus');
+  if(!textEl||!track) return;
+  const cfg=window.SJA_CONFIG||{};
+  const STORAGE_KEY='sja_published_ticker_v2';
+  const INTERVAL=5*60*1000;
+  let items=[];
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dateValue=v=>{const n=Date.parse(v||'');return Number.isFinite(n)?n:0};
+  const categoryInfo=value=>{
+    const c=String(value||'').trim().toLowerCase();
+    if(['vacancy','latest jobs','jobs'].includes(c)) return {label:'नई सरकारी भर्ती',type:'job'};
+    if(['admit card','admit cards'].includes(c)) return {label:'एडमिट कार्ड अपडेट',type:'job'};
+    if(['result','results','answer key'].includes(c)) return {label:'रिजल्ट अपडेट',type:'job'};
+    return null;
+  };
+  function save(list){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(list));}catch(e){}}
+  function showFallback(){
+    if(items.length) return;
+    textEl.textContent='सरकारी भर्ती, एडमिट कार्ड, रिजल्ट और स्कूल परीक्षा गाइड की नई प्रकाशित पोस्ट का इंतज़ार है।';
+    textEl.removeAttribute('data-href');
+  }
+  function render(){
+    if(!items.length){showFallback();return;}
+    const sequence=items.map(item=>`<span class="sja-ticker-item"><a class="sja-ticker-link" href="${esc(item.href)}">${esc(item.label)}: ${esc(item.title)}</a></span>`).join('');
+    track.innerHTML=sequence+sequence;
+    track.classList.remove('sja-ticker-refresh'); void track.offsetWidth; track.classList.add('sja-ticker-refresh');
+  }
+  function setItems(next){
+    if(!next.length) return;
+    const signature=next.map(x=>x.key).join('|');
+    const oldSignature=items.map(x=>x.key).join('|');
+    items=next; if(signature!==oldSignature) current=0; else current=current%items.length;
+    save(items); render();
+
+  }
+  try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');if(Array.isArray(saved)&&saved.length){items=saved;render();}}catch(e){}
+  async function refresh(){
+    if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){showFallback();return;}
+    try{
+      const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+      const [jobsRes,guideRes]=await Promise.all([
+        sb.from('jobs').select('id,title,category,created_at,updated_at').eq('status','published').order('created_at',{ascending:false}).limit(30),
+        sb.from('school_articles').select('id,title,article_type,published_at,created_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false,nullsFirst:false}).limit(30)
+      ]);
+      if(jobsRes.error) throw jobsRes.error;
+      if(guideRes.error) throw guideRes.error;
+      const combined=[];
+      (jobsRes.data||[]).forEach(j=>{
+        const info=categoryInfo(j.category); if(!info) return;
+        combined.push({key:`job-${j.id}`,title:j.title,label:info.label,href:`./?job=${encodeURIComponent(j.id)}#updates`,time:dateValue(j.updated_at)||dateValue(j.created_at)});
+      });
+      (guideRes.data||[]).forEach(a=>combined.push({key:`guide-${a.id}`,title:a.title,label:'स्कूल एवं परीक्षा गाइड',href:`education.html#article-${encodeURIComponent(a.id)}`,time:dateValue(a.published_at)||dateValue(a.created_at)}));
+      combined.sort((a,b)=>b.time-a.time);
+      setItems(combined.slice(0,5));
+      if(statusEl) statusEl.textContent='MONITORING';
+    }catch(error){
+      console.warn('Ticker refresh failed; showing last saved published headlines.',error);
+      if(statusEl) statusEl.textContent='MONITORING';
+      if(!items.length) showFallback();
+    }
+  }
+  refresh(); setInterval(refresh,INTERVAL);
+})();
+</script>
+
+
+
+<script>
+(function(){
+  const CHANNEL_ID='UCN4yhtIZEZVuNucKJ1GVqmg';
+  const FALLBACK_VIDEO='Wq2QF9Z6a-g';
+  const link=document.getElementById('sjaLatestVideoLink');
+  const thumb=document.getElementById('sjaLatestVideoThumb');
+  if(!link||!thumb)return;
+  function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
+  showVideo(FALLBACK_VIDEO,'SSC JE Answer Key 2026 जारी 🔥 NTA Deputation Recruitment 13 Posts | Latest Govt Job Updates');
+  link.addEventListener('click',function(event){
+    event.preventDefault();
+    const videoId=(link.href.match(/[?&]v=([A-Za-z0-9_-]{11})/)||[])[1]||FALLBACK_VIDEO;
+    const frame=document.createElement('iframe');
+    frame.src='https://www.youtube.com/embed/'+encodeURIComponent(videoId)+'?autoplay=1&rel=0';
+    frame.title='Education And Learning tmb latest video';
+    frame.loading='eager';
+    frame.referrerPolicy='strict-origin-when-cross-origin';
+    frame.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.allowFullscreen=true;
+    frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
+    link.replaceWith(frame);
+  });
+  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const itemUrl=item&&String(item.link||item.guid||item.id||'');const match=itemUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/)||itemUrl.match(/(?:youtu\.be\/|embed\/|yt:video:)([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
+  refreshLatest();setInterval(refreshLatest,10*60*1000);
+})();
+</script>
+  <script defer src="ai-assistant.js?v=3"></script>
+  <script defer src="/pwa-install.js?v=1"></script>
+
+
+<script>window.addEventListener("load",function(){const d=document.getElementById("adminDialog");if(d&&!d.open){try{d.showModal()}catch(e){d.setAttribute("open","")}}});</script>
+</body>
+</html>
