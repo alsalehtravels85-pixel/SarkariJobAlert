@@ -483,14 +483,24 @@
           if (listOpen) output.push("</ul>");
           listOpen = false;
         };
+        const inlineFormat = value => {
+          let safe = escapeHtml(value);
+          safe = safe.replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>");
+          safe = safe.replace(/(https?:\\/\\/[^\\s<]+)/g, url => {
+            const clean = url.replace(/[),.;!?।]+$/, "");
+            const tail = url.slice(clean.length);
+            return `<a href="${clean}" target="_blank" rel="noopener noreferrer nofollow">${clean}</a>${tail}`;
+          });
+          return safe;
+        };
         let firstContentLine = true;
         for (const sourceLine of lines) {
           const line = sourceLine.trim();
-          if (!line) { closeList(); continue; }
-          const bullet = line.match(/^[•-]\s*(.+)$/);
-          if (bullet) {
+          if (!line || /^[-–—_]{2,}$/.test(line)) { closeList(); continue; }
+          const bullet = line.match(/^[•-]\\s*(.+)$/);
+          if (bullet && !/^[-–—_]+$/.test(bullet[1].trim())) {
             if (!listOpen) { output.push("<ul>"); listOpen = true; }
-            output.push(`<li>${escapeHtml(bullet[1])}</li>`);
+            output.push(`<li>${inlineFormat(bullet[1])}</li>`);
             firstContentLine = false;
             continue;
           }
@@ -498,8 +508,8 @@
           const looksLikeHeading = line.length <= 95 &&
             !/[.!?।,:;]$/.test(line) &&
             (firstContentLine || line.length <= 75);
-          if (looksLikeHeading) output.push(`<h2>${escapeHtml(line)}</h2>`);
-          else output.push(`<p>${escapeHtml(line)}</p>`);
+          if (looksLikeHeading) output.push(`<h2>${inlineFormat(line)}</h2>`);
+          else output.push(`<p>${inlineFormat(line)}</p>`);
           firstContentLine = false;
         }
         closeList();
