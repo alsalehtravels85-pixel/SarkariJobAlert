@@ -908,10 +908,6 @@ document.addEventListener("click", async event => {
     });
   });
 
-  $("#adminOpen").addEventListener("click", () => {
-    adminDialog.showModal();
-  });
-
   $("#adminClose").addEventListener("click", () => {
     adminDialog.close();
   });
