@@ -84,6 +84,54 @@ def description_for(row):
         raw = raw[:5997].rsplit(" ", 1)[0] + "..."
     return raw
 
+def render_description(value):
+    """Render safe, readable paragraphs, Markdown emphasis, lists and clickable URLs."""
+    lines = str(value or "").splitlines()
+    output = []
+    list_open = False
+
+    def close_list():
+        nonlocal list_open
+        if list_open:
+            output.append("</ul>")
+            list_open = False
+
+    def inline(text):
+        safe = esc(text)
+        safe = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", safe)
+        def link(match):
+            url = match.group(0)
+            clean = url.rstrip("),.;!?।")
+            tail = url[len(clean):]
+            return f'<a href="{clean}" target="_blank" rel="noopener noreferrer nofollow">{clean}</a>{tail}'
+        return re.sub(r"https?://[^\s<]+", link, safe)
+
+    first_content = True
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or re.fullmatch(r"[-–—_]{2,}", line):
+            close_list()
+            continue
+        bullet = re.match(r"^[•-]\s*(.+)$", line)
+        if bullet and not re.fullmatch(r"[-–—_]+", bullet.group(1).strip()):
+            if not list_open:
+                output.append("<ul>")
+                list_open = True
+            output.append(f"<li>{inline(bullet.group(1))}</li>")
+            first_content = False
+            continue
+        close_list()
+        if line.startswith("## "):
+            output.append(f"<h3>{inline(line[3:])}</h3>")
+        elif len(line) <= 95 and not re.search(r"[.!?।,:;]$", line) and (first_content or len(line) <= 75):
+            output.append(f"<h3>{inline(line)}</h3>")
+        else:
+            output.append(f"<p>{inline(line)}</p>")
+        first_content = False
+    close_list()
+    return "\n".join(output)
+
+
 def is_generic_destination(value):
     """Identify a department homepage that is not a specific result/download destination."""
     from urllib.parse import urlparse
@@ -155,6 +203,7 @@ def render_page(row, rows=None):
     title = str(row.get("title") or "सरकारी अपडेट").strip()
     category = str(row.get("category") or "Update").strip()
     description = description_for(row)
+    description_html = render_description(description)
     canonical = f"{BASE}{job_path(row, rows)}"
     rows, links = detail_rows(row)
     table = "\n".join(
@@ -199,7 +248,7 @@ footer{{padding:20px 16px;text-align:center;color:#64748b;font-size:13px}}footer
 <span class="tag">{esc(category)}</span><h1>{esc(title)}</h1>
 <p class="dept">{esc(row.get('department') or 'विभाग की जानकारी उपलब्ध नहीं')}</p>
 <table><tbody>{table}</tbody></table>
-<h2>पूरी जानकारी</h2><div class="description">{esc(description)}</div>
+<h2>पूरी जानकारी</h2><div class="description">{description_html}</div>
 <div class="actions">{link_html}</div>
 <div class="note">महत्वपूर्ण: आवेदन करने या परिणाम संबंधी अगला कदम उठाने से पहले संबंधित विभाग की आधिकारिक वेबसाइट और मूल अधिसूचना से सभी तारीखों, पात्रता, शुल्क तथा लिंक की पुष्टि करें। Sarkari Job Alert एक स्वतंत्र सूचना वेबसाइट है, सरकारी विभाग नहीं।</div>
 </article></main>
