@@ -74,13 +74,15 @@ def public_rows(rows):
 
 
 def description_for(row):
-    raw = re.sub(r"\s+", " ", str(row.get("description") or "")).strip()
+    # Repair accidental literal escape sequences and preserve paragraph breaks.
+    raw = str(row.get("description") or "").replace("\\r\\n", "\n").replace("\\n", "\n").replace("\\r", "\n")
+    lines = [re.sub(r"[ \t]+", " ", line).strip() for line in raw.splitlines()]
+    raw = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
     if not raw:
         raw = f"{row.get('title', 'यह अपडेट')} की उपलब्ध जानकारी और आधिकारिक लिंक नीचे दिए गए हैं। आवेदन या अगला कदम उठाने से पहले विभाग की मूल अधिसूचना अवश्य पढ़ें।"
-    if len(raw) > 3000:
-        raw = raw[:2997].rsplit(" ", 1)[0] + "..."
+    if len(raw) > 6000:
+        raw = raw[:5997].rsplit(" ", 1)[0] + "..."
     return raw
-
 
 def is_generic_destination(value):
     """Identify a department homepage that is not a specific result/download destination."""
@@ -95,7 +97,13 @@ def is_generic_destination(value):
 def detail_rows(row):
     category = str(row.get("category") or "").strip().lower()
     common = [("विभाग", row.get("department"))]
-    if category in ("vacancy", "latest jobs", "jobs"):
+    if category in ("latest update", "update", "latest updates"):
+        common += [
+            ("अपडेट", row.get("vacancies")),
+            ("अधिसूचना की तारीख", date_display(row.get("notification_date"))),
+        ]
+        links = [("आधिकारिक नोटिस", row.get("notification_url"))]
+    elif category in ("vacancy", "latest jobs", "jobs"):
         common += [
             ("कुल पद", row.get("vacancies")),
             ("योग्यता", row.get("qualification")),
