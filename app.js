@@ -37,6 +37,9 @@
     if (["Latest Jobs", "Vacancy", "Jobs"].includes(category)) {
       return "Vacancy";
     }
+    if (["Latest Update", "Latest Updates", "Update"].includes(category)) {
+      return "Latest Update";
+    }
 
     if (["Results", "Result", "Answer Key"].includes(category)) {
       return "Result";
@@ -311,7 +314,14 @@
       let mainUrl;
       let buttonText;
 
-      if (category === "Admit Card") {
+      if (category === "Latest Update") {
+        label1 = "Update";
+        value1 = job.vacancies || "Official update";
+        label2 = "Notification Date";
+        value2 = formatDate(job.notification_date);
+        mainUrl = job.notification_url;
+        buttonText = "Official Notice ↗";
+      } else if (category === "Admit Card") {
         label1 = "Exam Date";
         value1 = formatDate(job.exam_date);
 
@@ -543,6 +553,12 @@
     function addLink(label, url) {
       if (!url) return;
       rows.push(`<tr><th>${escapeHtml(label)}</th><td><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)} ↗</a></td></tr>`);
+    }
+
+    if (category === "Latest Update") {
+      addRow(L.noticeDate, formatDate(job.notification_date));
+      addRow(hindi ? "अपडेट का प्रकार" : "Update", job.vacancies);
+      addLink(L.notification, job.notification_url);
     }
 
     if (category === "Vacancy") {
@@ -974,6 +990,7 @@ document.addEventListener("click", async event => {
         <label>Category *
           <select id="jobCategory">
             <option value="Vacancy">Vacancy</option>
+            <option value="Latest Update">Latest Update</option>
             <option value="Admit Card">Admit Card</option>
             <option value="Result">Result</option>
           </select>
@@ -1013,6 +1030,18 @@ document.addEventListener("click", async event => {
 
             <label>Apply Online URL
               <input id="jobApply" type="url">
+            </label>
+          </div>
+        </div>
+
+        <div id="latestUpdateFields" class="category-fields full" hidden>
+          <div class="category-fields-title">Latest Update Details</div>
+          <div class="category-fields-grid">
+            <label>Update Type / Short Summary
+              <input id="jobUpdateSummary" maxlength="180" placeholder="PET/PST date clash notice">
+            </label>
+            <label>Notification Date
+              <input id="jobUpdateDate" type="date">
             </label>
           </div>
         </div>
@@ -1185,6 +1214,7 @@ document.addEventListener("click", async event => {
     const category = $("#jobCategory")?.value || "Vacancy";
 
     $("#vacancyFields").hidden = category !== "Vacancy";
+    $("#latestUpdateFields").hidden = category !== "Latest Update";
     $("#admitCardFields").hidden = category !== "Admit Card";
     $("#resultFields").hidden = category !== "Result";
   }
@@ -1230,6 +1260,8 @@ document.addEventListener("click", async event => {
 
       jobVacancies: job?.vacancies || "",
       jobNotificationDate: job?.notification_date || "",
+      jobUpdateSummary: job?.category === "Latest Update" ? (job?.vacancies || "") : "",
+      jobUpdateDate: job?.category === "Latest Update" ? (job?.notification_date || "") : "",
       jobLastDate: job?.last_date || "",
       jobQualification: job?.qualification || "",
       jobFees: job?.fees || "",
@@ -1333,18 +1365,22 @@ document.addEventListener("click", async event => {
 
       vacancies:
         category === "Vacancy"
-          ? ($("#jobVacancies").value.trim() || "Not specified")
-          : "Not applicable",
+          ? ($("#jobVacancies").value.trim() || null)
+          : category === "Latest Update"
+            ? ($("#jobUpdateSummary").value.trim() || null)
+            : null,
 
       qualification:
         category === "Vacancy"
-          ? ($("#jobQualification").value.trim() || "Not specified")
-          : "Not applicable",
+          ? ($("#jobQualification").value.trim() || null)
+          : null,
 
       notification_date:
         category === "Vacancy"
           ? ($("#jobNotificationDate").value || null)
-          : null,
+          : category === "Latest Update"
+            ? ($("#jobUpdateDate").value || null)
+            : null,
 
       last_date:
         category === "Vacancy"
@@ -1353,18 +1389,18 @@ document.addEventListener("click", async event => {
 
       fees:
         category === "Vacancy"
-          ? ($("#jobFees").value.trim() || "See official notification")
-          : "Not applicable",
+          ? ($("#jobFees").value.trim() || null)
+          : null,
 
       age_limit:
         category === "Vacancy"
-          ? ($("#jobAge").value.trim() || "See official notification")
-          : "Not applicable",
+          ? ($("#jobAge").value.trim() || null)
+          : null,
 
       selection_process:
         category === "Vacancy"
-          ? ($("#jobSelection").value.trim() || "See official notification")
-          : "Not applicable",
+          ? ($("#jobSelection").value.trim() || null)
+          : null,
 
       apply_url:
         category === "Vacancy"
