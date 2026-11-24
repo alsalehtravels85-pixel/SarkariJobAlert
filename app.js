@@ -57,9 +57,11 @@
     }[c]));
   }
 
-  // Keep the original working detail URL format.
+  // Preserve original static URL format: readable slug plus full record ID.
   function jobDetailPath(job) {
-    return `/?job=${encodeURIComponent(job?.id || "")}`;
+    const slug = String(job?.title || "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "update";
+    return `/jobs/${slug}-${encodeURIComponent(job?.id || "")}.html`;
   }
 
   function formatDate(value) {
