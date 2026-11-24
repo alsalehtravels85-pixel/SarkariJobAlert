@@ -57,19 +57,9 @@
     }[c]));
   }
 
-  // Readable URL; add a short suffix only when published titles collide.
+  // Keep the original working detail URL format.
   function jobDetailPath(job) {
-    const slug = String(job?.title || "").toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "update";
-    const duplicates = allJobs.filter(item => {
-      const other = String(item?.title || "").toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70) || "update";
-      return other === slug;
-    });
-    const suffix = duplicates.length > 1
-      ? "-" + String(job?.id || "").replace(/[^a-z0-9]/gi, "").slice(0, 6).toLowerCase()
-      : "";
-    return `/jobs/${slug}${suffix}.html`;
+    return `/?job=${encodeURIComponent(job?.id || "")}`;
   }
 
   function formatDate(value) {
@@ -690,11 +680,8 @@ function openSharedJobFromUrl() {
     item => String(item.id) === String(jobId)
   );
 
-  // Old Google-indexed ?job= links should land on the dedicated static page,
-  // not open the in-page detail popup.
-  if (job) {
-    window.location.replace(jobDetailPath(job));
-  }
+  // Open the selected job in the original in-page detail dialog.
+  if (job) showDetails(jobId);
 }
   function getJobShareData(id) {
   const job = allJobs.find(item => String(item.id) === String(id));
