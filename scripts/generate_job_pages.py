@@ -41,7 +41,7 @@ def job_path(row, rows):
     if len(duplicates) > 1:
         short_id = re.sub(r"[^a-z0-9]", "", str(row.get("id") or "").lower())[:6]
         suffix = f"-{short_id}" if short_id else ""
-    return f"/jobs/{slug}{suffix}.html"
+    return f"/jobs/{slug}-{row['id']}.html"
 
 
 def iso_date(value):
@@ -147,7 +147,7 @@ def render_page(row, rows=None):
     title = str(row.get("title") or "सरकारी अपडेट").strip()
     category = str(row.get("category") or "Update").strip()
     description = description_for(row)
-    canonical = f"{BASE}/?job={row['id']}"
+    canonical = f"{BASE}{job_path(row, rows)}"
     rows, links = detail_rows(row)
     table = "\n".join(
         f"<tr><th>{esc(label)}</th><td>{esc(value)}</td></tr>" for label, value in rows
@@ -240,7 +240,7 @@ def generate(rows, output=OUT):
 
         updated = iso_date(row.get("updated_at") or row.get("created_at"))
         lastmod = f"<lastmod>{updated}</lastmod>" if updated else ""
-        sitemap_entries.append(f"<url><loc>{BASE}/?job={row['id']}</loc>{lastmod}</url>")
+        sitemap_entries.append(f"<url><loc>{BASE}{clean_path}</loc>{lastmod}</url>")
 
     # Remove stale generated HTML only; do not touch non-HTML assets or other files.
     for path in output.glob("*.html"):
