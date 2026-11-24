@@ -1380,15 +1380,15 @@ document.addEventListener("click", async event => {
 
       vacancies:
         category === "Vacancy"
-          ? ($("#jobVacancies").value.trim() || null)
+          ? ($("#jobVacancies").value.trim() || "")
           : category === "Latest Update"
-            ? ($("#jobUpdateSummary").value.trim() || null)
-            : null,
+            ? ($("#jobUpdateSummary").value.trim() || "")
+            : "",
 
       qualification:
         category === "Vacancy"
-          ? ($("#jobQualification").value.trim() || null)
-          : null,
+          ? ($("#jobQualification").value.trim() || "")
+          : "",
 
       notification_date:
         category === "Vacancy"
@@ -1404,18 +1404,18 @@ document.addEventListener("click", async event => {
 
       fees:
         category === "Vacancy"
-          ? ($("#jobFees").value.trim() || null)
-          : null,
+          ? ($("#jobFees").value.trim() || "")
+          : "",
 
       age_limit:
         category === "Vacancy"
-          ? ($("#jobAge").value.trim() || null)
-          : null,
+          ? ($("#jobAge").value.trim() || "")
+          : "",
 
       selection_process:
         category === "Vacancy"
-          ? ($("#jobSelection").value.trim() || null)
-          : null,
+          ? ($("#jobSelection").value.trim() || "")
+          : "",
 
       apply_url:
         category === "Vacancy"
