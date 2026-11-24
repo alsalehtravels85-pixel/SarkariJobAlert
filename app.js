@@ -882,6 +882,21 @@ document.addEventListener("click", async event => {
     });
   });
 
+  document.querySelectorAll(".nav-link[data-category]").forEach(button => {
+    button.addEventListener("click", () => {
+      activeCategory = button.dataset.category;
+      showAllJobs = false;
+      document.querySelectorAll(".cat").forEach(item => {
+        item.classList.toggle("active", item.dataset.category === activeCategory);
+      });
+      document.querySelectorAll(".nav-link[data-category]").forEach(item => {
+        item.classList.toggle("nav-working-active", item === button);
+      });
+      renderJobs();
+      document.querySelector("#updates")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
   $("#adminOpen").addEventListener("click", () => {
     adminDialog.showModal();
   });
