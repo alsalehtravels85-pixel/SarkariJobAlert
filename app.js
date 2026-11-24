@@ -110,6 +110,7 @@
     const c = displayCategory(value);
     if (c === "Admit Card") return "एडमिट कार्ड";
     if (c === "Result") return "रिजल्ट";
+    if (c === "Latest Update") return "लेटेस्ट अपडेट";
     return "सरकारी भर्ती";
   }
 
