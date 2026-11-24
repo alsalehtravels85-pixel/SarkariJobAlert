@@ -147,7 +147,7 @@ def render_page(row, rows=None):
     title = str(row.get("title") or "सरकारी अपडेट").strip()
     category = str(row.get("category") or "Update").strip()
     description = description_for(row)
-    canonical = f"{BASE}{job_path(row, rows)}"
+    canonical = f"{BASE}/?job={row['id']}"
     rows, links = detail_rows(row)
     table = "\n".join(
         f"<tr><th>{esc(label)}</th><td>{esc(value)}</td></tr>" for label, value in rows
@@ -240,7 +240,7 @@ def generate(rows, output=OUT):
 
         updated = iso_date(row.get("updated_at") or row.get("created_at"))
         lastmod = f"<lastmod>{updated}</lastmod>" if updated else ""
-        sitemap_entries.append(f"<url><loc>{BASE}{clean_path}</loc>{lastmod}</url>")
+        sitemap_entries.append(f"<url><loc>{BASE}/?job={row['id']}</loc>{lastmod}</url>")
 
     # Remove stale generated HTML only; do not touch non-HTML assets or other files.
     for path in output.glob("*.html"):
@@ -265,7 +265,7 @@ def generate(rows, output=OUT):
     lookup_js = "window.SJA_JOB_URLS = " + __import__("json").dumps(job_url_map, ensure_ascii=False) + ";\n"
     (output.parent / "job-redirects.js").write_text(lookup_js, encoding="utf-8")
 
-    # Sitemap contains only clean canonical detail URLs.
+    # Sitemap preserves the original job URLs already submitted to search engines.
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
