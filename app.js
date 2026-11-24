@@ -485,8 +485,8 @@
         };
         const inlineFormat = value => {
           let safe = escapeHtml(value);
-          safe = safe.replace(/\\*\\*(.+?)\\*\\*/g, "<strong>$1</strong>");
-          safe = safe.replace(/(https?:\\/\\/[^\\s<]+)/g, url => {
+          safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+          safe = safe.replace(/(https?:\/\/[^\s<]+)/g, url => {
             const clean = url.replace(/[),.;!?।]+$/, "");
             const tail = url.slice(clean.length);
             return `<a href="${clean}" target="_blank" rel="noopener noreferrer nofollow">${clean}</a>${tail}`;
@@ -497,7 +497,7 @@
         for (const sourceLine of lines) {
           const line = sourceLine.trim();
           if (!line || /^[-–—_]{2,}$/.test(line)) { closeList(); continue; }
-          const bullet = line.match(/^[•-]\\s*(.+)$/);
+          const bullet = line.match(/^[•-]\s*(.+)$/);
           if (bullet && !/^[-–—_]+$/.test(bullet[1].trim())) {
             if (!listOpen) { output.push("<ul>"); listOpen = true; }
             output.push(`<li>${inlineFormat(bullet[1])}</li>`);
