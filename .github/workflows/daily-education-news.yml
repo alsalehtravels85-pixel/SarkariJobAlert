@@ -1,10 +1,7 @@
 name: Daily Education News Draft Feed
 
 on:
-  workflow_dispatch:
-  schedule:
-    # Daily at 08:00 India time (02:30 UTC)
-    - cron: "30 2 * * *"
+  workflow_dispatch: # Manual only; daily automatic run paused
 
 permissions:
   contents: read
