@@ -2,12 +2,6 @@ name: SarkariJobAlert - Safe AdSense Content Cleanup
 
 on:
   workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/quarantine_flagged_jobs.py"
-      - ".github/workflows/adsense-content-cleanup.yml"
-
 permissions:
   contents: read
 
