@@ -270,6 +270,47 @@ def generate_article(course, subject, topic):
         raise RuntimeError(f"Gemini ne article text nahi diya. Finish reason: {reason}")
     return article
 
+def qualifies_study_guide(article):
+    """Conservative structure/length gate; weak guides remain unpublished."""
+    text = str(article or "").strip()
+    plain = re.sub(r"[*_#>]+", " ", text)
+    words = re.findall(r"\S+", plain)
+    hindi_chars = len(re.findall(r"[\u0900-\u097F]", plain))
+    headings = re.findall(r"(?m)^\s*#{1,4}\s+.+$", text)
+    qa_section = re.search(r"महत्वपूर्ण प्रश्न|प्रश्न.?उत्तर", text, re.I)
+    mcq_section = re.search(r"बहुविकल्पीय प्रश्न|MCQ", text, re.I)
+    answer_section = re.search(r"उत्तरमाला|सही उत्तर", text, re.I)
+    conclusion = re.search(r"निष्कर्ष", text)
+    mcq_items = re.findall(r"(?m)^\s*\d+[.)]\s+.+", text)
+    if len(words) < 700: return False, "लेख 700 शब्दों से छोटा है"
+    if hindi_chars < 500: return False, "हिंदी व्याख्या पर्याप्त नहीं है"
+    if len(headings) < 5: return False, "कम-से-कम 5 स्पष्ट Markdown headings नहीं हैं"
+    if not qa_section or not mcq_section or not answer_section or not conclusion:
+        return False, "प्रश्न-उत्तर, MCQ, उत्तरमाला या निष्कर्ष अनुभाग अधूरा है"
+    if len(mcq_items) < 8: return False, "MCQ प्रश्न पर्याप्त नहीं हैं"
+    if not re.search(r"[कखगघ]\s*[).]", text): return False, "MCQ विकल्पों का प्रारूप नहीं मिला"
+    if not re.search(r"अस्वीकरण|Disclaimer", text, re.I): return False, "शैक्षिक अस्वीकरण मौजूद नहीं है"
+    return True, "quality gate passed"
+
+def publish_qualified_study_guide_drafts():
+    """Promote only drafts that pass the same conservative content gate."""
+    response = requests.get(TABLE_URL, headers=HEADERS, params={
+        "select": "id,title,content", "status": "eq.draft",
+        "article_type": "eq.study_guide", "order": "created_at.asc", "limit": "50"
+    }, timeout=30)
+    response.raise_for_status()
+    for draft in response.json() or []:
+        ok, reason = qualifies_study_guide(draft.get("content", ""))
+        if not ok:
+            print(f"Existing Study Guide draft remains unpublished: {draft.get('title', draft.get('id'))} — {reason}", flush=True)
+            continue
+        update = requests.patch(TABLE_URL, headers={**HEADERS, "Prefer": "return=minimal"},
+            params={"id": f"eq.{draft['id']}"}, json={
+                "status": "published", "published_at": dt.datetime.now(dt.timezone.utc).isoformat()
+            }, timeout=30)
+        update.raise_for_status()
+        print(f"Published quality-checked Study Guide draft: {draft.get('title', draft['id'])}", flush=True)
+
 def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY:
         raise RuntimeError("Missing Supabase credentials or invalid SUPABASE_URL.")
