@@ -1,4 +1,4 @@
-name: Daily School Exam Guide Publishing
+name: Daily School Exam Guide Draft Feed
 
 on:
   workflow_dispatch:
@@ -30,14 +30,12 @@ jobs:
       - name: Install dependency
         run: pip install requests
 
-      - name: Publish one AI-generated Hindi study article
+      - name: Generate one AI-generated Hindi study article as Draft for human review
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: gemini-3.8-flash
-          # Daily original study guide is published automatically after quality checks.
-          AUTO_PUBLISH_STUDY_GUIDES: "true"
           GEMINI_FALLBACK_MODEL: gemini-3.5-flash-lite
 
         run: python scripts/publish_school_article.py
