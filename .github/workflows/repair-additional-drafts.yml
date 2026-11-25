@@ -1,12 +1,6 @@
 name: SarkariJobAlert - Repair additional draft posts
 on:
-  workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/repair_additional_drafts.py"
-      - ".github/workflows/repair-additional-drafts.yml"
-permissions:
+  workflow_dispatch:permissions:
   contents: read
 jobs:
   repair:
