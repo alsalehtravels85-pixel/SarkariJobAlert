@@ -400,7 +400,6 @@ def has_expired_action_window(text):
     value = clean(text)
     patterns = (
         rf"(?:remain(?:s)?\s+(?:live|open)|shall\s+remain\s+(?:live|open)|window\s+(?:is\s+)?open|portal\s+(?:shall\s+)?remain\s+open).{{0,180}}?(?:to|till|until|upto|up\s+to)\s*{DATE_TOKEN}",
-        rf"(?:last\s+date|closing\s+date|deadline|objections?\s+(?:may\s+be\s+raised|received)?\s*(?:before|up\s+to|till|until)|submit(?:ted)?\s+(?:before|up\s+to|till|until))\s*[:\-]?\s*{DATE_TOKEN}",
     )
     dates = []
     for pattern in patterns:
@@ -705,9 +704,25 @@ def seo_vacancy_title(title):
 
 
 def seo_update_title(title, category):
-    """Make titles clear and search-friendly without keyword stuffing."""
+    """Make titles clear, specific and search-friendly without source-page clutter."""
     title = clean(title).strip(" |•:-")
-    if title.lower() in {"click here", "view", "download", "click to view", "click to download", "here", "result notification", "admit card notification", "admit card", "result"} or len(title) < 12:
+    title = re.sub(r"(?i)\\s*\\(\\s*\\d+\\s*(?:kb|mb)\\s*\\)", "", title)
+    title = re.sub(r"(?i)\\s*(?:[-|–—:]\\s*)?(?:read more|read|new icon|pdf icon)\\s*$", "", title)
+    title = re.sub(r"\\s+", " ", title).strip(" |•:-")
+    normalized = normalize_text(title)
+    generic = {
+        "click here", "view", "download", "click to view", "click to download", "here",
+        "result notification", "admit card notification", "admit card", "result",
+        "exam schedule", "announcements", "answer key omr exams", "answer key",
+        "corrigendum", "important notice", "notice", "results", "latest updates",
+    }
+    if normalized in generic or len(title) < 16 or len(normalized.split()) < 3:
+        return ""
+    if category == "Latest Update" and not any(term in normalized for term in (
+        "exam", "answer key", "result", "admit", "recruitment", "vacancy", "application",
+        "interview", "selection", "schedule", "corrigendum", "objection", "notification",
+        "bharti", "pariksha", "parinam", "aavedan", "चयन", "परीक्षा", "परिणाम", "भर्ती",
+    )):
         return ""
     hindi = contains_devanagari(title)
     if category == "Admit Card":
