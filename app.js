@@ -93,7 +93,7 @@
       raw = raw.replace(/\s+(#{1,4}\s+)/g, "\n\n$1");
       for (const heading of legacySectionHeadings) {
         const re = new RegExp("\\s+(" + escapeRegExp(heading) + ")(\\s*[:：–—-]\\s*)", "gi");
-        raw = raw.replace(re, "\n\n$1\n$2");
+        raw = raw.replace(re, "\n\n$1$2\n");
       }
       const standalone = [
         "UPSC CSE Mains Result 2026 की मुख्य जानकारी",
@@ -574,8 +574,7 @@
           }
           closeList();
           const looksLikeHeading = line.length <= 95 &&
-            !/[.!?।,:;]$/.test(line) &&
-            (firstContentLine || line.length <= 75);
+            (/[:：–—-]$/.test(line) || (!/[.!?।,:;]$/.test(line) && (firstContentLine || line.length <= 75)));
           const markdownHeading = line.match(/^#{1,4}\s+(.+)$/);
           if (markdownHeading) output.push(`<h2>${inlineFormat(markdownHeading[1])}</h2>`);
           else if (looksLikeHeading) output.push(`<h2>${inlineFormat(line)}</h2>`);
