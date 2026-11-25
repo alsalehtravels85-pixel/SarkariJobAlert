@@ -1,6 +1,7 @@
 name: SarkariJobAlert - Reviewed Content Cleanup
 on:
-  workflow_dispatch:permissions:
+  workflow_dispatch:
+permissions:
   contents: read
 jobs:
   cleanup:
