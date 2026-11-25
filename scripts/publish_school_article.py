@@ -20,8 +20,8 @@ SERVICE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
 GEMINI_FALLBACK_MODEL = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite").strip()
-AUTO_PUBLISH = os.getenv("AUTO_PUBLISH_STUDY_GUIDES", "true").strip().lower() == "true"
-STATUS = "published" if AUTO_PUBLISH else "draft"
+# Safety policy: automated study guides are always saved as Draft for human review.
+STATUS = "draft"
 TODAY = dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
 TABLE_URL = f"{SUPABASE_URL}/rest/v1/school_articles"
 
