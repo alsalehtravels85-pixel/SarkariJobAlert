@@ -21,6 +21,8 @@ from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse, urldefrag
 from zoneinfo import ZoneInfo
 
+from job_article_writer import generate_article
+
 import requests
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
@@ -368,6 +370,12 @@ UP_ADMIT_HINTS = (
     "admit card", "admit-card", "hall ticket", "download admit",
     "प्रवेश पत्र", "प्रवेशपत्र",
 )
+UP_LATEST_HINTS = (
+    "corrigendum", "revised notice", "exam schedule", "exam date",
+    "answer key", "objection", "date extended", "extension of last date",
+    "notice regarding", "important notice", "सूचना", "संशोधित", "परीक्षा कार्यक्रम",
+    "उत्तर कुंजी", "आपत्ति", "तिथि बढ़ाई",
+)
 
 def up_official(url):
     h = host(url)
@@ -386,6 +394,8 @@ def discover_up_updates(html, page_url):
             category = "Admit Card"
         elif any(term in searchable for term in UP_RESULT_HINTS):
             category = "Result"
+        elif any(term in searchable for term in UP_LATEST_HINTS):
+            category = "Latest Update"
         if not category or has_stale_notice_date(context + " " + label):
             continue
         url = safe_url(anchor.get("href"), page_url)
@@ -642,7 +652,7 @@ def seo_update_title(title, category):
     if category == "Admit Card":
         if not any(x in title.lower() for x in ("admit card", "hall ticket", "प्रवेश पत्र", "प्रवेशपत्र")):
             title += " " + ("प्रवेश पत्र" if hindi else "Admit Card")
-    else:
+    elif category == "Result":
         if not any(x in title.lower() for x in ("result", "परिणाम", "रिजल्ट", "merit list", "scorecard")):
             title += " " + ("परिणाम" if hindi else "Result")
     return re.sub(r"\s+", " ", title).strip()[:180]
@@ -946,7 +956,6 @@ def main():
 
     session = make_session()
     try:
-        cleanup_existing_sarkaritoday_rows(session)
         known_urls, known_titles = load_existing(session)
     except Exception as exc:
         print("SUPABASE READ ERROR:", str(exc)[:300])
@@ -1110,10 +1119,15 @@ def main():
                 continue
 
             apply_url = find_apply_url(session, html, detail_url, notice_text) if html else None
+            generated = generate_article(title, "Vacancy", department, fields, notice_text,
+                {"official_notice": notification_url, "apply_online": apply_url or ""})
+            if not generated:
+                skipped += 1
+                continue
             record = {
                 "title": title,
                 "department": department,
-                "category": "Latest Jobs",
+                "category": "Vacancy",
                 "vacancies": fields["vacancies"] or "",
                 "notification_date": fields["notification_date"],
                 "last_date": fields["last_date"],
@@ -1124,18 +1138,7 @@ def main():
                 "notification_url": notification_url,
                 "apply_url": apply_url or "",
                 "source_url": detail_url + MARKER,
-                "description": build_vacancy_description(
-                    title=title,
-                    department=department,
-                    vacancies=fields["vacancies"],
-                    qualification=fields["qualification"],
-                    last_date=fields["last_date"],
-                    fees=fields["fees"],
-                    age_limit=fields["age_limit"],
-                    selection_process=fields["selection_process"],
-                    pdf_verified=pdf_is_publishable,
-                    source_notice_text=notice_text,
-                ),
+                "description": generated,
                 "status": "draft",  # Human editor must add original value before public publication.
             }
             response = session.post(
@@ -1256,10 +1259,16 @@ def main():
             fields["department"] = department
             fields["official_url"] = verified_pdf_url or ""
             fields["apply_url"] = apply_url
+            generated = generate_article(title, "Vacancy", department, fields,
+                fields.get("article_text") or pdf_text,
+                {"official_notice": verified_pdf_url or "", "apply_online": apply_url or ""})
+            if not generated:
+                sarkaritoday_skipped += 1
+                continue
             record = {
                 "title": title,
                 "department": department,
-                "category": "Latest Jobs",
+                "category": "Vacancy",
                 "vacancies": fields.get("vacancies") or "",
                 "notification_date": fields.get("notification_date"),
                 "last_date": last_date,
@@ -1270,7 +1279,7 @@ def main():
                 "notification_url": verified_pdf_url or "",
                 "apply_url": apply_url,
                 "source_url": detail_url + MARKER,
-                "description": build_sarkaritoday_draft_description(title, fields),
+                "description": generated,
                 "status": status,
             }
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
@@ -1321,16 +1330,19 @@ def main():
                 detail_text = clean(html_soup.get_text(" ", strip=True))
                 action_url = verified_up_action_link(data, detail_url, category, detail_text)
             lowered = (candidate_title + " " + detail_text).lower()
-            hints = UP_ADMIT_HINTS if category == "Admit Card" else UP_RESULT_HINTS
+            hints = UP_ADMIT_HINTS if category == "Admit Card" else (UP_RESULT_HINTS if category == "Result" else UP_LATEST_HINTS)
             release_hints = (
                 "available", "released", "download", "declared", "published",
                 "now live", "check result", "view result", "final result",
                 "final selection result", "प्रवेश पत्र डाउनलोड",
                 "परिणाम जारी", "जारी किया", "उपलब्ध",
             )
+            update_action_ok = bool(action_url and up_official(action_url))
+            if category == "Latest Update":
+                update_action_ok = bool(up_official(detail_url) and len(detail_text) >= 180)
             if (not any(term in lowered for term in hints) or len(detail_text) < 100
-                    or not any(term in lowered for term in release_hints)
-                    or has_corrupt_text(detail_text) or not action_url or not up_official(action_url)):
+                    or (category != "Latest Update" and not any(term in lowered for term in release_hints))
+                    or has_corrupt_text(detail_text) or not update_action_ok):
                 up_updates_skipped += 1
                 print("UP UPDATE SKIP - official category/action link not sufficiently verified:", candidate_title[:160])
                 continue
@@ -1344,29 +1356,29 @@ def main():
             if normalized_url(detail_url) in known_urls or title_key in known_titles:
                 up_updates_duplicates += 1
                 continue
-            record = {
-                "title": title,
-                "department": department,
+            article_facts = {
                 "category": category,
-                "notification_url": detail_url,
-                "description": build_up_update_description(
-                    title, department, category, action_url,
-                    exam_date=labelled_date(detail_text, (r"exam(?:ination)\s+date", r"date\s+of\s+exam")),
-                    release_date=labelled_date(detail_text, (r"admit\s+card\s+(?:available|released|download)", r"release\s+date")),
-                    result_date=labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result")),
-                    merit_url=action_url if category == "Result" and any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None,
-                    source_text=detail_text,
-                ),
-                "status": "draft",  # Official update is saved for human review before publication.
-                "source_url": detail_url + MARKER,
+                "exam_date": labelled_date(detail_text, (r"exam(?:ination)?\s+date", r"date\s+of\s+exam")),
+                "result_date": labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result")),
+                "notice_date": labelled_date(detail_text, (r"date\s+of\s+notice", r"published\s+on")),
+            }
+            generated = generate_article(title, category, department, article_facts, detail_text,
+                {"official_notice": detail_url, "official_action": action_url or detail_url})
+            if not generated:
+                up_updates_skipped += 1
+                continue
+            record = {
+                "title": title, "department": department, "category": category,
+                "notification_url": detail_url, "description": generated,
+                "status": "draft", "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
                 record["admit_card_url"] = action_url
-                record["exam_date"] = labelled_date(detail_text, (r"exam(?:ination)?\s+date", r"date\s+of\s+exam"))
+                record["exam_date"] = article_facts["exam_date"]
                 record["admit_card_release_date"] = labelled_date(detail_text, (r"admit\s+card\s+(?:available|released|download)", r"release\s+date"))
-            else:
+            elif category == "Result":
                 record["result_url"] = action_url
-                record["result_date"] = labelled_date(detail_text, (r"result\s+(?:declared|published|date)", r"date\s+of\s+result"))
+                record["result_date"] = article_facts["result_date"]
                 record["result_status"] = "परिणाम जारी" if contains_devanagari(detail_text) else "Declared"
                 record["merit_list_url"] = action_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
