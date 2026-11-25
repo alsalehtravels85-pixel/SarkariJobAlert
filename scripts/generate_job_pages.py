@@ -73,6 +73,60 @@ def public_rows(rows):
     ]
 
 
+LEGACY_SECTION_HEADINGS = [
+    "Important Dates", "Important Details", "Important Information", "Important Instructions",
+    "Recruitment Details", "Vacancy Details", "Post Details", "Post-wise vacancies", "Key Details",
+    "Educational Qualification", "Eligibility Criteria", "Age Limit", "Age Relaxation",
+    "Application Fee", "Application Fees", "Fee Structure", "Selection Process", "Exam Pattern",
+    "Exam Schedule", "Exam Details", "How to Apply", "How to Download", "How to Download Admit Card",
+    "How to Check Result", "Result Overview", "Result Details", "Result Status", "Result Date",
+    "Important Links", "Official Links", "Important Note", "Salary Details", "Application Process",
+    "महत्वपूर्ण तिथियां", "महत्वपूर्ण तिथियाँ", "महत्वपूर्ण विवरण", "महत्वपूर्ण जानकारी",
+    "भर्ती का विवरण", "भर्ती का संक्षिप्त विवरण", "कुल पद", "पदों का विवरण", "शैक्षणिक योग्यता",
+    "आयु सीमा", "आवेदन शुल्क", "चयन प्रक्रिया", "आवेदन कैसे करें", "कैसे आवेदन करें",
+    "कैसे डाउनलोड करें", "कैसे देखें", "कैसे जांचें", "परिणाम कैसे देखें", "परिणाम की स्थिति",
+    "परीक्षा विवरण", "परीक्षा कार्यक्रम", "उम्मीदवारों के लिए जरूरी सलाह",
+    "उम्मीदवारों के लिए जरूरी कदम", "परिणाम किन पदों के लिए जारी हुआ है",
+    "मुख्य सूची में श्रेणीवार उम्मीदवार", "UPSC CSE Mains Result 2026 की मुख्य जानकारी",
+    "IBPS RRB PO Admit Card 2026 की मुख्य जानकारी", "रोल नंबर और नाम वाली सूची में क्या अंतर है",
+    "कॉल लेटर कैसे डाउनलोड करें", "कॉल लेटर में कौन-सी जानकारी जाँचें",
+    "परीक्षा केंद्र पर जाने से पहले तैयारी", "Information Handout और Scribe Guidelines",
+    "UPSC Mains Result 2026 कैसे देखें", "यदि सूची में आपका रोल नंबर मिल जाता है",
+    "यदि सूची में रोल नंबर नहीं मिलता है", "कट-ऑफ और अंक से जुड़ी जानकारी",
+    "उपलब्ध reported details – अभी final न मानें",
+]
+
+
+def normalize_legacy_blocks(raw):
+    """Add visual section breaks to legacy single-paragraph records without changing words."""
+    if "\n" in raw:
+        return raw
+    raw = re.sub(r"\s+(#{1,4}\s+)", r"\n\n\1", raw)
+    for heading in sorted(LEGACY_SECTION_HEADINGS, key=len, reverse=True):
+        pattern = re.compile(r"\s+(" + re.escape(heading) + r")(\s*[:：–—-]\s*)", re.IGNORECASE)
+        raw = pattern.sub(lambda match: "\n\n" + match.group(1) + "\n" + match.group(2), raw)
+    standalone = [
+        "UPSC CSE Mains Result 2026 की मुख्य जानकारी",
+        "IBPS RRB PO Admit Card 2026 की मुख्य जानकारी",
+        "रोल नंबर और नाम वाली सूची में क्या अंतर है",
+        "कॉल लेटर कैसे डाउनलोड करें",
+        "कॉल लेटर में कौन-सी जानकारी जाँचें",
+        "परीक्षा केंद्र पर जाने से पहले तैयारी",
+        "Information Handout और Scribe Guidelines",
+        "UPSC Mains Result 2026 कैसे देखें",
+        "यदि सूची में आपका रोल नंबर मिल जाता है",
+        "यदि सूची में रोल नंबर नहीं मिलता है",
+        "कट-ऑफ और अंक से जुड़ी जानकारी",
+    ]
+    for heading in standalone:
+        raw = re.sub(r"\s+(" + re.escape(heading) + r")(?=\s)", r"\n\n\1\n", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\s+(•)\s+", r"\n\1 ", raw)
+    raw = re.sub(r"\s+-\s+(?=[A-Zअ-ह][^:：]{1,65}[:：])", "\n- ", raw)
+    raw = re.sub(r"\s+(?=\d{1,2}[.)]\s+[A-Zअ-ह])", "\n", raw)
+    raw = re.sub(r"(?<=[.!?।])\s+(?=(?:[A-Zअ-ह][A-Za-zअ-ह0-9 &()/–—-]{2,65})\s*[:：])", "\n\n", raw)
+    return re.sub(r"\n{3,}", "\n\n", raw).strip()
+
+
 def description_for(row):
     # Repair accidental literal escape sequences and preserve paragraph breaks.
     raw = str(row.get("description") or "").replace("\\r\\n", "\n").replace("\\n", "\n").replace("\\r", "\n")
@@ -80,8 +134,8 @@ def description_for(row):
     raw = re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
     if not raw:
         raw = f"{row.get('title', 'यह अपडेट')} की उपलब्ध जानकारी और आधिकारिक लिंक नीचे दिए गए हैं। आवेदन या अगला कदम उठाने से पहले विभाग की मूल अधिसूचना अवश्य पढ़ें।"
-    if len(raw) > 6000:
-        raw = raw[:5997].rsplit(" ", 1)[0] + "..."
+    if "\n" not in raw:
+        raw = normalize_legacy_blocks(raw)
     return raw
 
 def render_description(value):
@@ -98,18 +152,38 @@ def render_description(value):
 
     def inline(text):
         safe = esc(text)
+        markdown_links = []
+
+        def markdown_link(match):
+            label, url = match.group(1), match.group(2)
+            token = f"__SJA_LINK_{len(markdown_links)}__"
+            markdown_links.append(
+                f'<a href="{url}" target="_blank" rel="noopener noreferrer nofollow">{label}</a>'
+            )
+            return token
+
+        safe = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", markdown_link, safe)
         safe = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", safe)
+
         def link(match):
             url = match.group(0)
             clean = url.rstrip("),.;!?।")
             tail = url[len(clean):]
             return f'<a href="{clean}" target="_blank" rel="noopener noreferrer nofollow">{clean}</a>{tail}'
-        return re.sub(r"https?://[^\s<]+", link, safe)
+
+        safe = re.sub(r"https?://[^\s<]+", link, safe)
+        safe = re.sub(
+            r"__SJA_LINK_(\d+)__",
+            lambda match: markdown_links[int(match.group(1))],
+            safe,
+        )
+        return safe
+
 
     first_content = True
     for raw_line in lines:
         line = raw_line.strip()
-        if not line or re.fullmatch(r"[-–—_]{2,}", line):
+        if not line or re.fullmatch(r"#{1,4}", line) or re.fullmatch(r"[-–—_]{2,}", line):
             close_list()
             continue
         bullet = re.match(r"^[•-]\s*(.+)$", line)
@@ -121,8 +195,9 @@ def render_description(value):
             first_content = False
             continue
         close_list()
-        if line.startswith("## "):
-            output.append(f"<h3>{inline(line[3:])}</h3>")
+        markdown_heading = re.match(r"^#{1,4}\s+(.+)$", line)
+        if markdown_heading:
+            output.append(f"<h3>{inline(markdown_heading.group(1))}</h3>")
         elif len(line) <= 95 and not re.search(r"[.!?।,:;]$", line) and (first_content or len(line) <= 75):
             output.append(f"<h3>{inline(line)}</h3>")
         else:
