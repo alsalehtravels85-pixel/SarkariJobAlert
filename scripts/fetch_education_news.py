@@ -18,7 +18,7 @@ MIN_WORDS=450
 MAX_DAILY=3
 
 def clean(s):
-    return re.sub(r"\\s+"," ",html.unescape(re.sub(r"<[^>]+>"," ",s or ""))).strip()
+    return re.sub(r"\s+"," ",html.unescape(re.sub(r"<[^>]+>"," ",s or ""))).strip()
 
 def pubdate(s):
     try:
@@ -31,7 +31,7 @@ def collect():
     sess=requests.Session(); sess.headers.update({"User-Agent":UA})
     out=[]; seen=set()
     for q in QUERIES:
-        hi=any("\\u0900"<=ch<="\\u097f" for ch in q)
+        hi=any("\u0900"<=ch<="\u097f" for ch in q)
         lang="hi-IN" if hi else "en-IN"; ceid="hi" if hi else "en"
         try:
             res=sess.get(RSS.format(urllib.parse.quote(q),lang,ceid),timeout=25); res.raise_for_status()
@@ -88,11 +88,11 @@ SOURCE TEXT:
     r=requests.post(api,headers={"x-goog-api-key":GEMINI_API_KEY,"Content-Type":"application/json"},json={"contents":[{"role":"user","parts":[{"text":prompt}]}],"generationConfig":{"temperature":0.35,"topP":0.85,"maxOutputTokens":7000}},timeout=100)
     r.raise_for_status(); data=r.json()
     parts=((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
-    article="\\n".join(x.get("text","") for x in parts if x.get("text")).strip()
+    article="\n".join(x.get("text","") for x in parts if x.get("text")).strip()
     return "" if article=="INSUFFICIENT_SOURCE" else article
 
 def words(s):
-    return len(re.findall(r"[\\w\\u0900-\\u097F]+",s,flags=re.UNICODE))
+    return len(re.findall(r"[\w\u0900-\u097F]+",s,flags=re.UNICODE))
 
 def exists(slug):
     r=requests.get(TABLE,headers=HEADERS,params={"slug":f"eq.{slug}","select":"id,status"},timeout=20)
@@ -112,7 +112,7 @@ def main():
             if count<MIN_WORDS:
                 print(f"Skipped insufficient/short article: {item['title']} ({count} words)"); skipped+=1; continue
             excerpt=re.sub(r"[#*_>]+","",article)
-            excerpt=re.sub(r"\\s+"," ",excerpt).strip()[:420]
+            excerpt=re.sub(r"\s+"," ",excerpt).strip()[:420]
             payload={"slug":slug,"title":item["title"],"excerpt":excerpt,"content":article,"grade":"All Students","subject":"Education News","article_type":"news","source_url":url,"source_name":item["source"],"original_published_at":item.get("published"),"status":"published","published_at":NOW.isoformat(),"updated_at":NOW.isoformat()}
             h={**HEADERS,"Prefer":"resolution=ignore-duplicates,return=representation"}
             r=requests.post(TABLE,headers=h,params={"on_conflict":"slug"},json=payload,timeout=35)
