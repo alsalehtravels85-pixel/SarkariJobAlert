@@ -1,15 +1,22 @@
-name: Daily Education News Draft Feed
+name: Daily Education News Original Article Publisher
 
 on:
-  workflow_dispatch: # Manual only; daily automatic run paused
+  workflow_dispatch:
+  schedule:
+    # Daily at 08:00 AM India time (02:30 UTC)
+    - cron: "30 2 * * *"
 
 permissions:
   contents: read
 
+concurrency:
+  group: daily-education-news
+  cancel-in-progress: false
+
 jobs:
-  fetch-and-save-drafts:
+  fetch-research-write-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,10 +24,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install dependency
-        run: pip install requests
-      - name: Fetch headlines from RSS and save short attributed Drafts for editorial review
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+      - name: Generate original source-grounded Hindi education articles and publish only quality-qualified articles
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-3.8-flash
         run: python scripts/fetch_education_news.py
