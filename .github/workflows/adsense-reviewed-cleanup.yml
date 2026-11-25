@@ -1,12 +1,6 @@
 name: SarkariJobAlert - Reviewed Content Cleanup
 on:
-  workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/quarantine_reviewed_posts.py"
-      - ".github/workflows/adsense-reviewed-cleanup.yml"
-permissions:
+  workflow_dispatch:permissions:
   contents: read
 jobs:
   cleanup:
