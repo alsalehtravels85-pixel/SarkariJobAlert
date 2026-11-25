@@ -98,9 +98,32 @@ def exists(slug):
     r=requests.get(TABLE,headers=HEADERS,params={"slug":f"eq.{slug}","select":"id,status"},timeout=20)
     r.raise_for_status(); return bool(r.json())
 
+def cleanup_old_news():
+    # Delete only Education News rows older than 30 days; never touch study guides or job posts.
+    cutoff=(NOW-dt.timedelta(days=30)).isoformat()
+    params={"article_type":"eq.news","created_at":f"lt.{cutoff}","select":"id"}
+    h={**HEADERS,"Prefer":"return=representation"}
+    r=requests.delete(TABLE,headers=h,params=params,timeout=30)
+    r.raise_for_status()
+    deleted=r.json() if r.content else []
+    print(f"30-day Education News cleanup: deleted {len(deleted)} old news rows.",flush=True)
+
+def published_news_today():
+    local_today=dt.datetime.now(ZoneInfo("Asia/Kolkata")).date()
+    midnight=dt.datetime.combine(local_today,dt.time.min,tzinfo=ZoneInfo("Asia/Kolkata")).astimezone(dt.timezone.utc)
+    params={"article_type":"eq.news","status":"eq.published","published_at":f"gte.{midnight.isoformat()}","select":"id","limit":"2"}
+    r=requests.get(TABLE,headers=HEADERS,params=params,timeout=25)
+    r.raise_for_status()
+    return len(r.json())
+
 def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY: raise RuntimeError("Missing Supabase credentials")
     if not GEMINI_API_KEY: raise RuntimeError("GEMINI_API_KEY GitHub Secret missing")
+    cleanup_old_news()
+    already_published=published_news_today()
+    if already_published >= MAX_DAILY:
+        print(f"Daily limit reached: {already_published} Education News article(s) already published today. No more will be created.",flush=True)
+        return
     created=skipped=0
     for item in collect():
         if created>=MAX_DAILY: break
@@ -117,6 +140,9 @@ def main():
             h={**HEADERS,"Prefer":"resolution=ignore-duplicates,return=representation"}
             r=requests.post(TABLE,headers=h,params={"on_conflict":"slug"},json=payload,timeout=35)
             if not r.ok: raise RuntimeError(f"Supabase HTTP {r.status_code}: {r.text[:400]}")
+            inserted=r.json() if r.content else []
+            if not inserted or inserted[0].get("status") != "published":
+                raise RuntimeError("Supabase did not confirm a published row; refusing to count this as published.")
             created+=1; print(f"Published original education article: {item['title']} ({count} words)")
         except (requests.RequestException,ValueError,RuntimeError) as e:
             skipped+=1; print(f"Skipped safely: {item['title']} — {e}")
