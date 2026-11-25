@@ -367,7 +367,8 @@ UP_OFFICIAL_HOSTS = {
 }
 UP_RESULT_HINTS = (
     "result", "merit list", "merit-list", "score card", "scorecard",
-    "final selection list", "selected candidates", "परिणाम", "रिजल्ट",
+    "answer key", "answer keys", "response sheet", "response sheets",
+    "final selection list", "selected candidates", "परिणाम", "रिजल्ट", "उत्तर कुंजी",
 )
 UP_ADMIT_HINTS = (
     "admit card", "admit-card", "hall ticket", "download admit",
@@ -375,14 +376,40 @@ UP_ADMIT_HINTS = (
 )
 UP_LATEST_HINTS = (
     "corrigendum", "revised notice", "exam schedule", "exam date",
-    "answer key", "objection", "date extended", "extension of last date",
+    "objection", "date extended", "extension of last date",
     "notice regarding", "important notice", "सूचना", "संशोधित", "परीक्षा कार्यक्रम",
-    "उत्तर कुंजी", "आपत्ति", "तिथि बढ़ाई",
+    "आपत्ति", "तिथि बढ़ाई",
 )
 
 def up_official(url):
     h = host(url)
     return h in UP_OFFICIAL_HOSTS or h.endswith(".up.gov.in") or h.endswith(".up.nic.in")
+
+def classify_update_category(value):
+    """Classify answer keys/results separately from general administrative notices."""
+    text = clean(value).lower()
+    if any(term in text for term in UP_ADMIT_HINTS):
+        return "Admit Card"
+    if any(term in text for term in UP_RESULT_HINTS):
+        return "Result"
+    return "Latest Update"
+
+
+def has_expired_action_window(text):
+    """Reject notices whose response/download/objection window has already closed."""
+    value = clean(text)
+    patterns = (
+        rf"(?:remain(?:s)?\s+(?:live|open)|shall\s+remain\s+(?:live|open)|window\s+(?:is\s+)?open|portal\s+(?:shall\s+)?remain\s+open).{{0,180}}?(?:to|till|until|upto|up\s+to)\s*{DATE_TOKEN}",
+        rf"(?:last\s+date|closing\s+date|deadline|objections?\s+(?:may\s+be\s+raised|received)?\s*(?:before|up\s+to|till|until)|submit(?:ted)?\s+(?:before|up\s+to|till|until))\s*[:\-]?\s*{DATE_TOKEN}",
+    )
+    dates = []
+    for pattern in patterns:
+        for match in re.finditer(pattern, value, flags=re.I):
+            parsed = parse_date(match.group(1))
+            if parsed:
+                dates.append(parsed)
+    return any(item < TODAY.isoformat() for item in dates)
+
 
 def discover_latest_updates(html, page_url):
     """Discover clearly labelled non-vacancy notices on approved official portals."""
@@ -390,7 +417,7 @@ def discover_latest_updates(html, page_url):
     found, seen = [], set()
     hints = (
         "corrigendum", "revised notice", "exam schedule", "exam date",
-        "answer key", "objection", "date extended", "extension of last date",
+        "answer key", "response sheet", "objection", "date extended", "extension of last date",
         "important notice", "notice regarding", "सूचना", "संशोधित",
         "परीक्षा कार्यक्रम", "उत्तर कुंजी", "आपत्ति", "तिथि बढ़ाई",
     )
@@ -401,9 +428,10 @@ def discover_latest_updates(html, page_url):
         searchable = (context + " " + label).lower()
         if not any(term in searchable for term in hints):
             continue
-        if any(term in searchable for term in ("admit card", "hall ticket", "प्रवेश पत्र", "result declared", "परिणाम जारी")):
+        category = classify_update_category(searchable)
+        if category == "Admit Card":
             continue
-        if has_stale_notice_date(searchable):
+        if has_stale_notice_date(searchable) or has_expired_action_window(searchable):
             continue
         url = safe_url(anchor.get("href"), page_url)
         if not url or not official(url):
@@ -415,7 +443,7 @@ def discover_latest_updates(html, page_url):
         title = context if len(context) > len(label) + 10 else label
         title = clean(title)[:220]
         if len(title) >= 12:
-            found.append(("Latest Update", title, url))
+            found.append((category, title, url))
     return found
 
 def discover_up_updates(html, page_url):
@@ -426,14 +454,10 @@ def discover_up_updates(html, page_url):
         parent = anchor.find_parent(["tr", "li", "article"])
         context = clean(parent.get_text(" ", strip=True)) if parent else label
         searchable = (context + " " + label).lower()
-        category = None
-        if any(term in searchable for term in UP_ADMIT_HINTS):
-            category = "Admit Card"
-        elif any(term in searchable for term in UP_RESULT_HINTS):
-            category = "Result"
-        elif any(term in searchable for term in UP_LATEST_HINTS):
-            category = "Latest Update"
-        if not category or has_stale_notice_date(context + " " + label):
+        category = classify_update_category(searchable)
+        if category == "Latest Update" and not any(term in searchable for term in UP_LATEST_HINTS):
+            category = None
+        if not category or has_stale_notice_date(context + " " + label) or has_expired_action_window(context + " " + label):
             continue
         url = safe_url(anchor.get("href"), page_url)
         if not url or not up_official(url):
@@ -1386,6 +1410,7 @@ def main():
                 update_action_ok = bool(official(detail_url) and len(detail_text) >= 180)
             if (not any(term in lowered for term in hints) or len(detail_text) < 100
                     or (category != "Latest Update" and not any(term in lowered for term in release_hints))
+                    or has_expired_action_window(detail_text)
                     or has_corrupt_text(detail_text) or not update_action_ok):
                 up_updates_skipped += 1
                 print("UP UPDATE SKIP - official category/action link not sufficiently verified:", candidate_title[:160])
