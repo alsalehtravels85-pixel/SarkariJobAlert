@@ -1,4 +1,4 @@
-name: Daily Education News Feed
+name: Daily Education News Draft Feed
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  fetch-and-publish-news:
+  fetch-and-save-drafts:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
       - name: Install dependency
         run: pip install requests
-      - name: Fetch headlines from RSS and publish short attributed summaries
+      - name: Fetch headlines from RSS and save short attributed Drafts for editorial review
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
