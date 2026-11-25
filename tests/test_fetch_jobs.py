@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from scripts import fetch_jobs
+from scripts import fetch_jobs, job_article_writer
 
 
 class ScannerRegressionTests(unittest.TestCase):
@@ -19,6 +19,16 @@ class ScannerRegressionTests(unittest.TestCase):
         self.assertTrue(fetch_jobs.has_stale_notice_date(
             "Recruitment notice dated 24-Sep-2016 updated 24-Oct-2026"
         ))
+
+    def test_generated_article_is_plain_clean_text(self):
+        article = job_article_writer.clean_article_text(
+            "## भर्ती विवरण\\n\\n**महत्वपूर्ण तिथि** | 26-11-2026\\n* आवेदन करें\\n# नोटिस"
+        )
+        self.assertNotIn("#", article)
+        self.assertNotIn("*", article)
+        self.assertNotIn("|", article)
+        self.assertIn("भर्ती विवरण", article)
+        self.assertIn("महत्वपूर्ण तिथि", article)
 
     def test_answer_keys_and_response_sheets_are_result_category(self):
         self.assertEqual(fetch_jobs.classify_update_category(
