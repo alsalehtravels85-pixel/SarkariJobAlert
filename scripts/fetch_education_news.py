@@ -15,7 +15,7 @@ RSS="https://news.google.com/rss/search?q={}&hl={}&gl=IN&ceid=IN:{}"
 UA="Mozilla/5.0 (compatible; SarkariJobAlertEducationNews/2.0; +https://sarkari-jobalert.com)"
 MIN_SOURCE_CHARS=1200
 MIN_WORDS=450
-MAX_DAILY=3
+MAX_DAILY=1
 
 def clean(s):
     return re.sub(r"\s+"," ",html.unescape(re.sub(r"<[^>]+>"," ",s or ""))).strip()
