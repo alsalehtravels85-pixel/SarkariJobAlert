@@ -181,6 +181,21 @@
       #homeEducationGuides .home-education-card{padding:12px!important}
       #homeEducationNews .home-education-card{padding:9px!important}
     }
+
+    /* Eye-catching read-all links for Exam Guide and Education News only */
+    .sja-read-all-cta{display:inline-flex;align-items:center;gap:10px;min-height:58px;padding:9px 14px;border:1px solid rgba(255,255,255,.78);border-radius:15px;color:#fff!important;text-decoration:none!important;box-shadow:0 8px 22px rgba(16,55,115,.18),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .2s ease,box-shadow .2s ease,filter .2s ease;position:relative;overflow:hidden}
+    .sja-guide-cta{background:linear-gradient(115deg,#0647b5,#087cf5 58%,#4d43d5)}
+    .sja-news-cta{background:linear-gradient(115deg,#a51c48,#e04459 55%,#f18b32)}
+    .sja-read-all-cta .sja-cta-icon{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:rgba(255,255,255,.2);font-size:20px}
+    .sja-read-all-cta strong,.sja-read-all-cta small{display:block;line-height:1.25}
+    .sja-read-all-cta strong{font-size:13px;font-weight:950;letter-spacing:.1px}
+    .sja-read-all-cta small{margin-top:3px;color:rgba(255,255,255,.9);font-size:10px;font-weight:650}
+    .sja-read-all-cta .sja-cta-arrow{font-size:21px;font-weight:900;margin-left:3px;transition:transform .2s ease}
+    .sja-read-all-cta:hover,.sja-read-all-cta:focus-visible{transform:translateY(-3px);filter:saturate(1.12);box-shadow:0 13px 28px rgba(16,55,115,.25),inset 0 1px 0 rgba(255,255,255,.4);outline:3px solid rgba(8,120,249,.18);outline-offset:2px}
+    .sja-read-all-cta:hover .sja-cta-arrow{transform:translate(3px,-2px)}
+    @media(max-width:600px){.home-education-section .section-heading{align-items:flex-start;gap:12px}.sja-read-all-cta{min-height:54px;padding:8px 10px;gap:8px;border-radius:13px}.sja-read-all-cta .sja-cta-icon{width:33px;height:33px;flex-basis:33px;font-size:18px}.sja-read-all-cta strong{font-size:11px}.sja-read-all-cta small{font-size:9px}.sja-read-all-cta .sja-cta-arrow{font-size:18px}}
+    @media(prefers-reduced-motion:reduce){.sja-read-all-cta,.sja-read-all-cta .sja-cta-arrow{transition:none}}
+
 </style>
 
   <script src="/job-redirects.js?v=20261122-legacy-map"></script>
@@ -345,7 +360,7 @@
     <section class="content-section home-education-section" aria-labelledby="homeGuideTitle">
       <div class="section-heading">
         <div><h2 id="homeGuideTitle">📚 School &amp; Exam Guide</h2><p class="home-guide-subtitle">Class 9–12, BA, BSc, BCom, MA, MSc aur MCom • Study Tips • Revision • Practice</p></div>
-        <a class="apply-btn" href="education.html">Saare Articles dekhein ↗</a>
+        <a class="sja-read-all-cta sja-guide-cta" href="education.html"><span class="sja-cta-icon">📚</span><span><strong>सभी Exam Guides पढ़ें</strong><small>पूरी Study Library खोलें</small></span><span class="sja-cta-arrow">↗</span></a>
       </div>
       <div id="homeEducationGuides" class="home-education-grid" aria-live="polite">
         <div class="loading-card">Education articles load ho rahe hain…</div>
@@ -355,7 +370,7 @@
     <section class="content-section home-education-section" aria-labelledby="educationNewsTitle">
       <div class="section-heading">
         <div><h2 id="educationNewsTitle">📰 Education News</h2></div>
-        <a class="apply-btn" href="education-news.html">Saari News dekhein ↗</a>
+        <a class="sja-read-all-cta sja-news-cta" href="education-news.html"><span class="sja-cta-icon">📰</span><span><strong>सारी Education News पढ़ें</strong><small>ताज़ा शिक्षा अपडेट देखें</small></span><span class="sja-cta-arrow">↗</span></a>
       </div>
       <div id="homeEducationNews" class="home-education-grid" aria-live="polite">
         <div class="loading-card">Education news load ho rahi hai…</div>
