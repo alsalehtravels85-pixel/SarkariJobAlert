@@ -75,7 +75,7 @@ class StaticJobPageTests(unittest.TestCase):
             self.assertTrue((out / "keep.txt").exists())
             self.assertTrue((out.parent / "job-redirects.js").exists())
             self.assertIn("/jobs/test-recruitment-2026-abc-123.html", (out.parent / "job-redirects.js").read_text(encoding="utf-8"))
-            self.assertIn("301", (out.parent / "_redirects").read_text(encoding="utf-8"))
+            self.assertIn("# BEGIN generated SarkariJobAlert legacy job URL redirects", (out.parent / "_redirects").read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
