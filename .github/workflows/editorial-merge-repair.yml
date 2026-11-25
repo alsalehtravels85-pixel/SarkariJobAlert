@@ -1,12 +1,6 @@
 name: SarkariJobAlert - Editorial merge and verification
 on:
-  workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/editorial_merge_repair.py"
-      - ".github/workflows/editorial-merge-repair.yml"
-permissions:
+  workflow_dispatch:permissions:
   contents: read
 jobs:
   repair:
