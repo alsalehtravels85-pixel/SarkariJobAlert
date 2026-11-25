@@ -2,14 +2,6 @@ name: SarkariJobAlert - Static Pages Preview Audit
 
 on:
   workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/generate_job_pages.py"
-      - "scripts/generate_job_sitemap.py"
-      - "tests/test_generate_job_pages.py"
-      - ".github/workflows/preview-static-job-pages.yml"
-
 permissions:
   contents: read
 
