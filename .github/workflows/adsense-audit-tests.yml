@@ -1,6 +1,15 @@
 name: AdSense Readiness - Safe Validation
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "tests/**"
+      - ".github/workflows/adsense-audit-tests.yml"
+      - "index.html"
+      - "app.js"
+      - "styles.css"
   pull_request:
     branches: [main]
     paths:
