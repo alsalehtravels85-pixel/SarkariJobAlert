@@ -30,7 +30,7 @@ jobs:
         run: python -m py_compile scripts/fetch_jobs.py scripts/job_article_writer.py scripts/cleanup_expired_jobs.py scripts/generate_job_sitemap.py scripts/generate_job_pages.py
       - name: Run scanner regression tests
         run: python -m unittest discover -s tests -v
-      - name: Scan vacancies plus UP Admit Cards/Results; save verified candidates as Draft for human review
+      - name: Scan Vacancy, Admit Card, Result and Latest Update; generate verified Hindi Drafts for human review
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.schedule == '30 2 * * *'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
