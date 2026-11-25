@@ -381,6 +381,40 @@ def up_official(url):
     h = host(url)
     return h in UP_OFFICIAL_HOSTS or h.endswith(".up.gov.in") or h.endswith(".up.nic.in")
 
+def discover_latest_updates(html, page_url):
+    """Discover clearly labelled non-vacancy notices on approved official portals."""
+    soup = BeautifulSoup(html, "html.parser")
+    found, seen = [], set()
+    hints = (
+        "corrigendum", "revised notice", "exam schedule", "exam date",
+        "answer key", "objection", "date extended", "extension of last date",
+        "important notice", "notice regarding", "सूचना", "संशोधित",
+        "परीक्षा कार्यक्रम", "उत्तर कुंजी", "आपत्ति", "तिथि बढ़ाई",
+    )
+    for anchor in soup.select("a[href]"):
+        label = clean(anchor.get_text(" ", strip=True))
+        parent = anchor.find_parent(["tr", "li", "article"])
+        context = clean(parent.get_text(" ", strip=True)) if parent else label
+        searchable = (context + " " + label).lower()
+        if not any(term in searchable for term in hints):
+            continue
+        if any(term in searchable for term in ("admit card", "hall ticket", "प्रवेश पत्र", "result declared", "परिणाम जारी")):
+            continue
+        if has_stale_notice_date(searchable):
+            continue
+        url = safe_url(anchor.get("href"), page_url)
+        if not url or not official(url):
+            continue
+        key = normalized_url(url)
+        if key == normalized_url(page_url) or key in seen:
+            continue
+        seen.add(key)
+        title = context if len(context) > len(label) + 10 else label
+        title = clean(title)[:220]
+        if len(title) >= 12:
+            found.append(("Latest Update", title, url))
+    return found
+
 def discover_up_updates(html, page_url):
     soup = BeautifulSoup(html, "html.parser")
     found, seen = [], set()
@@ -982,6 +1016,11 @@ def main():
                 if key not in known_urls and key not in seen_links:
                     seen_links.add(key)
                     candidates.append((source_name, title, link))
+            for category, title, link in discover_latest_updates(data, final_url):
+                key = normalized_url(link)
+                if key not in known_urls and key not in seen_up_updates:
+                    seen_up_updates.add(key)
+                    up_update_candidates.append((source_name, category, title, link))
             if source_name in {name for name, _ in UP_SOURCES}:
                 for category, title, link in discover_up_updates(data, final_url):
                     key = normalized_url(link)
@@ -1309,7 +1348,7 @@ def main():
     for source_name, category, candidate_title, link in up_update_candidates:
         try:
             data, detail_url, content_type = fetch(session, link)
-            if not data or not detail_url or not up_official(detail_url):
+            if not data or not detail_url or not (official(detail_url) if category == "Latest Update" else up_official(detail_url)):
                 up_updates_skipped += 1
                 print("UP UPDATE SKIP - official UP detail page unavailable:", candidate_title[:160])
                 continue
@@ -1339,7 +1378,7 @@ def main():
             )
             update_action_ok = bool(action_url and up_official(action_url))
             if category == "Latest Update":
-                update_action_ok = bool(up_official(detail_url) and len(detail_text) >= 180)
+                update_action_ok = bool(official(detail_url) and len(detail_text) >= 180)
             if (not any(term in lowered for term in hints) or len(detail_text) < 100
                     or (category != "Latest Update" and not any(term in lowered for term in release_hints))
                     or has_corrupt_text(detail_text) or not update_action_ok):
