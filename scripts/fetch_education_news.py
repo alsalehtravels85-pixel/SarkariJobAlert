@@ -120,6 +120,7 @@ def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY: raise RuntimeError("Missing Supabase credentials")
     if not GEMINI_API_KEY: raise RuntimeError("GEMINI_API_KEY GitHub Secret missing")
     cleanup_old_news()
+    promoted_drafts=publish_qualified_news_drafts()
     already_published=published_news_today()
     if already_published >= MAX_DAILY:
         print(f"Daily limit reached: {already_published} Education News article(s) already published today. No more will be created.",flush=True)
@@ -132,8 +133,9 @@ def main():
         try:
             url,source=extract(item["url"])
             article=write_article(item,url,source); count=words(article)
-            if count<MIN_WORDS:
-                print(f"Skipped insufficient/short article: {item['title']} ({count} words)"); skipped+=1; continue
+            ok, reason = qualifies_news_article(item['title'], article, url, item['source'])
+            if not ok:
+                print(f"Skipped article failing quality gate: {item['title']} — {reason} ({count} words)"); skipped+=1; continue
             excerpt=re.sub(r"[#*_>]+","",article)
             excerpt=re.sub(r"\s+"," ",excerpt).strip()[:420]
             payload={"slug":slug,"title":item["title"],"excerpt":excerpt,"content":article,"grade":"All Students","subject":"Education News","article_type":"news","source_url":url,"source_name":item["source"],"original_published_at":item.get("published"),"status":"published","published_at":NOW.isoformat(),"updated_at":NOW.isoformat()}
