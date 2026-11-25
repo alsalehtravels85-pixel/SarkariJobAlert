@@ -60,6 +60,66 @@
     }[c]));
   }
 
+  function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^$()|[\]\\]/g, "\\$&");
+  }
+
+  const legacySectionHeadings = [
+    "Important Dates","Important Details","Important Information","Important Instructions",
+    "Recruitment Details","Vacancy Details","Post Details","Post-wise vacancies","Key Details",
+    "Educational Qualification","Eligibility Criteria","Age Limit","Age Relaxation",
+    "Application Fee","Application Fees","Fee Structure","Selection Process","Exam Pattern",
+    "Exam Schedule","Exam Details","How to Apply","How to Download","How to Download Admit Card",
+    "How to Check Result","Result Overview","Result Details","Result Status","Result Date",
+    "Important Links","Official Links","Important Note","Salary Details","Application Process",
+    "महत्वपूर्ण तिथियां","महत्वपूर्ण तिथियाँ","महत्वपूर्ण विवरण","महत्वपूर्ण जानकारी",
+    "भर्ती का विवरण","भर्ती का संक्षिप्त विवरण","कुल पद","पदों का विवरण","शैक्षणिक योग्यता",
+    "आयु सीमा","आवेदन शुल्क","चयन प्रक्रिया","आवेदन कैसे करें","कैसे आवेदन करें",
+    "कैसे डाउनलोड करें","कैसे देखें","कैसे जांचें","परिणाम कैसे देखें","परिणाम की स्थिति",
+    "परीक्षा विवरण","परीक्षा कार्यक्रम","उम्मीदवारों के लिए जरूरी सलाह",
+    "उम्मीदवारों के लिए जरूरी कदम","परिणाम किन पदों के लिए जारी हुआ है",
+    "मुख्य सूची में श्रेणीवार उम्मीदवार","UPSC CSE Mains Result 2026 की मुख्य जानकारी",
+    "IBPS RRB PO Admit Card 2026 की मुख्य जानकारी","रोल नंबर और नाम वाली सूची में क्या अंतर है",
+    "कॉल लेटर कैसे डाउनलोड करें","कॉल लेटर में कौन-सी जानकारी जाँचें",
+    "परीक्षा केंद्र पर जाने से पहले तैयारी","Information Handout और Scribe Guidelines",
+    "UPSC Mains Result 2026 कैसे देखें","यदि सूची में आपका रोल नंबर मिल जाता है",
+    "यदि सूची में रोल नंबर नहीं मिलता है","कट-ऑफ और अंक से जुड़ी जानकारी",
+    "उपलब्ध reported details – अभी final न मानें"
+  ];
+
+  function normalizeDescriptionText(value) {
+    let raw = String(value || "").replace(/\r\n?/g, "\n").replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n").replace(/\\r/g, "\n").trim();
+    if (!raw.includes("\n")) {
+      raw = raw.replace(/\s+(#{1,4}\s+)/g, "\n\n$1");
+      for (const heading of legacySectionHeadings) {
+        const re = new RegExp("\\s+(" + escapeRegExp(heading) + ")(\\s*[:：–—-]\\s*)", "gi");
+        raw = raw.replace(re, "\n\n$1\n$2");
+      }
+      const standalone = [
+        "UPSC CSE Mains Result 2026 की मुख्य जानकारी",
+        "IBPS RRB PO Admit Card 2026 की मुख्य जानकारी",
+        "रोल नंबर और नाम वाली सूची में क्या अंतर है",
+        "कॉल लेटर कैसे डाउनलोड करें",
+        "कॉल लेटर में कौन-सी जानकारी जाँचें",
+        "परीक्षा केंद्र पर जाने से पहले तैयारी",
+        "Information Handout और Scribe Guidelines",
+        "UPSC Mains Result 2026 कैसे देखें",
+        "यदि सूची में आपका रोल नंबर मिल जाता है",
+        "यदि सूची में रोल नंबर नहीं मिलता है",
+        "कट-ऑफ और अंक से जुड़ी जानकारी"
+      ];
+      for (const heading of standalone) {
+        const re = new RegExp("\\s+(" + escapeRegExp(heading) + ")(?=\\s)", "gi");
+        raw = raw.replace(re, "\n\n$1\n");
+      }
+      raw = raw.replace(/\s+(•)\s+/g, "\n$1 ");
+      raw = raw.replace(/\s+-\s+(?=[A-Zअ-ह][^:：]{1,65}[:：])/g, "\n- ");
+      raw = raw.replace(/\s+(?=\d{1,2}[.)]\s+[A-Zअ-ह])/g, "\n");
+      raw = raw.replace(/(?<=[.!?।])\s+(?=(?:[A-Zअ-ह][A-Za-zअ-ह0-9 &()/–—-]{2,65})\s*[:：])/g, "\n\n");
+    }
+    return raw.replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   // Preserve original static URL format: readable slug plus full record ID.
   function jobDetailPath(job) {
     const slug = String(job?.title || "").toLowerCase()
@@ -466,7 +526,7 @@
     }
 
     function readableDescription(value) {
-      const raw = String(value || "").replace(/\r/g, "").trim();
+      const raw = normalizeDescriptionText(value);
       if (!raw) return L.unavailable;
 
       // Descriptions may contain intentional HTML formatting. Render only a
@@ -486,18 +546,25 @@
         };
         const inlineFormat = value => {
           let safe = escapeHtml(value);
+          const markdownLinks = [];
+          safe = safe.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, (_, label, url) => {
+            const token = "__SJA_LINK_" + markdownLinks.length + "__";
+            markdownLinks.push('<a href="' + url + '" target="_blank" rel="noopener noreferrer nofollow">' + label + "</a>");
+            return token;
+          });
           safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
           safe = safe.replace(/(https?:\/\/[^\s<]+)/g, url => {
             const clean = url.replace(/[),.;!?।]+$/, "");
             const tail = url.slice(clean.length);
-            return `<a href="${clean}" target="_blank" rel="noopener noreferrer nofollow">${clean}</a>${tail}`;
+            return '<a href="' + clean + '" target="_blank" rel="noopener noreferrer nofollow">' + clean + "</a>" + tail;
           });
+          safe = safe.replace(/__SJA_LINK_(\d+)__/g, (_, index) => markdownLinks[Number(index)] || "");
           return safe;
         };
         let firstContentLine = true;
         for (const sourceLine of lines) {
           const line = sourceLine.trim();
-          if (!line || /^[-–—_]{2,}$/.test(line)) { closeList(); continue; }
+          if (!line || /^#{1,4}$/.test(line) || /^[-–—_]{2,}$/.test(line)) { closeList(); continue; }
           const bullet = line.match(/^[•-]\s*(.+)$/);
           if (bullet && !/^[-–—_]+$/.test(bullet[1].trim())) {
             if (!listOpen) { output.push("<ul>"); listOpen = true; }
@@ -509,7 +576,9 @@
           const looksLikeHeading = line.length <= 95 &&
             !/[.!?।,:;]$/.test(line) &&
             (firstContentLine || line.length <= 75);
-          if (looksLikeHeading) output.push(`<h2>${inlineFormat(line)}</h2>`);
+          const markdownHeading = line.match(/^#{1,4}\s+(.+)$/);
+          if (markdownHeading) output.push(`<h2>${inlineFormat(markdownHeading[1])}</h2>`);
+          else if (looksLikeHeading) output.push(`<h2>${inlineFormat(line)}</h2>`);
           else output.push(`<p>${inlineFormat(line)}</p>`);
           firstContentLine = false;
         }
