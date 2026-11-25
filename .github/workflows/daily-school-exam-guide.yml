@@ -1,7 +1,10 @@
 name: Daily School Exam Guide Draft Feed
 
 on:
-  workflow_dispatch: # Manual only; daily automatic run paused
+  workflow_dispatch:
+  schedule:
+    # Daily at 06:00 AM India time (00:30 UTC)
+    - cron: "30 0 * * *"
 
 permissions:
   contents: read
@@ -27,7 +30,7 @@ jobs:
       - name: Install dependency
         run: pip install requests
 
-      - name: Generate one AI-generated Hindi study article as Draft for human review
+      - name: Generate and publish one quality-checked Hindi study guide
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
