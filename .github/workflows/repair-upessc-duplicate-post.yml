@@ -1,5 +1,6 @@
 name: SarkariJobAlert - Correct UPESSC duplicate placeholder in place
 on:
+  workflow_dispatch:
   push:
     branches: [adsense-readiness-audit]
     paths:
