@@ -40,12 +40,12 @@
    flushParagraph();flushList();return out.join('');
  }
  const cfg=window.SJA_CONFIG||{};
- if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){grid.innerHTML='<div class="edu-empty">Supabase configuration set karne ke baad articles yahan dikhenge.</div>';count.textContent='0 articles';return;}
+ if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){grid.innerHTML='<div class="edu-empty">Articles abhi load nahi ho paaye. Kripya kuch der baad dobara try karein.</div>';count.textContent='0 articles';return;}
  const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
  const {data,error}=await sb.from('school_articles').select('id,title,slug,excerpt,content,grade,subject,published_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false}).limit(60);
- if(error){grid.innerHTML='<div class="edu-empty">Articles abhi load nahi hue. Supabase mein SCHOOL_EXAM_SETUP.sql run hua hai ya nahi, check karein.</div>';count.textContent='Unavailable';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
+ if(error){grid.innerHTML='<div class="edu-empty">Articles abhi load nahi ho paaye. Kripya kuch der baad dobara try karein.</div>';count.textContent='Unavailable';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
  count.textContent=(data||[]).length+' articles';
- if(!data?.length){grid.innerHTML='<div class="edu-empty">Pehla educational article automatic workflow ke agle run par publish hoga.</div>';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
+ if(!data?.length){grid.innerHTML='<div class="edu-empty">Naye educational articles jald hi yahan available honge.</div>';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
  grid.innerHTML=data.map(a=>`<article class="edu-card" id="article-${esc(a.id)}"><span class="edu-tag">${esc(a.grade)} • ${esc(a.subject)}</span><h2>${esc(a.title)}</h2><div class="edu-meta">${a.published_at?new Date(a.published_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Study Guide'}</div><p>${esc(a.excerpt)}</p><details class="edu-article-body"><summary>पूरा लेख पढ़ें / Full article</summary><div class="edu-full-content">${renderGuideContent(a.content)}</div></details></article>`).join('');
  const target=decodeURIComponent(location.hash.slice(1)); if(target.startsWith('article-')){const card=document.getElementById(target);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.querySelector('details')?.setAttribute('open','');}}
 })();
