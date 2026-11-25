@@ -1402,7 +1402,8 @@ def main():
             release_hints = (
                 "available", "released", "download", "declared", "published",
                 "now live", "check result", "view result", "final result",
-                "final selection result", "प्रवेश पत्र डाउनलोड",
+                "final selection result", "answer key", "answer keys",
+                "response sheet", "response sheets", "प्रवेश पत्र डाउनलोड",
                 "परिणाम जारी", "जारी किया", "उपलब्ध",
             )
             update_action_ok = bool(action_url and up_official(action_url))
