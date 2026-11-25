@@ -1,16 +1,7 @@
 name: SarkariJobAlert - Automatic Government Job Scanner
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "scripts/fetch_jobs.py"
-      - "tests/test_fetch_jobs.py"
-      - ".github/workflows/auto-government-jobs.yml"
-  schedule:
-    - cron: "30 0 * * *" # Daily 06:00 IST (Asia/Kolkata)
-    - cron: "35 19 * * *" # 01:05 IST daily cleanup
+  workflow_dispatch: # Manual run only; automatic scanning and expiry cleanup paused
 
 permissions:
   contents: write
