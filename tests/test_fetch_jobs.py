@@ -22,7 +22,7 @@ class ScannerRegressionTests(unittest.TestCase):
 
     def test_generated_article_is_plain_clean_text(self):
         article = job_article_writer.clean_article_text(
-            "## भर्ती विवरण\\n\\n**महत्वपूर्ण तिथि** | 26-11-2026\\n* आवेदन करें\\n# नोटिस"
+            "## भर्ती विवरण\n\n**महत्वपूर्ण तिथि** | 26-11-2026\n* आवेदन करें\n# नोटिस"
         )
         self.assertNotIn("#", article)
         self.assertNotIn("*", article)
