@@ -5,6 +5,8 @@ on:
   schedule:
     # Daily at 08:00 AM India time (02:30 UTC)
     - cron: "30 2 * * *"
+    # Daily expired-vacancy cleanup at 01:05 AM India time (19:35 UTC)
+    - cron: "35 19 * * *"
 
 permissions:
   contents: write
@@ -41,7 +43,7 @@ jobs:
         run: python scripts/fetch_jobs.py
 
       - name: Unpublish expired vacancies while preserving records (manual and automatic)
-        if: github.event.schedule == '35 19 * * *'
+        if: github.event.schedule == '35 19 * * *' || github.event_name == 'workflow_dispatch'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
