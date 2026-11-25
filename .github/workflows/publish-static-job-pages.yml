@@ -33,24 +33,38 @@ jobs:
           python-version: "3.12"
       - name: Install dependency
         run: python -m pip install requests
-      - name: Generate crawlable job pages and sitemap
+      - name: Generate and safely publish crawlable job pages
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: \${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: \${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          python scripts/generate_job_pages.py
-          python scripts/generate_job_sitemap.py
-      - name: Commit generated public pages
-        run: |
-          # Incorporate any newer main commits before committing generated files.
-          git fetch origin main
-          git rebase origin/main
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jobs sitemap-jobs.xml _redirects job-redirects.js
-          if git diff --cached --quiet; then
-            echo "Static pages and sitemap already current."
-          else
+
+          # Rebuild from the newest main on each attempt so concurrent commits
+          # never leave the generated pages or one-line sitemap based on stale code.
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            python scripts/generate_job_pages.py
+            python scripts/generate_job_sitemap.py
+
+            git add jobs sitemap-jobs.xml _redirects job-redirects.js
+            if git diff --cached --quiet; then
+              echo "Static pages and sitemap already current."
+              exit 0
+            fi
+
             git commit -m "Publish crawlable static job detail pages"
-            git push origin HEAD:main
-          fi
+            if git push origin HEAD:main; then
+              echo "Static job pages and sitemap pushed successfully."
+              exit 0
+            fi
+
+            echo "Push race detected (attempt $attempt/5); rebuilding from latest main."
+            sleep $((attempt * 2))
+          done
+
+          echo "Could not publish static job pages after 5 attempts."
+          exit 1
