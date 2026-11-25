@@ -47,9 +47,16 @@
  count.textContent=(data||[]).length+' articles';
  if(!data?.length){grid.innerHTML='<div class="edu-empty">Naye educational articles jald hi yahan available honge.</div>';document.querySelector('meta[name="robots"]')?.setAttribute('content','noindex,follow');return;}
  grid.innerHTML=data.map(a=>`<article class="edu-card" id="article-${esc(a.id)}"><span class="edu-tag">${esc(a.grade)} • ${esc(a.subject)}</span><h2>${esc(a.title)}</h2><div class="edu-meta">${a.published_at?new Date(a.published_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'Study Guide'}</div><p>${esc(a.excerpt)}</p><details class="edu-article-body"><summary>पूरा लेख पढ़ें / Full article</summary><div class="edu-full-content">${renderGuideContent(a.content)}</div></details></article>`).join('');
- // Render LaTeX formulas in study guides (inline $...$ and display $...$).
- if(data.some(a=>/\\\\?\(|\\\\?\[|\$\$?[\s\S]*?\$\$?/.test(String(a.content||'')))){
-   window.MathJax={tex:{inlineMath:[[' if(target.startsWith('article-')){const card=document.getElementById(target);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.querySelector('details')?.setAttribute('open','');}}
+ // Render LaTeX formulas in study guides (inline $...$ and display $$...$$).
+ if(data.some(a=>/\$\$|\\\(|\\\[/.test(String(a.content||'')))){
+   window.MathJax={tex:{inlineMath:[['$','$'],['\\(','\\)']],displayMath:[['$$','$$'],['\\[','\\]']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']}};
+   const mathScript=document.createElement('script');
+   mathScript.src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js';
+   mathScript.async=true;
+   mathScript.onload=()=>window.MathJax?.typesetPromise?.([grid]).catch(()=>{});
+   document.head.appendChild(mathScript);
+ }
+ if(target.startsWith('article-')){const card=document.getElementById(target);if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.querySelector('details')?.setAttribute('open','');}}
 })();
 </script>
   <div class="sja-language-control" aria-label="Website language selector">
