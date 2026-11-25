@@ -1,6 +1,7 @@
 name: SarkariJobAlert - Repair additional draft posts
 on:
-  workflow_dispatch:permissions:
+  workflow_dispatch:
+permissions:
   contents: read
 jobs:
   repair:
