@@ -21,7 +21,10 @@ from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse, urldefrag
 from zoneinfo import ZoneInfo
 
-from job_article_writer import generate_article
+try:
+    from .job_article_writer import generate_article
+except ImportError:  # Direct execution: python scripts/fetch_jobs.py
+    from job_article_writer import generate_article
 
 import requests
 from bs4 import BeautifulSoup
