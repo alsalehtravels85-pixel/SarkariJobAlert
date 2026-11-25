@@ -104,7 +104,7 @@ def normalize_legacy_blocks(raw):
     raw = re.sub(r"\s+(#{1,4}\s+)", r"\n\n\1", raw)
     for heading in sorted(LEGACY_SECTION_HEADINGS, key=len, reverse=True):
         pattern = re.compile(r"\s+(" + re.escape(heading) + r")(\s*[:：–—-]\s*)", re.IGNORECASE)
-        raw = pattern.sub(lambda match: "\n\n" + match.group(1) + "\n" + match.group(2), raw)
+        raw = pattern.sub(lambda match: "\n\n" + match.group(1) + match.group(2) + "\n", raw)
     standalone = [
         "UPSC CSE Mains Result 2026 की मुख्य जानकारी",
         "IBPS RRB PO Admit Card 2026 की मुख्य जानकारी",
@@ -198,7 +198,7 @@ def render_description(value):
         markdown_heading = re.match(r"^#{1,4}\s+(.+)$", line)
         if markdown_heading:
             output.append(f"<h3>{inline(markdown_heading.group(1))}</h3>")
-        elif len(line) <= 95 and not re.search(r"[.!?।,:;]$", line) and (first_content or len(line) <= 75):
+        elif len(line) <= 95 and (re.search(r"[:：–—-]$", line) or (not re.search(r"[.!?।,:;]$", line) and (first_content or len(line) <= 75))):
             output.append(f"<h3>{inline(line)}</h3>")
         else:
             output.append(f"<p>{inline(line)}</p>")
