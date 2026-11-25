@@ -1371,6 +1371,8 @@ def main():
                 html_soup = BeautifulSoup(data, "html.parser")
                 detail_text = clean(html_soup.get_text(" ", strip=True))
                 action_url = verified_up_action_link(data, detail_url, category, detail_text)
+                if category == "Latest Update":
+                    action_url = detail_url
             lowered = (candidate_title + " " + detail_text).lower()
             hints = UP_ADMIT_HINTS if category == "Admit Card" else (UP_RESULT_HINTS if category == "Result" else UP_LATEST_HINTS)
             release_hints = (
@@ -1423,6 +1425,9 @@ def main():
                 record["result_date"] = article_facts["result_date"]
                 record["result_status"] = "परिणाम जारी" if contains_devanagari(detail_text) else "Declared"
                 record["merit_list_url"] = action_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
+            else:
+                record["vacancies"] = candidate_title[:500]
+                record["notification_date"] = article_facts["notice_date"]
             response = session.post(DB + "/rest/v1/jobs", headers=db_headers(), json=record, timeout=30)
             response.raise_for_status()
             known_urls.add(normalized_url(detail_url))
