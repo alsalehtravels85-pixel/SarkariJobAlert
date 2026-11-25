@@ -714,7 +714,7 @@ def seo_update_title(title, category):
         if not any(x in title.lower() for x in ("admit card", "hall ticket", "प्रवेश पत्र", "प्रवेशपत्र")):
             title += " " + ("प्रवेश पत्र" if hindi else "Admit Card")
     elif category == "Result":
-        if not any(x in title.lower() for x in ("result", "परिणाम", "रिजल्ट", "merit list", "scorecard")):
+        if not any(x in title.lower() for x in ("result", "परिणाम", "रिजल्ट", "merit list", "scorecard", "answer key", "response sheet")):
             title += " " + ("परिणाम" if hindi else "Result")
     return re.sub(r"\s+", " ", title).strip()[:180]
 
@@ -1449,7 +1449,7 @@ def main():
             elif category == "Result":
                 record["result_url"] = action_url
                 record["result_date"] = article_facts["result_date"]
-                record["result_status"] = "परिणाम जारी" if contains_devanagari(detail_text) else "Declared"
+                record["result_status"] = ("उत्तर कुंजी जारी" if contains_devanagari(detail_text) else "Answer Key Released") if any(x in lowered for x in ("answer key", "answer keys", "उत्तर कुंजी")) else (("रिस्पॉन्स शीट जारी" if contains_devanagari(detail_text) else "Response Sheet Released") if "response sheet" in lowered else ("परिणाम जारी" if contains_devanagari(detail_text) else "Declared"))
                 record["merit_list_url"] = action_url if any(x in lowered for x in ("merit list", "merit-list", "selection list")) else None
             else:
                 record["vacancies"] = candidate_title[:500]
