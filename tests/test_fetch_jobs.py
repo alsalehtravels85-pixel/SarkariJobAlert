@@ -38,6 +38,18 @@ class ScannerRegressionTests(unittest.TestCase):
             "Final/Revised Response Sheets and Redressal of Objections"
         ), "Result")
 
+    def test_historical_objection_deadline_does_not_expire_final_answer_key(self):
+        self.assertFalse(fetch_jobs.has_expired_action_window(
+            "Final Answer Key issued. Objections to provisional key were accepted before 05-10-2026."
+        ))
+
+    def test_generic_and_irrelevant_update_titles_are_rejected(self):
+        self.assertEqual(fetch_jobs.seo_update_title("Exam Schedule", "Latest Update"), "")
+        self.assertEqual(fetch_jobs.seo_update_title("Answer Key-OMR Exams", "Result"), "")
+        self.assertEqual(fetch_jobs.seo_update_title(
+            "Final Answer Keys for Scientist Engineer Industrial Engineering", "Result"
+        ), "Final Answer Keys for Scientist Engineer Industrial Engineering")
+
     def test_expired_response_sheet_window_is_rejected(self):
         self.assertTrue(fetch_jobs.has_expired_action_window(
             "The link shall remain live from 27-10-2026 to 02-11-2026"
