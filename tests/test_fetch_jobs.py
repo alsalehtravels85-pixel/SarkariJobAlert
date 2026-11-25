@@ -20,6 +20,22 @@ class ScannerRegressionTests(unittest.TestCase):
             "Recruitment notice dated 24-Sep-2016 updated 24-Oct-2026"
         ))
 
+    def test_answer_keys_and_response_sheets_are_result_category(self):
+        self.assertEqual(fetch_jobs.classify_update_category(
+            "Final Answer Keys for written test"
+        ), "Result")
+        self.assertEqual(fetch_jobs.classify_update_category(
+            "Final/Revised Response Sheets and Redressal of Objections"
+        ), "Result")
+
+    def test_expired_response_sheet_window_is_rejected(self):
+        self.assertTrue(fetch_jobs.has_expired_action_window(
+            "The link shall remain live from 27-10-2026 to 02-11-2026"
+        ))
+        self.assertFalse(fetch_jobs.has_expired_action_window(
+            "Final answer keys published on 06-11-2026"
+        ))
+
     def test_leading_employment_news_date_is_notification_date_not_deadline(self):
         self.assertEqual(
             fetch_jobs.listing_notification_date(
