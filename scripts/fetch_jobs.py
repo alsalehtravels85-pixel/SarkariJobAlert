@@ -1249,8 +1249,8 @@ def main():
                 sarkaritoday_duplicates += 1
                 continue
 
-            # Publish only if the official PDF is readable and verifies the key facts.
-            # An official apply URL alone is enough for a draft, never automatic publishing.
+            # Save only after the official PDF is readable and verifies the key facts.
+            # All discovered records remain Draft for human editorial review.
             status = "draft"  # Discovery-source content requires human editorial review.
             fields["last_date"] = last_date
             fields["department"] = department
