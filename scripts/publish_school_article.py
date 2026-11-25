@@ -276,6 +276,8 @@ def main():
     if not GEMINI_API_KEY:
         raise RuntimeError("GEMINI_API_KEY GitHub Secret missing hai.")
 
+    publish_qualified_study_guide_drafts()
+
     course, subject, topic, day_number = choose_lesson()
     title = f"{course} {subject}: {topic}"
     slug = f"{TODAY.isoformat()}-{slugify(course)}-{slugify(subject)}-{day_number}"
@@ -308,11 +310,10 @@ def main():
 
     # Do not launch a second full article generation: that can exceed the
     # GitHub Actions time limit. Keep the article unpublished if too short.
-    if count < 700:
-        raise RuntimeError(
-            f"Generated article is too short ({count} words). "
-            "Not published; retry the workflow later."
-        )
+    ok, reason = qualifies_study_guide(article)
+    if not ok:
+        print(f"Generated Exam Guide skipped by quality gate: {reason} ({count} words).", flush=True)
+        return
 
     # Build a short excerpt locally from the article to avoid a second Gemini
     # API request, which previously caused long waits and extra 503 errors.
