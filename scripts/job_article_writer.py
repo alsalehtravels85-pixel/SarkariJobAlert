@@ -8,15 +8,16 @@ def words(value):
 def clean_article_text(value):
     """Return plain, readable article text without Markdown/HTML decoration."""
     text = html_lib.unescape(str(value or ""))
-    text = re.sub(r"(?is)<(script|style).*?>.*?</\\1>", " ", text)
+    text = re.sub(r"(?is)<(script|style).*?>.*?</\1>", " ", text)
     text = re.sub(r"(?s)<[^>]+>", " ", text)
-    text = re.sub(r"!?\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", text)
-    text = re.sub(r"(?m)^\\s{0,3}#{1,6}\\s*", "", text)
-    text = re.sub(r"(?m)^\\s*[-+*•]\\s+", "", text)
-    text = re.sub(r"[*#`_~]", "", text)
+    text = re.sub(r"!?\[([^\]]+)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"(?m)^\s{0,3}#{1,6}\s*", "", text)
+    text = re.sub(r"(?m)^\s*[-+*•]\s+", "", text)
+    text = re.sub(r"[*#_~]", "", text)
+    text = text.replace(chr(96), "")
     text = text.replace("|", " - ")
-    text = re.sub(r"[ \\t]+", " ", text)
-    text = re.sub(r"\\n\\s*\\n\\s*\\n+", "\\n\\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n\s*\n\s*\n+", "\n\n", text)
     return text.strip()
 
 
