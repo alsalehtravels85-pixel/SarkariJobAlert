@@ -1,9 +1,15 @@
 import unittest
+from pathlib import Path
 
 from scripts import fetch_jobs
 
 
 class ScannerRegressionTests(unittest.TestCase):
+
+    def test_discovered_job_records_are_saved_as_drafts_only(self):
+        source = Path("scripts/fetch_jobs.py").read_text(encoding="utf-8")
+        self.assertIn('"status": "draft"', source)
+        self.assertNotIn('"status": "published"', source)
 
     def test_stale_dated_archive_notice_is_filtered(self):
         self.assertTrue(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Sep-2016"))
