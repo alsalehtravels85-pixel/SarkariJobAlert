@@ -21,6 +21,8 @@ class EducationNewsSafetyTests(unittest.TestCase):
         source = Path("scripts/fetch_education_news.py").read_text(encoding="utf-8")
         self.assertNotIn("requests.delete(", source)
         self.assertNotIn("session.delete(", source)
+        self.assertNotIn("requests.patch(", source)
+        self.assertNotIn("session.patch(", source)
 
 
 if __name__ == "__main__":
