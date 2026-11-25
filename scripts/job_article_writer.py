@@ -1,10 +1,25 @@
 """Gemini-backed Hindi article writer for verified SarkariJobAlert drafts."""
-import os, re, time, requests
+import html as html_lib, os, re, time, requests
 API_KEY=os.getenv("GEMINI_API_KEY","").strip()
 PRIMARY=os.getenv("GEMINI_MODEL","gemini-3.8-flash").strip()
 FALLBACK=os.getenv("GEMINI_FALLBACK_MODEL","gemini-3.5-flash-lite").strip()
 def words(value):
     return len(re.findall(r"\S+",re.sub(r"<[^>]+>"," ",str(value or ""))))
+def clean_article_text(value):
+    """Return plain, readable article text without Markdown/HTML decoration."""
+    text = html_lib.unescape(str(value or ""))
+    text = re.sub(r"(?is)<(script|style).*?>.*?</\\1>", " ", text)
+    text = re.sub(r"(?s)<[^>]+>", " ", text)
+    text = re.sub(r"!?\\[([^\\]]+)\\]\\([^)]*\\)", r"\\1", text)
+    text = re.sub(r"(?m)^\\s{0,3}#{1,6}\\s*", "", text)
+    text = re.sub(r"(?m)^\\s*[-+*•]\\s+", "", text)
+    text = re.sub(r"[*#`_~]", "", text)
+    text = text.replace("|", " - ")
+    text = re.sub(r"[ \\t]+", " ", text)
+    text = re.sub(r"\\n\\s*\\n\\s*\\n+", "\\n\\n", text)
+    return text.strip()
+
+
 def generate_article(title,category,department,facts,source_text,official_links):
     if not API_KEY:
         print("GEMINI SKIP: GEMINI_API_KEY missing; candidate not saved."); return None
@@ -39,7 +54,7 @@ Latest Update में नोटिस का अर्थ, प्रभाव�
                 r=requests.post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                     headers={"x-goog-api-key":API_KEY,"Content-Type":"application/json"},json=payload,timeout=100)
                 if r.ok:
-                    article=r.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+                    article=clean_article_text(r.json()["candidates"][0]["content"]["parts"][0]["text"])
                     if words(article)>=500 and len(article)>=2200: return article
                     print("GEMINI REJECT:",words(article),"words; candidate skipped."); return None
                 if r.status_code not in (429,500,502,503,504):
