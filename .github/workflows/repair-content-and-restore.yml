@@ -1,12 +1,6 @@
 name: SarkariJobAlert - Repair content and restore verified posts
 on:
-  workflow_dispatch:
-  push:
-    branches: [adsense-readiness-audit]
-    paths:
-      - "scripts/repair_content_and_restore.py"
-      - ".github/workflows/repair-content-and-restore.yml"
-permissions:
+  workflow_dispatch:permissions:
   contents: read
 jobs:
   repair:
