@@ -117,14 +117,19 @@ def published_news_today():
     return len(r.json())
 
 def qualifies_news_article(title, article, url, source):
-    if not url.startswith("https://") or "news.google.com" in url:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.hostname == "news.google.com":
         return False, "Original publisher URL not resolved"
-    if words(article) < MIN_WORDS:
-        return False, "Article below minimum word count"
     if not title.strip() or not source.strip():
         return False, "Missing title or source"
-    if len(re.findall(r"(?m)^#{1,3}\\s+|^.{5,80}$", article)) < 4:
+    if not MIN_WORDS <= words(article) <= 1100:
+        return False, "Article word count outside quality limits"
+    if len(re.findall(r"(?m)^#{1,3}\s+\S", article)) < 4:
         return False, "Insufficient article structure"
+    if url not in article:
+        return False, "Publisher source link missing"
+    if "INSUFFICIENT_SOURCE" in article:
+        return False, "Insufficient source"
     return True, "qualified"
 
 def main():
