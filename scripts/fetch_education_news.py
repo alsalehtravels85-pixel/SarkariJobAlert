@@ -1,12 +1,13 @@
 import os, re, hashlib, datetime as dt, email.utils, html, urllib.parse, xml.etree.ElementTree as ET
 from zoneinfo import ZoneInfo
 import requests
+from googlenewsdecoder import gnewsdecoder
 from bs4 import BeautifulSoup
 
 SUPABASE_URL=os.environ["SUPABASE_URL"].rstrip("/")
 SERVICE_KEY=os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 GEMINI_API_KEY=os.getenv("GEMINI_API_KEY","").strip()
-GEMINI_MODEL=os.getenv("GEMINI_MODEL","gemini-3.8-flash").strip()
+GEMINI_MODEL=os.getenv("GEMINI_MODEL","gemini-2.5-flash").strip()
 NOW=dt.datetime.now(dt.timezone.utc)
 TABLE=f"{SUPABASE_URL}/rest/v1/school_articles"
 HEADERS={"apikey":SERVICE_KEY,"Authorization":f"Bearer {SERVICE_KEY}","Content-Type":"application/json"}
@@ -51,6 +52,11 @@ def collect():
     return out
 
 def extract(url):
+    if 'news.google.com/' in url:
+        decoded=gnewsdecoder(url, interval=1)
+        if not decoded.get('status') or not decoded.get('decoded_url'):
+            raise ValueError('Google News source could not be resolved')
+        url=decoded['decoded_url']
     r=requests.get(url,headers={"User-Agent":UA},timeout=25,allow_redirects=True); r.raise_for_status()
     final=r.url
     if not final.startswith("https://"): raise ValueError("Non-HTTPS publisher URL")
