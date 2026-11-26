@@ -53,12 +53,18 @@ def collect():
 
 def extract(url):
     if 'news.google.com/' in url:
-        decoded=gnewsdecoder(url, interval=1)
+        try:
+            decoded=gnewsdecoder(url, interval=1)
+        except Exception as e:
+            raise ValueError(f'Google News decoder error: {type(e).__name__}: {e}') from e
+        if not isinstance(decoded, dict):
+            raise ValueError('Google News decoder returned invalid response')
         if not decoded.get('status') or not decoded.get('decoded_url'):
             raise ValueError('Google News source could not be resolved')
         url=decoded['decoded_url']
     r=requests.get(url,headers={"User-Agent":UA},timeout=25,allow_redirects=True); r.raise_for_status()
     final=r.url
+    if 'news.google.com/' in final: raise ValueError('Publisher URL remained Google News')
     if not final.startswith("https://"): raise ValueError("Non-HTTPS publisher URL")
     soup=BeautifulSoup(r.text,"html.parser")
     for n in soup(["script","style","noscript","svg","nav","footer","header","aside","form"]): n.decompose()
