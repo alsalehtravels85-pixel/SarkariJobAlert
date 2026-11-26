@@ -135,7 +135,7 @@ def qualifies_news_article(title, article, url, source):
 def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY: raise RuntimeError("Missing Supabase credentials")
     if not GEMINI_API_KEY: raise RuntimeError("GEMINI_API_KEY GitHub Secret missing")
-    cleanup_old_news()
+    # Preserve published articles; no automatic deletion.
 
     already_published=published_news_today()
     if already_published >= MAX_DAILY:
@@ -165,4 +165,6 @@ def main():
         except (requests.RequestException,ValueError,RuntimeError) as e:
             skipped+=1; print(f"Skipped safely: {item['title']} — {e}")
     print(f"Education News complete: {created} published; {skipped} skipped. Existing records untouched.")
+    if created == 0:
+        raise RuntimeError("No verified education article was published; inspect source resolution and quality gates.")
 if __name__=="__main__": main()
