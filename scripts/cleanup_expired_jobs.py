@@ -1,91 +1,46 @@
 #!/usr/bin/env python3
-"""Unpublish expired vacancy posts while preserving their records.
-
-Only Latest Jobs, Vacancy and Jobs categories are eligible. Admit Cards,
-Results and other categories are excluded. Missing or invalid last_date is
-never changed. Expired rows are moved from published to draft, not deleted,
-so administrators can review or restore them when appropriate.
-"""
+"""Delete expired Vacancy rows only. Never delete other categories or undated rows."""
 import os
 import sys
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
 import requests
 
-DB = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
-KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
-HEADERS = {
-    "apikey": KEY,
-    "Authorization": "Bearer " + KEY,
-    "Content-Type": "application/json",
-    "Prefer": "return=representation",
-}
-
-
 def main():
-    if not DB.startswith("https://") or not KEY:
-        print("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY GitHub secret")
+    url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    if not url.startswith("https://") or not key:
         return 2
-
     today = datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
-    session = requests.Session()
-    unpublished = 0
-
+    headers = {"apikey": key, "Authorization": "Bearer " + key,
+               "Prefer": "return=representation"}
+    params = {"select": "id,title,last_date", "category": "eq.Vacancy",
+              "last_date": "lt." + today}
     try:
+        session = requests.Session()
+        count = 0
         while True:
-            params = {
-                "select": "id,title,last_date,status",
-                "status": "eq.published",
-                "category": 'in.("Latest Jobs",Vacancy,Jobs)',
-                "last_date": "lt." + today,
-                "order": "last_date.asc",
-                "limit": "100",
-            }
-            response = session.get(
-                DB + "/rest/v1/jobs", headers=HEADERS, params=params, timeout=30
-            )
-            response.raise_for_status()
-            rows = response.json()
-            if not isinstance(rows, list):
-                raise ValueError("Unexpected Supabase response (expected list)")
+            r = session.get(url + "/rest/v1/jobs", headers=headers,
+                            params={**params, "limit": "100"}, timeout=30)
+            r.raise_for_status()
+            rows = r.json()
             if not rows:
                 break
-
-            ids = [str(row["id"]) for row in rows if row.get("id") is not None]
+            ids = [str(row["id"]) for row in rows]
             if not ids:
-                raise ValueError("Eligible rows returned without IDs")
-
-            update_params = {
-                "id": "in.(" + ",".join(ids) + ")",
-                "status": "eq.published",
-                "last_date": "lt." + today,
-            }
-            result = session.patch(
-                DB + "/rest/v1/jobs",
-                headers=HEADERS,
-                params=update_params,
-                json={"status": "draft"},
-                timeout=30,
-            )
-            result.raise_for_status()
-            changed = result.json() if result.content else []
-            if not isinstance(changed, list):
-                raise ValueError("Unexpected update response (expected list)")
-            if not changed:
-                raise RuntimeError("No rows updated; stopping to avoid an infinite loop")
-
-            unpublished += len(changed)
-            for row in changed:
-                print("UNPUBLISHED", row.get("id"), row.get("title"),
-                      "last_date=", row.get("last_date"))
-
-        print(f"EXPIRY REVIEW | India date={today} | expired published vacancies moved to draft={unpublished} | records preserved")
+                raise RuntimeError("Missing IDs")
+            r = session.delete(url + "/rest/v1/jobs", headers=headers,
+                params={**params, "id": "in.(" + ",".join(ids) + ")"}, timeout=30)
+            r.raise_for_status()
+            deleted = r.json()
+            if not deleted:
+                raise RuntimeError("No rows deleted; stopping")
+            count += len(deleted)
+        print(f"Expired Vacancy cleanup: {count} deleted; India date={today}")
         return 0
     except Exception as exc:
-        print("EXPIRY CLEANUP ERROR:", str(exc)[:500])
+        print("Cleanup failed:", str(exc)[:500])
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())
