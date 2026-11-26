@@ -48,6 +48,26 @@ def collect():
             seen.add(key); published=pubdate(it.findtext("pubDate"))
             if published and (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
             out.append({"title":title[:240],"url":link,"source":src,"published":published,"key":key})
+    # Direct publisher RSS avoids Google News redirect decoding.
+    for feed, publisher in [
+        ("https://www.theguardian.com/education/rss", "The Guardian"),
+        ("https://feeds.bbci.co.uk/news/education/rss.xml", "BBC News"),
+    ]:
+        try:
+            res=sess.get(feed,timeout=25); res.raise_for_status()
+            root=ET.fromstring(res.content)
+            for it in root.findall("./channel/item"):
+                title=clean(it.findtext("title"))
+                link=(it.findtext("link") or "").strip()
+                published=pubdate(it.findtext("pubDate"))
+                if not title or not link.startswith("https://") or not published: continue
+                if (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
+                key=hashlib.sha256((title.lower()+"|"+publisher.lower()).encode()).hexdigest()
+                if key in seen: continue
+                seen.add(key)
+                out.append({"title":title[:240],"url":link,"source":publisher,"published":published,"key":key})
+        except (requests.RequestException,ET.ParseError,ValueError) as e:
+            print(f"Direct publisher feed skipped: {publisher}: {e}",flush=True)
     out.sort(key=lambda x:x.get("published") or "",reverse=True)
     return out
 
