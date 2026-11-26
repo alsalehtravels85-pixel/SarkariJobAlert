@@ -15,7 +15,7 @@ def main():
     cutoff = (today - timedelta(days=15)).isoformat()
     headers = {"apikey": key, "Authorization": "Bearer " + key,
                "Prefer": "return=representation"}
-    params = {"select": "id,title,last_date", "category": "eq.Vacancy",
+    params = {"select": "id,title,last_date", "category": "eq.Vacancy", "status": "eq.published",
               "last_date": "lte." + cutoff}
     try:
         session = requests.Session()
