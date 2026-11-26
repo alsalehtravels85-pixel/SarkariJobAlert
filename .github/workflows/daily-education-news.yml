@@ -1,6 +1,10 @@
 name: Daily Education News Original Article Publisher
 
 on:
+  push:
+    paths:
+      - 'scripts/fetch_education_news.py'
+      - '.github/workflows/daily-education-news.yml'
   workflow_dispatch:
   schedule:
     # Daily at 08:00 AM India time (02:30 UTC)
