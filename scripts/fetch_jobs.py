@@ -396,19 +396,18 @@ def classify_update_category(value):
 
 
 def has_expired_action_window(text):
-    """Reject notices whose response/download/objection window has already closed."""
+    """Reject closed action windows, not historical exam/objection dates."""
     value = clean(text)
     patterns = (
         rf"(?:remain(?:s)?\s+(?:live|open)|shall\s+remain\s+(?:live|open)|window\s+(?:is\s+)?open|portal\s+(?:shall\s+)?remain\s+open).{{0,180}}?(?:to|till|until|upto|up\s+to)\s*{DATE_TOKEN}",
+        rf"(?:response\s+sheet|objection\s+(?:window|portal)|download\s+link|call\s+letter).{{0,220}}?(?:closes?|closed|ends?|available\s+until|last\s+date|till|until|up\s+to)\s*[:\-]?\s*{DATE_TOKEN}",
     )
-    dates = []
     for pattern in patterns:
         for match in re.finditer(pattern, value, flags=re.I):
             parsed = parse_date(match.group(1))
-            if parsed:
-                dates.append(parsed)
-    return any(item < TODAY.isoformat() for item in dates)
-
+            if parsed and parsed < TODAY.isoformat():
+                return True
+    return False
 
 def discover_latest_updates(html, page_url):
     """Discover clearly labelled non-vacancy notices on approved official portals."""
