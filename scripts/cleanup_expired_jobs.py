@@ -2,7 +2,7 @@
 """Delete expired Vacancy rows only. Never delete other categories or undated rows."""
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 import requests
 
@@ -11,11 +11,12 @@ def main():
     key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     if not url.startswith("https://") or not key:
         return 2
-    today = datetime.now(ZoneInfo("Asia/Kolkata")).date().isoformat()
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+    cutoff = (today - timedelta(days=15)).isoformat()
     headers = {"apikey": key, "Authorization": "Bearer " + key,
                "Prefer": "return=representation"}
     params = {"select": "id,title,last_date", "category": "eq.Vacancy",
-              "last_date": "lt." + today}
+              "last_date": "lte." + cutoff}
     try:
         session = requests.Session()
         count = 0
