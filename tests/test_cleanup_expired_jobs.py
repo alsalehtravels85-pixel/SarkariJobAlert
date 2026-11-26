@@ -13,12 +13,7 @@ class FixedDateTime:
 
 class CleanupExpiredJobsTests(unittest.TestCase):
     def setUp(self):
-        self.env = patch.multiple(
-            cleanup_expired_jobs,
-            DB="https://example.supabase.co",
-            KEY="test-service-key",
-            HEADERS={"apikey": "test", "Authorization": "Bearer test"},
-        )
+        self.env = patch.dict("os.environ", {"SUPABASE_URL": "https://example.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "test-service-key"})
         self.env.start()
         self.addCleanup(self.env.stop)
 
@@ -32,22 +27,22 @@ class CleanupExpiredJobsTests(unittest.TestCase):
 
     @patch.object(cleanup_expired_jobs, "datetime", FixedDateTime)
     @patch.object(cleanup_expired_jobs.requests, "Session")
-    def test_only_expired_published_vacancies_are_moved_to_draft(self, session_cls):
+    def test_only_expired_published_rows_are_deleted(self, session_cls):
         session = session_cls.return_value
         session.get.side_effect = [
             self.response([{"id": 1, "title": "Expired vacancy", "last_date": "2026-11-10"}]),
             self.response([]),
         ]
-        session.patch.return_value = self.response(
+        session.delete.return_value = self.response(
             [{"id": 1, "title": "Expired vacancy", "last_date": "2026-11-10"}]
         )
 
         self.assertEqual(cleanup_expired_jobs.main(), 0)
-        params = session.patch.call_args.kwargs
-        self.assertEqual(params["json"], {"status": "draft"})
-        self.assertIn("id", params["params"])
-        self.assertEqual(session.patch.call_count, 1)
-        self.assertEqual(session.delete.call_count, 0)
+        params = session.delete.call_args.kwargs["params"]
+        self.assertEqual(params["status"], "eq.published")
+        self.assertEqual(params["last_date"], "lte.2026-10-27")
+        self.assertEqual(params["id"], "in.(1)")
+        session.patch.assert_not_called()
 
     @patch.object(cleanup_expired_jobs, "datetime", FixedDateTime)
     @patch.object(cleanup_expired_jobs.requests, "Session")
@@ -68,7 +63,7 @@ class CleanupExpiredJobsTests(unittest.TestCase):
         )
         failed = Mock()
         failed.raise_for_status.side_effect = RuntimeError("update failed")
-        session.patch.return_value = failed
+        session.delete.return_value = failed
 
         self.assertEqual(cleanup_expired_jobs.main(), 1)
 
