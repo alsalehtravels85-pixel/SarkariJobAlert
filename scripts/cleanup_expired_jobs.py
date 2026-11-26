@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Delete expired Vacancy rows only. Never delete other categories or undated rows."""
+"""Delete expired published job posts only. Never delete drafts or undated rows."""
 import os
 import sys
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ def main():
     cutoff = (today - timedelta(days=15)).isoformat()
     headers = {"apikey": key, "Authorization": "Bearer " + key,
                "Prefer": "return=representation"}
-    params = {"select": "id,title,last_date", "category": "eq.Vacancy", "status": "eq.published",
+    params = {"select": "id,title,last_date", "category": "in.(Vacancy,Admit Card,Result,Latest Update)", "status": "eq.published",
               "last_date": "lte." + cutoff}
     try:
         session = requests.Session()
@@ -37,7 +37,7 @@ def main():
             if not deleted:
                 raise RuntimeError("No rows deleted; stopping")
             count += len(deleted)
-        print(f"Expired Vacancy cleanup: {count} deleted; India date={today}")
+        print(f"Expired published posts cleanup: {count} deleted; India date={today}")
         return 0
     except Exception as exc:
         print("Cleanup failed:", str(exc)[:500])
