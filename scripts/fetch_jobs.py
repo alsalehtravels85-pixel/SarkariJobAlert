@@ -1454,7 +1454,7 @@ def main():
             record = {
                 "title": title, "department": department, "category": category,
                 "notification_url": detail_url, "description": generated,
-                "status": "draft", "source_url": detail_url + MARKER,
+                "status": "published" if category == "Latest Update" else "draft", "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
                 record["admit_card_url"] = action_url
