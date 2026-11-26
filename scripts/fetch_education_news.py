@@ -176,6 +176,11 @@ def qualifies_news_article(title, article, url, source):
         return False, "Publisher source link missing"
     if "INSUFFICIENT_SOURCE" in article:
         return False, "Insufficient source"
+    education = r"\b(?:school|student|pupil|teacher|education|university|college|admission|scholarship|examination|exam|curriculum|campus|classroom|academic|research)\b|शिक्षा|विद्यालय|स्कूल|छात्र|विश्वविद्यालय|परीक्षा|प्रवेश|छात्रवृत्ति|शिक्षक"
+    if not re.search(education, title, re.I) or len(re.findall(education, article, re.I)) < 5:
+        return False, "Education relevance not established"
+    if re.search(r"\b(?:celebrity|reality tv|fake videos|deepfake|viral video|entertainment)\b", title, re.I):
+        return False, "Non-core education topic"
     return True, "qualified"
 
 def main():
