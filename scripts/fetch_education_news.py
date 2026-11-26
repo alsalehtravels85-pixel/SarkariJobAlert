@@ -11,7 +11,7 @@ GEMINI_MODEL=os.getenv("GEMINI_MODEL","gemini-2.5-flash").strip()
 NOW=dt.datetime.now(dt.timezone.utc)
 TABLE=f"{SUPABASE_URL}/rest/v1/school_articles"
 HEADERS={"apikey":SERVICE_KEY,"Authorization":f"Bearer {SERVICE_KEY}","Content-Type":"application/json"}
-QUERIES=["India education school college university examination scholarship admission","Uttar Pradesh board school examination education scholarship","CBSE education examination students India","भारत शिक्षा समाचार परीक्षा छात्रवृत्ति प्रवेश विश्वविद्यालय"]
+QUERIES=["India education school university examination scholarship admission India","Uttar Pradesh board school examination education scholarship","CBSE education examination students India","भारत शिक्षा समाचार परीक्षा छात्रवृत्ति प्रवेश विश्वविद्यालय"]
 RSS="https://news.google.com/rss/search?q={}&hl={}&gl=IN&ceid=IN:{}"
 UA="Mozilla/5.0 (compatible; SarkariJobAlertEducationNews/2.0; +https://sarkari-jobalert.com)"
 MIN_SOURCE_CHARS=1200
@@ -116,9 +116,23 @@ def write_article(item,url,source):
 SOURCE TEXT:
 {source}
 """
-    api=f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-    r=requests.post(api,headers={"x-goog-api-key":GEMINI_API_KEY,"Content-Type":"application/json"},json={"contents":[{"role":"user","parts":[{"text":prompt}]}],"generationConfig":{"temperature":0.35,"topP":0.85,"maxOutputTokens":7000}},timeout=100)
-    r.raise_for_status(); data=r.json()
+    base="https://generativelanguage.googleapis.com/v1beta"
+    headers={"x-goog-api-key":GEMINI_API_KEY,"Content-Type":"application/json"}
+    listing=requests.get(base+"/models",headers=headers,timeout=30)
+    listing.raise_for_status()
+    available=[m["name"] for m in listing.json().get("models",[]) if "generateContent" in m.get("supportedGenerationMethods",[]) and "gemini" in m.get("name","") and not any(x in m["name"] for x in ("embedding","image","tts","live"))]
+    preferred=[m for m in available if "flash" in m and "preview" not in m]
+    models=preferred+[m for m in available if m not in preferred]
+    if not models: raise RuntimeError("No supported Gemini text model available")
+    data=None
+    for model in models:
+        r=requests.post(base+"/"+model+":generateContent",headers=headers,json={"contents":[{"role":"user","parts":[{"text":prompt}]}],"generationConfig":{"temperature":0.35,"topP":0.85,"maxOutputTokens":7000}},timeout=100)
+        if r.ok:
+            data=r.json()
+            print("Gemini model:",model,flush=True)
+            break
+        if r.status_code not in (404,429): r.raise_for_status()
+    if data is None: raise RuntimeError("All available Gemini models failed")
     parts=((data.get("candidates") or [{}])[0].get("content") or {}).get("parts") or []
     article="\n".join(x.get("text","") for x in parts if x.get("text")).strip()
     return "" if article=="INSUFFICIENT_SOURCE" else article
