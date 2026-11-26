@@ -116,11 +116,22 @@ def published_news_today():
     r.raise_for_status()
     return len(r.json())
 
+def qualifies_news_article(title, article, url, source):
+    if not url.startswith("https://") or "news.google.com" in url:
+        return False, "Original publisher URL not resolved"
+    if words(article) < MIN_WORDS:
+        return False, "Article below minimum word count"
+    if not title.strip() or not source.strip():
+        return False, "Missing title or source"
+    if len(re.findall(r"(?m)^#{1,3}\\s+|^.{5,80}$", article)) < 4:
+        return False, "Insufficient article structure"
+    return True, "qualified"
+
 def main():
     if not SUPABASE_URL.startswith("https://") or not SERVICE_KEY: raise RuntimeError("Missing Supabase credentials")
     if not GEMINI_API_KEY: raise RuntimeError("GEMINI_API_KEY GitHub Secret missing")
     cleanup_old_news()
-    promoted_drafts=publish_qualified_news_drafts()
+
     already_published=published_news_today()
     if already_published >= MAX_DAILY:
         print(f"Daily limit reached: {already_published} Education News article(s) already published today. No more will be created.",flush=True)
