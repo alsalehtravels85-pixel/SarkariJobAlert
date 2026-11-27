@@ -439,7 +439,7 @@
   const dateText=v=>v?new Date(v).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'';
   if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){guideBox.innerHTML='<div class="loading-card">Education articles configuration available nahi hai.</div>';newsBox.innerHTML='<div class="loading-card">Education news configuration available nahi hai.</div>';return;}
   try{
-    const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+    const sb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
     const [guidesResult,newsResult]=await Promise.all([
       sb.from('school_articles').select('title,excerpt,grade,subject,published_at').eq('status','published').eq('article_type','study_guide').order('published_at',{ascending:false}).limit(4),
       sb.from('school_articles').select('title,excerpt,source_url,source_name,original_published_at,published_at').eq('status','published').eq('article_type','news').order('original_published_at',{ascending:false,nullsFirst:false}).limit(100)
@@ -561,12 +561,7 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
   const cfg=window.SJA_CONFIG||{};
   let videoDb=null; function getVideoDb(){if(!videoDb&&window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY)videoDb=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);return videoDb;}
   async function loadChoice(){if(!getVideoDb())return;const {data,error}=await videoDb.from('hero_video_setting').select('video_id').eq('id',1).single();if(!error){chosen=data.video_id; if(chosen)showVideo(chosen,'Selected video');else if(latest)showVideo(latest[0],latest[1]);}}
-  function adminVideo(){const root=document.getElementById('adminRoot');if(!root||!getVideoDb()||root.querySelector('#heroVideoSettings')||!root.querySelector('#logoutBtn'))return;
-  const box=document.createElement('div');box.id='heroVideoSettings';box.innerHTML='<h3>Hero Video</h3><input id="heroVideoInput" placeholder="YouTube URL or video ID"><button id="heroSave">Save video</button><button id="heroAuto">Auto Latest</button><p id="heroStatus"></p>';root.prepend(box);
-  const save=async(id)=>{const {error}=await videoDb.from('hero_video_setting').update({video_id:id}).eq('id',1);box.querySelector('#heroStatus').textContent=error?'Save failed: '+error.message:'Saved';if(!error){chosen=id;if(id)showVideo(id,'Selected video');else if(latest)showVideo(latest[0],latest[1]);}};
-  box.querySelector('#heroSave').onclick=()=>{const v=box.querySelector('#heroVideoInput').value.trim();const m=v.match(/^[\w-]{11}$/)||v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);if(!m){box.querySelector('#heroStatus').textContent='Invalid YouTube URL';return;}save(m[1]||m[0]);};box.querySelector('#heroAuto').onclick=()=>save(null);}
-  new MutationObserver(adminVideo).observe(document.body,{childList:true,subtree:true});setInterval(adminVideo,1500);adminVideo();
-  function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
+    function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
   showVideo(FALLBACK_VIDEO,'SSC JE Answer Key 2026 जारी 🔥 NTA Deputation Recruitment 13 Posts | Latest Govt Job Updates');
   link.addEventListener('click',function(event){
     event.preventDefault();
