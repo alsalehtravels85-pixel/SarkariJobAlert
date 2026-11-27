@@ -194,7 +194,7 @@ button.share-btn:hover,
 .sja-live-badge{height:100%;flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:0 11px;background:linear-gradient(110deg,#e11d35,#fa394b);color:#fff;font-size:9px;font-weight:950;letter-spacing:.7px}
 .sja-live-badge i{width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px #ffffff35;animation:sjaPulse 1.5s infinite}
 .sja-news-window{flex:1;min-width:0;overflow:hidden;padding:0 12px}
-.sja-news-track{display:flex;align-items:center;width:max-content;min-width:100%;animation:sjaTicker 55s linear infinite;will-change:transform}
+.sja-news-track{display:flex;align-items:center;width:max-content;min-width:100%;animation:sjaTicker 32s linear infinite;will-change:transform}
 .sja-news-window:hover .sja-news-track{animation-play-state:paused}
 .sja-news-track a,.sja-news-track span{display:inline-block;flex:0 0 auto;padding-right:60px;color:#17345f;font-size:12px;font-weight:800;white-space:nowrap;text-decoration:none}
 .sja-news-track a:hover{color:#075bd9;text-decoration:underline}
@@ -497,7 +497,7 @@ button.share-btn:hover,
 .sja-live-badge{padding:0 9px;font-size:8px}
 .sja-live-badge i{width:5px;height:5px}
 .sja-news-window{padding:0 9px}
-.sja-news-track{animation-duration:58s}
+.sja-news-track{animation-duration:32s}
 .sja-news-track a,.sja-news-track span{font-size:10px;padding-right:42px}
 @media(max-width:600px){
   .sja-live-ticker{margin:6px 7px;border-radius:8px}
@@ -525,7 +525,7 @@ button.share-btn:hover,
   background:linear-gradient(180deg,#fff 0%,#f5f9ff 100%);
   box-shadow:inset 0 1px 2px rgba(18,55,105,.05),0 1px 3px rgba(18,55,105,.06);
 }
-.sja-news-track{animation-duration:58s}
+.sja-news-track{animation-duration:32s}
 .sja-news-track a,.sja-news-track span{
   font-size:10px;
   line-height:18px;
