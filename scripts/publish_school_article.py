@@ -277,6 +277,9 @@ def qualifies_study_guide(article):
     words = re.findall(r"\S+", plain)
     hindi_chars = len(re.findall(r"[\u0900-\u097F]", plain))
     headings = re.findall(r"(?m)^\s*#{1,4}\s+.+$", text)
+    # Gemini may return the requested section headings without Markdown markers.
+    plain_headings = re.findall(r"(?m)^\s*(?:\*\*)?(?:भूमिका|अध्ययन के उद्देश्य|विषय की विस्तृत व्याख्या|उदाहरण(?: / हल किया हुआ उदाहरण)?|महत्वपूर्ण बिंदु|10 महत्वपूर्ण प्रश्न-उत्तर|10 बहुविकल्पीय प्रश्न|उत्तरमाला(?: व संक्षिप्त व्याख्या)?|निष्कर्ष)(?:\*\*)?\s*[:：]?\s*$", text)
+    headings = headings + plain_headings
     qa_section = re.search(r"महत्वपूर्ण प्रश्न|प्रश्न.?उत्तर", text, re.I)
     mcq_section = re.search(r"बहुविकल्पीय प्रश्न|MCQ", text, re.I)
     answer_section = re.search(r"उत्तरमाला|सही उत्तर", text, re.I)
