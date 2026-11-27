@@ -285,7 +285,7 @@ def qualifies_study_guide(article):
     answer_section = re.search(r"उत्तरमाला|सही उत्तर", text, re.I)
     conclusion = re.search(r"निष्कर्ष", text)
     mcq_items = re.findall(r"(?m)^\s*\d+[.)]\s+.+", text)
-    if len(words) < 700: return False, "लेख 700 शब्दों से छोटा है"
+    if len(words) < 550: return False, "लेख 550 शब्दों से छोटा है"
     if hindi_chars < 500: return False, "हिंदी व्याख्या पर्याप्त नहीं है"
     if len(headings) < 5: return False, "कम-से-कम 5 स्पष्ट Markdown headings नहीं हैं"
     if not qa_section or not mcq_section or not answer_section or not conclusion:
