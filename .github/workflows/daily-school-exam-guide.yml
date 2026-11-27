@@ -3,8 +3,8 @@ name: Daily School Exam Guide Draft Feed
 on:
   workflow_dispatch:
   schedule:
-    # Daily at 06:00 AM India time (00:30 UTC)
-    - cron: "30 0 * * *"
+    # Daily at 08:00 AM India time (02:30 UTC)
+    - cron: "30 2 * * *"
 
 permissions:
   contents: read
