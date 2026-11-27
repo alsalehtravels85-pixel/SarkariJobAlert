@@ -578,5 +578,27 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
 
 
 <script>window.addEventListener("load",function(){const d=document.getElementById("adminDialog");if(d&&!d.open){try{d.showModal()}catch(e){d.setAttribute("open","")}}});</script>
-</body>
+<style>
+body.admin-page #adminDialog{position:fixed!important;inset:0!important;width:100vw!important;max-width:none!important;height:100dvh!important;max-height:none!important;margin:0!important;padding:20px!important;overflow:auto!important;background:#f1f5f9!important;box-sizing:border-box!important}
+body.admin-page #heroVideoSettings{padding:16px;margin:12px 0;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc}
+body.admin-page #heroVideoSettings input{display:block;width:100%;box-sizing:border-box;padding:10px;margin:8px 0}
+</style>
+<script>
+(function(){
+function mount(){
+ const root=document.getElementById('adminRoot');
+ if(!root||!root.querySelector('#logoutBtn')||root.querySelector('#heroVideoSettings'))return;
+ const box=document.createElement('section');box.id='heroVideoSettings';
+ box.innerHTML='<h3>Hero Video</h3><input id="heroVideoInput" placeholder="YouTube URL or video ID"><button id="heroSave">Save video</button> <button id="heroAuto">Auto Latest</button><p id="heroStatus"></p>';
+ root.prepend(box);
+ const cfg=window.SJA_CONFIG||{};
+ if(!window.supabase||!cfg.SUPABASE_URL||!cfg.SUPABASE_ANON_KEY){box.querySelector('#heroStatus').textContent='Database configuration unavailable';return;}
+ const db=window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+ async function save(id){const {error}=await db.from('hero_video_setting').update({video_id:id}).eq('id',1);box.querySelector('#heroStatus').textContent=error?'Save failed: '+error.message:'Saved';}
+ box.querySelector('#heroSave').onclick=()=>{const v=box.querySelector('#heroVideoInput').value.trim();const m=v.match(/^[\w-]{11}$/)||v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);if(!m){box.querySelector('#heroStatus').textContent='Invalid YouTube URL';return;}save(m[1]||m[0]);};
+ box.querySelector('#heroAuto').onclick=()=>save(null);
+}
+new MutationObserver(mount).observe(document.documentElement,{childList:true,subtree:true});mount();
+})();
+</script></body>
 </html>
