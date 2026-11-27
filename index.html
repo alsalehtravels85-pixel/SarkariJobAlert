@@ -557,6 +557,15 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
   const link=document.getElementById('sjaLatestVideoLink');
   const thumb=document.getElementById('sjaLatestVideoThumb');
   if(!link||!thumb)return;
+  let chosen=null,latest=null;
+  const cfg=window.SJA_CONFIG||{};
+  const videoDb=window.supabase&&cfg.SUPABASE_URL&&cfg.SUPABASE_ANON_KEY?window.supabase.createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY):null;
+  async function loadChoice(){if(!videoDb)return;const {data,error}=await videoDb.from('hero_video_setting').select('video_id').eq('id',1).single();if(!error){chosen=data.video_id; if(chosen)showVideo(chosen,'Selected video');else if(latest)showVideo(latest[0],latest[1]);}}
+  function adminVideo(){const root=document.getElementById('adminRoot');if(!root||!videoDb||root.querySelector('#heroVideoSettings')||!root.querySelector('#logoutBtn'))return;
+  const box=document.createElement('div');box.id='heroVideoSettings';box.innerHTML='<h3>Hero Video</h3><input id="heroVideoInput" placeholder="YouTube URL or video ID"><button id="heroSave">Save video</button><button id="heroAuto">Auto Latest</button><p id="heroStatus"></p>';root.prepend(box);
+  const save=async(id)=>{const {error}=await videoDb.from('hero_video_setting').update({video_id:id}).eq('id',1);box.querySelector('#heroStatus').textContent=error?'Save failed: '+error.message:'Saved';if(!error){chosen=id;if(id)showVideo(id,'Selected video');else if(latest)showVideo(latest[0],latest[1]);}};
+  box.querySelector('#heroSave').onclick=()=>{const v=box.querySelector('#heroVideoInput').value.trim();const m=v.match(/^[\w-]{11}$/)||v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/);if(!m){box.querySelector('#heroStatus').textContent='Invalid YouTube URL';return;}save(m[1]||m[0]);};box.querySelector('#heroAuto').onclick=()=>save(null);}
+  new MutationObserver(adminVideo).observe(document.body,{childList:true,subtree:true});
   function showVideo(id,title){if(!id)return;link.href='https://www.youtube.com/watch?v='+encodeURIComponent(id);thumb.src='https://i.ytimg.com/vi/'+encodeURIComponent(id)+'/hqdefault.jpg';thumb.alt=title||'Education And Learning tmb का सबसे नया वीडियो';link.setAttribute('aria-label',(title||'नया वीडियो')+' — YouTube पर देखें');}
   showVideo(FALLBACK_VIDEO,'SSC JE Answer Key 2026 जारी 🔥 NTA Deputation Recruitment 13 Posts | Latest Govt Job Updates');
   link.addEventListener('click',function(event){
@@ -572,8 +581,8 @@ document.querySelector('.main-nav a[href="education.html"]')?.addEventListener('
     frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0';
     link.replaceWith(frame);
   });
-  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const itemUrl=item&&String(item.link||item.guid||item.id||'');const match=itemUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/)||itemUrl.match(/(?:youtu\.be\/|embed\/|yt:video:)([A-Za-z0-9_-]{11})/);if(match)showVideo(match[1],item.title||'Education And Learning tmb का नया वीडियो');}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
-  refreshLatest();setInterval(refreshLatest,10*60*1000);
+  async function refreshLatest(){try{const feed='https://www.youtube.com/feeds/videos.xml?channel_id='+CHANNEL_ID;const api='https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(feed);const response=await fetch(api,{cache:'no-store'});if(!response.ok)throw new Error('Feed request failed');const data=await response.json();const item=data&&data.items&&data.items[0];const itemUrl=item&&String(item.link||item.guid||item.id||'');const match=itemUrl.match(/[?&]v=([A-Za-z0-9_-]{11})/)||itemUrl.match(/(?:youtu\.be\/|embed\/|yt:video:)([A-Za-z0-9_-]{11})/);if(match){latest=[match[1],item.title||'Latest video'];if(!chosen)showVideo(latest[0],latest[1]);}}catch(error){console.warn('Latest YouTube video refresh failed; keeping last available video.',error);}}
+  loadChoice();refreshLatest();setInterval(refreshLatest,10*60*1000);
 })();
 </script>
   <script defer src="ai-assistant.js?v=3"></script>
