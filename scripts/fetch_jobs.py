@@ -1454,7 +1454,7 @@ def main():
             record = {
                 "title": title, "department": department, "category": category,
                 "notification_url": detail_url, "description": generated,
-                "status": "published" if category == "Latest Update" and any(t in (source_name + " " + candidate_title).lower() for t in ("education", "school", "board", "university", "college", "शिक्षा", "विद्यालय", "विश्वविद्यालय")) else "draft", "source_url": detail_url + MARKER,
+                "status": "draft", "source_url": detail_url + MARKER,
             }
             if category == "Admit Card":
                 record["admit_card_url"] = action_url
