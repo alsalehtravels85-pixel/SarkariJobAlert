@@ -16,6 +16,7 @@ RSS="https://news.google.com/rss/search?q={}&hl={}&gl=IN&ceid=IN:{}"
 UA="Mozilla/5.0 (compatible; SarkariJobAlertEducationNews/2.0; +https://sarkari-jobalert.com)"
 MIN_SOURCE_CHARS=1200
 MIN_WORDS=450
+INDIA_EDU = re.compile(r"\b(?:India|Indian|Uttar Pradesh|UP|CBSE|UPSC|UGC|NCERT|NTA|JEE|NEET|Delhi|Bihar|Maharashtra|Lucknow|Prayagraj)\b|भारत|उत्तर प्रदेश|सीबीएसई|विश्वविद्यालय", re.I)
 MAX_DAILY=1
 
 def clean(s):
@@ -43,11 +44,12 @@ def collect():
             title=clean(it.findtext("title")); link=(it.findtext("link") or "").strip()
             src=clean(it.find("source").text if it.find("source") is not None else "Original publisher")[:120]
             if not title or not link.startswith("https://"): continue
+            if not INDIA_EDU.search(title): continue
             if not re.search(r"education|school|university|college|exam|scholarship|admission|शिक्षा|परीक्षा|छात्र", title, re.I): continue
             key=hashlib.sha256((title.lower()+"|"+src.lower()).encode()).hexdigest()
             if key in seen: continue
             seen.add(key); published=pubdate(it.findtext("pubDate"))
-            if not published or (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
+            if not published or not 0 <= (NOW-dt.datetime.fromisoformat(published)).total_seconds() <= 72*3600: continue
             out.append({"title":title[:240],"url":link,"source":src,"published":published,"key":key})
     # Direct publisher RSS avoids Google News redirect decoding.
     for feed, publisher in [
@@ -107,7 +109,7 @@ def write_article(item,url,source):
 - स्रोत में जानकारी अधूरी/विरोधाभासी हो तो सीमा स्पष्ट करें; अनुमान न लगाएँ।
 - खबर का विद्यार्थियों पर व्यावहारिक असर और पाठक को अगला सही कदम बताएं, पर केवल समर्थित जानकारी के आधार पर।
 - भर्ती/परीक्षा की खबर को आधिकारिक घोषणा न कहें जब तक स्रोत इसकी पुष्टि न करे।
-- 550-850 हिंदी शब्द, छोटे पैराग्राफ और 4-6 उपयोगी उपशीर्षक। स्रोत अपर्याप्त हो तो केवल INSUFFICIENT_SOURCE लिखें।
+- 550-850 हिंदी शब्द, छोटे पैराग्राफ और 4-6 Markdown उपशीर्षक (# शीर्षक) दें। सार, मुख्य घोषणा, तारीख/स्थिति, छात्रों पर असर और मूल स्रोत अलग-अलग स्पष्ट करें। स्रोत अपर्याप्त हो तो केवल INSUFFICIENT_SOURCE लिखें।
 - क्लिकबेट, keyword stuffing, filler, दोहराव और सामान्य सलाह नहीं। शुरुआत में संक्षिप्त सार और अंत में स्रोत/प्रकाशक लिंक दें।
 - मूल प्रकाशन तारीख केवल उपलब्ध होने पर दें। केवल लेख लौटाएँ, JSON या टिप्पणी नहीं।
 शीर्षक: {item["title"]}
@@ -167,6 +169,8 @@ def qualifies_news_article(title, article, url, source):
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme != "https" or not parsed.netloc or parsed.hostname == "news.google.com":
         return False, "Original publisher URL not resolved"
+    if not INDIA_EDU.search(title):
+        return False, "India education relevance not established"
     if not title.strip() or not source.strip():
         return False, "Missing title or source"
     if not MIN_WORDS <= words(article) <= 1100:
