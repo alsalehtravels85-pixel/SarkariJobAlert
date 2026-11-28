@@ -43,15 +43,15 @@ def collect():
             title=clean(it.findtext("title")); link=(it.findtext("link") or "").strip()
             src=clean(it.find("source").text if it.find("source") is not None else "Original publisher")[:120]
             if not title or not link.startswith("https://"): continue
+            if not re.search(r"education|school|university|college|exam|scholarship|admission|शिक्षा|परीक्षा|छात्र", title, re.I): continue
             key=hashlib.sha256((title.lower()+"|"+src.lower()).encode()).hexdigest()
             if key in seen: continue
             seen.add(key); published=pubdate(it.findtext("pubDate"))
-            if published and (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
+            if not published or (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
             out.append({"title":title[:240],"url":link,"source":src,"published":published,"key":key})
     # Direct publisher RSS avoids Google News redirect decoding.
     for feed, publisher in [
-        ("https://www.theguardian.com/education/rss", "The Guardian"),
-        ("https://feeds.bbci.co.uk/news/education/rss.xml", "BBC News"),
+        
     ]:
         try:
             res=sess.get(feed,timeout=25); res.raise_for_status()
@@ -61,7 +61,8 @@ def collect():
                 link=(it.findtext("link") or "").strip()
                 published=pubdate(it.findtext("pubDate"))
                 if not title or not link.startswith("https://") or not published: continue
-                if (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
+                if not published or not re.search(r"education|school|university|college|exam|scholarship|admission|शिक्षा|परीक्षा|छात्र", title, re.I): continue
+            if (NOW-dt.datetime.fromisoformat(published)).total_seconds()>72*3600: continue
                 key=hashlib.sha256((title.lower()+"|"+publisher.lower()).encode()).hexdigest()
                 if key in seen: continue
                 seen.add(key)
