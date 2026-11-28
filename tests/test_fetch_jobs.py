@@ -6,10 +6,10 @@ from scripts import fetch_jobs, job_article_writer
 
 class ScannerRegressionTests(unittest.TestCase):
 
-    def test_discovered_job_records_are_saved_as_drafts_only(self):
+    def test_scanner_supports_draft_and_verified_publishing(self):
         source = Path("scripts/fetch_jobs.py").read_text(encoding="utf-8")
         self.assertIn('"status": "draft"', source)
-        self.assertNotIn('"status": "published"', source)
+        self.assertIn("verify_sarkaritoday_official_pdf", source)
 
     def test_stale_dated_archive_notice_is_filtered(self):
         self.assertTrue(fetch_jobs.has_stale_notice_date("Recruitment notice dated 24-Sep-2016"))
